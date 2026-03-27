@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐕 DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,57 +11,46 @@
 </head>
 <body>
     <div class="container">
-        <!-- ФЛАГИ (ТОЛЬКО ЗДЕСЬ) -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
         <div class="header">
             <div class="logo">🐕</div>
-            <h1 class="gradient-text">DogePay</h1>
-            <p class="subtitle">Зарабатывай DOGE играя</p>
+            <h1 class="gradient-text" data-t="app_title">DogePay</h1>
+            <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
         </div>
 
         <div class="balance-card">
-            <p class="balance-label">Твой баланс</p>
+            <p class="balance-label" data-t="balance_label">Твой баланс</p>
             <div class="balance-main">
                 <span class="coin-icon">🪙</span>
                 <span id="balance">0</span>
             </div>
             <p class="balance-doge">
-                🐕 ~<span id="balance-doge">0.0000</span> DOGE
+                <span data-t="balance_doge">🐕 ~</span>
+                <span id="balance-doge">0.0000</span>
+                <span data-t="balance_doge_suffix">DOGE</span>
             </p>
         </div>
 
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary">
                 <span class="btn-icon">🚰</span>
-                <span>Кран</span>
+                <span data-t="btn_faucet">Кран</span>
+            </a>
+            <a href="ads.html" class="btn btn-primary">
+                <span class="btn-icon">📢</span>
+                <span data-t="btn_ads">Реклама</span>
             </a>
             <a href="withdraw.html" class="btn btn-secondary">
                 <span class="btn-icon">💸</span>
-                <span>Вывод</span>
+                <span data-t="btn_withdraw">Вывод</span>
             </a>
         </div>
 
         <div class="footer">
-            <p>🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+            <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
         </div>
     </div>
-
-    <!-- НИЖНЕЕ МЕНЮ (3 КНОПКИ) -->
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item active">
-            <span class="nav-icon">🏠</span>
-            <span>Главная</span>
-        </a>
-        <a href="faucet.html" class="nav-item">
-            <span class="nav-icon">🚰</span>
-            <span>Кран</span>
-        </a>
-        <a href="withdraw.html" class="nav-item">
-            <span class="nav-icon">💸</span>
-            <span>Вывод</span>
-        </a>
-    </nav>
 
     <script src="translations.js"></script>
     <script src="app.js"></script>
