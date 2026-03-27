@@ -173,3 +173,18 @@ function loadSavedLanguage() {
 
 // Инициализация
 loadSavedLanguage();
+
+// Обновление кнопки языка с флагами
+function updateLanguageButton() {
+    const langBtn = document.getElementById('langSwitch');
+    if (langBtn) {
+        if (currentLang === 'ru') {
+            langBtn.innerHTML = '🇷🇺 | 🇬🇧';
+        } else {
+            langBtn.innerHTML = '🇬🇧 | 🇷🇺';
+        }
+    }
+}
+
+// Вызов после загрузки языка
+updateLanguageButton();
