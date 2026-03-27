@@ -5,48 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🐕 DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <!-- Language Switch -->
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 | 🇬🇧</button>
+        <!-- Language Switch (LEFT TOP) -->
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
         <!-- Header -->
         <div class="header">
-            <h1 data-t="app_name">🐕 DogePay</h1>
+            <div class="logo">🐕</div>
+            <h1 class="gradient-text">DogePay</h1>
             <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
         </div>
 
         <!-- Balance Card -->
-        <div class="balance-card float">
+        <div class="balance-card glow">
             <p class="balance-label" data-t="balance_label">Твой баланс</p>
-            <div class="balance-main"><span data-t="balance_coins">🪙</span> <span id="balance">0</span></div>
-            <p class="balance-doge"><span data-t="balance_doge">🐕 ~</span><span id="balance-doge">0.0000</span> <span data-t="balance_doge_suffix">DOGE</span></p>
+            <div class="balance-main">
+                <span class="coin-icon">🪙</span>
+                <span id="balance" class="count-animation">0</span>
+            </div>
+            <p class="balance-doge">
+                <span data-t="balance_doge">🐕 ~</span>
+                <span id="balance-doge" class="count-animation">0.0000</span>
+                <span data-t="balance_doge_suffix">DOGE</span>
+            </p>
         </div>
 
         <!-- Action Buttons -->
         <div class="buttons-grid">
-            <a href="faucet.html" class="btn btn-primary">
+            <a href="faucet.html" class="btn btn-primary btn-3d">
                 <span class="btn-icon">🚰</span>
                 <span data-t="btn_faucet">Кран</span>
             </a>
-            <a href="deposit.html" class="btn btn-secondary">
+            <a href="deposit.html" class="btn btn-secondary btn-3d">
                 <span class="btn-icon">💰</span>
-                <span data-t="btn_deposit">Ввод средств</span>
+                <span data-t="btn_deposit">Ввод</span>
             </a>
-            <a href="withdraw.html" class="btn btn-secondary">
+            <a href="withdraw.html" class="btn btn-secondary btn-3d">
                 <span class="btn-icon">💸</span>
-                <span data-t="btn_withdraw">Вывод DOGE</span>
+                <span data-t="btn_withdraw">Вывод</span>
             </a>
         </div>
 
         <!-- Info Card -->
-        <div class="form-card">
-            <p class="text-center" style="color: var(--text-secondary); font-size: 14px;">
-                💡 <strong data-t="how_it_works">Как работает:</strong><br>
-                <span data-t="how_it_works_desc">Забирай монеты с крана каждые 3 часа,<br>копи на вывод или покупай за реальные DOGE.</span>
-            </p>
+        <div class="info-card">
+            <div class="info-icon">💡</div>
+            <p data-t="how_it_works_desc">Забирай монеты с крана каждые 3 часа, копи на вывод или покупай за DOGE</p>
         </div>
 
         <!-- Footer -->
