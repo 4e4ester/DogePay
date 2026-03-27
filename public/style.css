@@ -34,6 +34,7 @@ body {
 .container {
     max-width: 420px;
     margin: 0 auto;
+    position: relative;
 }
 
 /* ===== HEADER ===== */
@@ -288,4 +289,30 @@ body {
     body { padding: 15px; }
     .balance-main { font-size: 42px; }
     .btn { padding: 16px 20px; font-size: 16px; }
+}
+
+/* ===== LANGUAGE SWITCHER ===== */
+.lang-switch {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 10px 16px;
+    color: var(--gold);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.lang-switch:hover {
+    border-color: var(--gold);
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(243, 198, 35, 0.3);
+}
+
+.lang-switch:active {
+    transform: scale(0.95);
 }
