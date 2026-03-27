@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💰 Ввод - DogePay</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: var(--gold);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .lang-switch:hover {
+            border-color: var(--gold);
+            transform: scale(1.05);
+        }
+        .rate-info {
+            background: rgba(243, 198, 35, 0.1);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            color: var(--gold);
+            font-weight: 600;
+        }
+        .conversion {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switch -->
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇬🇧 EN</button>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1 data-t="deposit_title">💰 Ввод средств</h1>
+            <p class="subtitle" data-t="deposit_subtitle">Пополни баланс DOGE</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <div class="form-group">
+                <label class="form-label" data-t="deposit_label">Сумма в DOGE</label>
+                <input type="number" id="amount" class="form-input" data-t-placeholder="deposit_placeholder" placeholder="Минимум 10 DOGE" step="0.01" min="10">
+                <p class="conversion" id="conversion">10 DOGE = 10000 🪙</p>
+            </div>
+
+            <div class="rate-info">
+                💡 1 DOGE = 1000 🪙
+            </div>
+
+            <button id="depositBtn" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
+                <span data-t="deposit_btn">✅ Пополнить</span>
+            </button>
+
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;" data-t="deposit_info">
+                💡 Курс: 1 DOGE = 1000 🪙
+                ⚡ Зачисление моментальное
+            </p>
+        </div>
+
+        <!-- Back Button -->
+        <a href="index.html" class="btn btn-secondary" style="width: 100%;">
+            <span data-t="btn_back">← Назад</span>
+        </a>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🐕 DogePay • <span data-t="deposit_title">Ввод</span></p>
+        </div>
+    </div>
+
+    <script src="translations.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // ============================================
+        // DEPOSIT LOGIC
+        // ============================================
+        
+        const amountInput = document.getElementById('amount');
+        const depositBtn = document.getElementById('depositBtn');
+        const conversionEl = document.getElementById('conversion');
+
+        // Обновление конвертации
+        amountInput.addEventListener('input', () => {
+            const amount = parseFloat(amountInput.value) || 0;
+            const coins = Math.floor(amount * 1000);
+            conversionEl.innerText = `${amount} DOGE = ${coins.toLocaleString('ru-RU')} 🪙`;
+        });
+
+        // Обработка депозита
+        depositBtn.addEventListener('click', async () => {
+            if (!userId) {
+                showMessage(t('error_user'), 'error');
+                return;
+            }
+
+            const amount = parseFloat(amountInput.value);
+            
+            if (!amount || amount < 10) {
+                showMessage('❌ Минимум 10 DOGE', 'error');
+                return;
+            }
+
+            depositBtn.disabled = true;
+            depositBtn.innerHTML = '⏳ Обработка...';
+
+            try {
+                const res = await fetch('/api/deposit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, amount })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    amountInput.value = '';
+                    conversionEl.innerText = '10 DOGE = 10000 🪙';
+                    
+                    // Обновить баланс
+                    if (window.updateBalance) window.updateBalance();
+                    
+                    // Перенаправить на главную через 2 секунды
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                    depositBtn.disabled = false;
+                    depositBtn.innerHTML = `<span data-t="deposit_btn">✅ Пополнить</span>`;
+                }
+            } catch (err) {
+                showMessage(t('error_network'), 'error');
+                depositBtn.disabled = false;
+                depositBtn.innerHTML = `<span data-t="deposit_btn">✅ Пополнить</span>`;
+            }
+        });
+    </script>
+</body>
+</html>

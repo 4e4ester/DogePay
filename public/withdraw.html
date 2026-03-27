@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💸 Вывод - DogePay</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: var(--gold);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .lang-switch:hover {
+            border-color: var(--gold);
+            transform: scale(1.05);
+        }
+        .wallet-hint {
+            background: rgba(0, 214, 143, 0.1);
+            border: 1px solid #00d68f;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            color: #00d68f;
+            font-size: 13px;
+        }
+        .balance-display {
+            background: rgba(243, 198, 35, 0.1);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            color: var(--gold);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switch -->
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇬🇧 EN</button>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1 data-t="withdraw_title">💸 Вывод DOGE</h1>
+            <p class="subtitle" data-t="withdraw_subtitle">Выведи на свой кошелёк</p>
+        </div>
+
+        <!-- Current Balance -->
+        <div class="balance-display">
+            💰 Твой баланс: <span id="currentBalance">0</span> 🪙
+        </div>
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <div class="form-group">
+                <label class="form-label" data-t="withdraw_wallet_label">Твой DOGE кошелёк</label>
+                <input type="text" id="wallet" class="form-input" data-t-placeholder="withdraw_wallet_placeholder" placeholder="Адрес кошелька (например: DQr...abc)">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" data-t="withdraw_amount_label">Сумма в 🪙</label>
+                <input type="number" id="amount" class="form-input" data-t-placeholder="withdraw_amount_placeholder" placeholder="Минимум 10000 🪙 (10 DOGE)" step="100" min="10000">
+                <p class="conversion" id="conversion">10000 🪙 = 10 DOGE</p>
+            </div>
+
+            <div class="wallet-hint">
+                ⚠️ Проверяй адрес кошелька! Транзакции необратимы.
+            </div>
+
+            <button id="withdrawBtn" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
+                <span data-t="withdraw_btn">✅ Запросить вывод</span>
+            </button>
+
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;" data-t="withdraw_info">
+                💡 Мин. вывод: 10000 🪙
+                ⏱ Обработка: до 24 часов
+            </p>
+        </div>
+
+        <!-- Back Button -->
+        <a href="index.html" class="btn btn-secondary" style="width: 100%;">
+            <span data-t="btn_back">← Назад</span>
+        </a>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🐕 DogePay • <span data-t="withdraw_title">Вывод</span></p>
+        </div>
+    </div>
+
+    <script src="translations.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // ============================================
+        // WITHDRAW LOGIC
+        // ============================================
+        
+        const walletInput = document.getElementById('wallet');
+        const amountInput = document.getElementById('amount');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+        const conversionEl = document.getElementById('conversion');
+        const currentBalanceEl = document.getElementById('currentBalance');
+
+        // Загрузка текущего баланса
+        async function loadCurrentBalance() {
+            if (!userId) return;
+            try {
+                const res = await fetch(`/api/balance?user_id=${userId}`);
+                const data = await res.json();
+                if (currentBalanceEl) {
+                    currentBalanceEl.innerText = (data.balance || 0).toLocaleString('ru-RU');
+                }
+            } catch (err) {
+                console.error('Ошибка загрузки баланса:', err);
+            }
+        }
+
+        // Обновление конвертации
+        amountInput.addEventListener('input', () => {
+            const coins = parseFloat(amountInput.value) || 0;
+            const doge = (coins / 1000).toFixed(2);
+            conversionEl.innerText = `${coins.toLocaleString('ru-RU')} 🪙 = ${doge} DOGE`;
+        });
+
+        // Обработка вывода
+        withdrawBtn.addEventListener('click', async () => {
+            if (!userId) {
+                showMessage(t('error_user'), 'error');
+                return;
+            }
+
+            const wallet = walletInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            // Валидация
+            if (!wallet || wallet.length < 10) {
+                showMessage('❌ Введи корректный адрес кошелька', 'error');
+                return;
+            }
+
+            if (!amount || amount < 10000) {
+                showMessage('❌ Минимум 10000 🪙 (10 DOGE)', 'error');
+                return;
+            }
+
+            withdrawBtn.disabled = true;
+            withdrawBtn.innerHTML = '⏳ Обработка...';
+
+            try {
+                const res = await fetch('/api/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, amount, wallet })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    walletInput.value = '';
+                    amountInput.value = '';
+                    conversionEl.innerText = '10000 🪙 = 10 DOGE';
+                    
+                    // Обновить баланс
+                    loadCurrentBalance();
+                    if (window.updateBalance) window.updateBalance();
+                    
+                    // Перенаправить на главную через 2 секунды
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                    withdrawBtn.disabled = false;
+                    withdrawBtn.innerHTML = `<span data-t="withdraw_btn">✅ Запросить вывод</span>`;
+                }
+            } catch (err) {
+                showMessage(t('error_network'), 'error');
+                withdrawBtn.disabled = false;
+                withdrawBtn.innerHTML = `<span data-t="withdraw_btn">✅ Запросить вывод</span>`;
+            }
+        });
+
+        // Загрузить баланс при старте
+        loadCurrentBalance();
+    </script>
+</body>
+</html>
