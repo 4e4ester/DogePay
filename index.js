@@ -43,9 +43,9 @@ async function initDB() {
             amount DECIMAL(10,2) NOT NULL,
             tx_hash TEXT NOT NULL,
             status TEXT DEFAULT 'pending',
+            coins BIGINT DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW(),
-            approved_at TIMESTAMP,
-            approved_by TEXT
+            approved_at TIMESTAMP
         )`);
         
         console.log('✅ Таблицы готовы');
@@ -116,20 +116,6 @@ app.post('/api/claim', async (req, res) => {
     } catch (e) { res.json({ error: e.message }); }
 });
 
-// 🔷 API: ЗАПРОС НА ДЕПОЗИТ
-app.post('/api/deposit-request', async (req, res) => {
-    try {
-        const { user_id, amount, tx_hash } = req.body;
-        if (!user_id || !amount || !tx_hash) return res.json({ error: 'Заполни все поля' });
-        if (amount < 10) return res.json({ error: 'Мин. 10 DOGE' });
-        await pool.query(
-            'INSERT INTO deposit_requests (user_id, amount, tx_hash) VALUES ($1, $2, $3)',
-            [user_id, amount, tx_hash]
-        );
-        res.json({ success: true, message: 'Заявка отправлена на проверку' });
-    } catch (e) { res.json({ error: e.message }); }
-});
-
 // 🔷 API: ВЫВОД
 app.post('/api/withdraw', async (req, res) => {
     try {
@@ -179,7 +165,7 @@ app.post('/api/admin/approve', async (req, res) => {
         const deposit = reqData.rows[0];
         const coins = Math.floor(deposit.amount * 1000);
         await pool.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [coins, deposit.user_id]);
-        await pool.query("UPDATE deposit_requests SET status = 'approved', approved_at = NOW() WHERE id = $1", [request_id]);
+        await pool.query("UPDATE deposit_requests SET status = 'approved', coins = $1, approved_at = NOW() WHERE id = $2", [coins, request_id]);
         res.json({ success: true });
     } catch (e) { res.json({ error: e.message }); }
 });
