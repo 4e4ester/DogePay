@@ -1,15 +1,9 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
-tg.enableClosingConfirmation();
+// 🔊 ЗВУКИ (ЛОКАЛЬНЫЕ ФАЙЛЫ)
+const clickSound = new Audio('click.mp3');
+const claimSound = new Audio('claim.mp3');
 
-const userId = tg.initDataUnsafe?.user?.id;
-
-// 🔊 ЗВУКИ
-const clickSound = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_736f5b6e6e.mp3');
-const claimSound = new Audio('https://cdn.pixabay.com/download/audio/2022/03/24/audio_c8c8a73467.mp3');
-
-clickSound.volume = 0.4;
-claimSound.volume = 0.6;
+clickSound.volume = 0.5;
+claimSound.volume = 0.7;
 
 function playClick() {
     try {
@@ -25,21 +19,26 @@ function playClaim() {
     } catch (e) {}
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('button, .btn, a, .nav-item').forEach(el => {
-        el.addEventListener('click', playClick);
-    });
-    updateNavActive();
-});
+window.playClick = playClick;
+window.playClaim = playClaim;
 
+// Telegram WebApp
+const tg = window.Telegram.WebApp;
+tg.expand();
+tg.enableClosingConfirmation();
+
+const userId = tg.initDataUnsafe?.user?.id;
+
+// Обновление баланса
 async function updateBalance() {
     if (!userId) return;
     try {
         const response = await fetch(`/api/balance?user_id=${userId}`);
         const data = await response.json();
         if (data.balance !== undefined) {
-            animateValue('balance', data.balance);
+            const balanceEl = document.getElementById('balance');
             const dogeEl = document.getElementById('balance-doge');
+            if (balanceEl) balanceEl.innerText = data.balance.toLocaleString('ru-RU');
             if (dogeEl) dogeEl.innerText = (data.balance / 1000).toFixed(4);
         }
     } catch (err) {
@@ -47,6 +46,7 @@ async function updateBalance() {
     }
 }
 
+// Анимация счётчика
 function animateValue(elementId, end) {
     const element = document.getElementById(elementId);
     if (!element) return;
@@ -65,6 +65,7 @@ function animateValue(elementId, end) {
     requestAnimationFrame(update);
 }
 
+// Показать сообщение
 function showMessage(text, type = 'info', duration = 4000) {
     const msg = document.createElement('div');
     msg.className = `message ${type}`;
@@ -79,7 +80,7 @@ function showMessage(text, type = 'info', duration = 4000) {
     }
 }
 
-// Переключение языка (только на index.html)
+// Переключение языка
 window.toggleLanguage = function() {
     playClick();
     const newLang = currentLang === 'ru' ? 'en' : 'ru';
@@ -87,30 +88,31 @@ window.toggleLanguage = function() {
     setTimeout(() => window.location.reload(), 100);
 };
 
-function updateNavActive() {
-    const path = window.location.pathname;
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-        const href = item.getAttribute('href');
-        if (href && path.includes(href)) {
-            item.classList.add('active');
-        }
-    });
-}
-
+// Глобальные функции
 window.updateBalance = updateBalance;
 window.showMessage = showMessage;
-window.playClick = playClick;
-window.playClaim = playClaim;
+window.animateValue = animateValue;
 
+// Инициализация
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         loadSavedLanguage();
         updatePageLanguage();
+        updateLanguageButton();
         updateBalance();
+        
+        // Звуки на все кнопки
+        document.querySelectorAll('button, .btn, a').forEach(el => {
+            el.addEventListener('click', playClick);
+        });
     });
 } else {
     loadSavedLanguage();
     updatePageLanguage();
+    updateLanguageButton();
     updateBalance();
+    
+    document.querySelectorAll('button, .btn, a').forEach(el => {
+        el.addEventListener('click', playClick);
+    });
 }
