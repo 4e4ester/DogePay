@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📢 Реклама - DogePay</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📢</div>
+            <h1 class="gradient-text" data-t="ads_title">Реклама</h1>
+            <p class="subtitle" data-t="ads_subtitle">Смотри рекламу и получай монеты</p>
+        </div>
+
+        <div id="rewardPopup" class="reward-popup hidden">
+            <span data-t="success_claim">🎉 +</span><span id="rewardAmount">0</span> <span data-t="coins">🪙</span>
+        </div>
+
+        <div class="form-card">
+            <p class="timer" id="timer" data-t="ads_loading">Загрузка рекламы...</p>
+            <button id="watchBtn" class="btn btn-primary" style="width: 100%;" data-t="ads_watch">Смотреть рекламу</button>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;" data-t="ads_reward">Награда: 5-20 🪙</p>
+        </div>
+
+        <div class="info-box">
+            <p data-t="ads_info">Просмотри рекламу и получи монеты
+Лимит: каждые 1 час</p>
+        </div>
+
+        <a href="index.html" class="btn btn-secondary" style="width: 100%;" data-t="btn_back">← На главную</a>
+
+        <div class="footer">
+            <p>🐕 DogePay • Реклама</p>
+        </div>
+    </div>
+
+    <script src="translations.js"></script>
+    <script src="app.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const userId = tg.initDataUnsafe?.user?.id;
+
+        const timerEl = document.getElementById('timer');
+        const watchBtn = document.getElementById('watchBtn');
+        const rewardPopup = document.getElementById('rewardPopup');
+        const rewardAmount = document.getElementById('rewardAmount');
+
+        async function handleWatch() {
+            if (!userId) { showMessage(t('error_user'), 'error'); return; }
+            watchBtn.disabled = true;
+            watchBtn.innerText = t('ads_loading');
+            try {
+                const res = await fetch('/api/ads-reward', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    playClaim();
+                    rewardAmount.innerText = data.reward;
+                    rewardPopup.classList.remove('hidden');
+                    watchBtn.innerText = t('ads_complete');
+                    setTimeout(() => { rewardPopup.classList.add('hidden'); startTimer(1 * 60 * 60 * 1000); }, 3000);
+                } else {
+                    const hours = Math.ceil(data.waitTime / 1000 / 3600) || 1;
+                    timerEl.innerText = `⏰ ${t('msg_wait')} ${hours} ${t('msg_hours')}.`;
+                    watchBtn.innerText = t('ads_watch');
+                    if (data.waitTime) startTimer(data.waitTime);
+                }
+            } catch (err) {
+                showMessage(t('error_network'), 'error');
+                watchBtn.disabled = false;
+                watchBtn.innerText = t('ads_watch');
+            }
+        }
+
+        function startTimer(ms) {
+            let remaining = ms;
+            timerEl.innerText = `⏰ ${formatTime(remaining)}`;
+            const interval = setInterval(() => {
+                remaining -= 1000;
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    timerEl.innerText = t('ads_available');
+                    watchBtn.disabled = false;
+                    watchBtn.innerText = t('ads_watch');
+                    return;
+                }
+                timerEl.innerText = `⏰ ${formatTime(remaining)}`;
+            }, 1000);
+        }
+
+        function formatTime(ms) {
+            const totalSec = Math.max(0, Math.floor(ms / 1000));
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        watchBtn.addEventListener('click', handleWatch);
+    </script>
+</body>
+</html>
