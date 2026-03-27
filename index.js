@@ -1,4 +1,4 @@
-// ⚠️ САМОЕ ВАЖНОЕ: Принудительно использовать IPv4 для ВСЕХ DNS-запросов
+// ⚠️ Принудительно используем IPv4 для всех подключений
 require('dns').setDefaultResultOrder('ipv4first');
 
 const express = require('express');
@@ -9,20 +9,14 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔷 ПОДКЛЮЧЕНИЕ К БАЗЕ
+// 🔷 ПОДКЛЮЧЕНИЕ К БАЗЕ (Neon/PostgreSQL)
 const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT) || 5432,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
-    // family: 4 больше не нужен, dns.setDefaultResultOrder решает проблему глобально
 });
 
 async function testDB() {
     try {
-        console.log('🔄 Подключение к БД...');
         await pool.query('SELECT 1');
         console.log('✅ База подключена!');
         return true;
