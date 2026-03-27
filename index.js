@@ -8,7 +8,7 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔷 ОДИН БОТ (глобальная переменная)
+// 🔷 ОДИН БОТ
 let bot = null;
 
 // 🔷 БАЗА ДАННЫХ
@@ -29,19 +29,27 @@ async function testDB() {
     }
 }
 
-// 🔷 СОЗДАНИЕ ТАБЛИЦ
+// 🔷 СОЗДАНИЕ/ОБНОВЛЕНИЕ ТАБЛИЦ
 async function initDB() {
     try {
+        // Таблица пользователей
         await pool.query(`CREATE TABLE IF NOT EXISTS users (
             user_id BIGINT PRIMARY KEY,
             username TEXT,
             balance BIGINT DEFAULT 0,
             last_claim TIMESTAMP DEFAULT NOW(),
-            last_ads TIMESTAMP DEFAULT NOW() - INTERVAL '1 hour',
             wallet_address TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )`);
         
+        // 🔷 ДОБАВИТЬ last_ads ЕСЛИ НЕТ
+        await pool.query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS last_ads TIMESTAMP DEFAULT NOW() - INTERVAL '1 hour'
+        `);
+        console.log('✅ Колонка last_ads добавлена');
+        
+        // Таблица заявок на вывод
         await pool.query(`CREATE TABLE IF NOT EXISTS withdraw_requests (
             id SERIAL PRIMARY KEY,
             user_id BIGINT NOT NULL,
@@ -63,7 +71,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 🔷 БОТ (СОЗДАЁТСЯ 1 РАЗ)
+// 🔷 БОТ
 function initBot() {
     if (bot) {
         console.log('⚠️ Бот уже инициализирован');
@@ -98,12 +106,10 @@ function initBot() {
         ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
     });
 
-    // 🔷 ЗАПУСК БОТА (ТОЛЬКО 1 РАЗ!)
     bot.launch()
         .then(() => console.log('🤖 Бот запущен'))
         .catch(e => console.error('❌ Ошибка бота:', e.message));
 
-    // 🔷 ОСТАНОВКА ПРИ ЗАВЕРШЕНИИ
     process.once('SIGINT', () => {
         console.log('🛑 SIGINT received, stopping bot...');
         bot.stop('SIGINT');
@@ -147,6 +153,31 @@ app.post('/api/claim', async (req, res) => {
         res.json({ success: true, reward: reward, message: '+' + reward + ' 🪙' });
     } catch (e) { 
         console.error('CLAIM ERROR:', e);
+        res.json({ error: e.message }); 
+    }
+});
+
+// 🔷 API: РЕКЛАМА
+app.post('/api/ads-reward', async (req, res) => {
+    console.log('📢 ADS:', req.body);
+    try {
+        const uid = req.body.user_id;
+        if (!uid) return res.json({ error: 'Нет ID' });
+        
+        const r = await pool.query('SELECT * FROM users WHERE user_id = $1', [uid]);
+        if (!r.rows[0]) return res.json({ error: 'Не найден' });
+        
+        const hours = (new Date() - new Date(r.rows[0].last_ads)) / 36e5;
+        if (hours < 1) {
+            const w = Math.ceil(1 - hours);
+            return res.json({ success: false, message: 'Жди ещё ' + w + ' ч.', waitTime: w * 36e5 });
+        }
+        
+        const reward = Math.floor(Math.random() * 16) + 5;
+        await pool.query('UPDATE users SET balance = balance + $1, last_ads = NOW() WHERE user_id = $2', [reward, uid]);
+        res.json({ success: true, reward: reward, message: '+' + reward + ' 🪙' });
+    } catch (e) { 
+        console.error('ADS ERROR:', e);
         res.json({ error: e.message }); 
     }
 });
@@ -210,7 +241,7 @@ app.post('/api/admin/reject', async (req, res) => {
     } catch (e) { res.json({ error: e.message }); }
 });
 
-// 🔷 ЗАПУСК СЕРВЕРА (БОТ ЗАПУСКАЕТСЯ ОТДЕЛЬНО)
+// 🔷 ЗАПУСК
 (async () => {
     const ok = await testDB();
     if (ok) await initDB();
@@ -219,6 +250,5 @@ app.post('/api/admin/reject', async (req, res) => {
         console.log('🌐 Порт ' + PORT + ' | ' + process.env.WEB_APP_URL);
     });
     
-    // 🔷 БОТ ЗАПУСКАЕТСЯ 1 РАЗ ПОСЛЕ СТАРТА СЕРВЕРА
     initBot();
 })();
