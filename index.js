@@ -1,3 +1,6 @@
+// ⚠️ САМОЕ ВАЖНОЕ: Принудительно использовать IPv4 для ВСЕХ DNS-запросов
+require('dns').setDefaultResultOrder('ipv4first');
+
 const express = require('express');
 const { Telegraf, Markup } = require('telegraf');
 const { Pool } = require('pg');
@@ -6,34 +9,25 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔷 ЛОГИРОВАНИЕ ПЕРЕМЕННЫХ (для отладки)
-console.log('🔍 DB_HOST:', process.env.DB_HOST);
-console.log('🔍 DB_PORT:', process.env.DB_PORT);
-console.log('🔍 DB_NAME:', process.env.DB_NAME);
-console.log('🔍 DB_USER:', process.env.DB_USER);
-console.log('🔍 DB_PASSWORD:', process.env.DB_PASSWORD ? '***' : 'НЕ ЗАДАН!');
-
-// 🔷 ПОДКЛЮЧЕНИЕ — ТОЛЬКО ЯВНЫЕ ПАРАМЕТРЫ (без connectionString!)
+// 🔷 ПОДКЛЮЧЕНИЕ К БАЗЕ
 const pool = new Pool({
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT) || 5432,
     database: process.env.DB_NAME,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    ssl: { rejectUnauthorized: false },
-    family: 4  // ⚠️ ПРИНУДИТЕЛЬНО IPv4
+    ssl: { rejectUnauthorized: false }
+    // family: 4 больше не нужен, dns.setDefaultResultOrder решает проблему глобально
 });
 
 async function testDB() {
     try {
-        console.log('🔄 Попытка подключения к БД...');
+        console.log('🔄 Подключение к БД...');
         await pool.query('SELECT 1');
-        console.log('✅ База подключена (IPv4)');
+        console.log('✅ База подключена!');
         return true;
     } catch (e) {
         console.error('❌ Ошибка БД:', e.message);
-        console.error('❌ Код ошибки:', e.code);
-        console.error('❌ Адрес:', e.address);
         return false;
     }
 }
@@ -58,8 +52,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 🔷 БОТ (с проверкой, чтобы не запускать дважды)
-let botLaunched = false;
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 bot.start(async (ctx) => {
@@ -78,7 +70,6 @@ bot.start(async (ctx) => {
             Markup.keyboard([[Markup.button.webApp('🚀 Открыть', process.env.WEB_APP_URL)]]).resize()
         );
     } catch (e) {
-        console.error('Ошибка /start:', e.message);
         ctx.reply('❌ Ошибка сервера');
     }
 });
@@ -94,23 +85,10 @@ bot.command('balance', async (ctx) => {
     }
 });
 
-// Запуск бота только один раз
-if (!botLaunched && !process.env.NO_BOT) {
-    botLaunched = true;
-    bot.launch()
-        .then(() => console.log('🤖 Бот запущен'))
-        .catch(e => {
-            if (e.description?.includes('terminated')) {
-                console.log('⚠️ Бот уже запущен в другом месте — этот экземпляр пропущен');
-            } else {
-                console.error('❌ Ошибка бота:', e.message);
-            }
-        });
-    process.on('SIGINT', () => bot?.stop());
-    process.on('SIGTERM', () => bot?.stop());
-}
+bot.launch().then(() => console.log('🤖 Бот запущен')).catch(e => console.error('❌ Бот:', e.message));
+process.on('SIGINT', () => bot?.stop());
+process.on('SIGTERM', () => bot?.stop());
 
-// 🔷 API
 app.get('/api/balance', async (req, res) => {
     try {
         const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [req.query.user_id]);
@@ -157,7 +135,6 @@ app.post('/api/deposit', async (req, res) => {
     } catch (e) { res.json({ error: e.message }); }
 });
 
-// 🔷 ЗАПУСК
 (async () => {
     const ok = await testDB();
     if (ok) await initDB();
