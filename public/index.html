@@ -6,23 +6,20 @@
     <title>🐕 DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <!-- Language Switch (LEFT TOP) -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
-        <!-- Header -->
         <div class="header">
             <div class="logo">🐕</div>
             <h1 class="gradient-text">DogePay</h1>
             <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
         </div>
 
-        <!-- Balance Card -->
-        <div class="balance-card glow">
+        <div class="balance-card">
             <p class="balance-label" data-t="balance_label">Твой баланс</p>
             <div class="balance-main">
                 <span class="coin-icon">🪙</span>
@@ -35,33 +32,48 @@
             </p>
         </div>
 
-        <!-- Action Buttons -->
         <div class="buttons-grid">
-            <a href="faucet.html" class="btn btn-primary btn-3d">
+            <a href="faucet.html" class="btn btn-primary">
                 <span class="btn-icon">🚰</span>
-                <span data-t="btn_faucet">Кран</span>
+                <span data-t="nav_faucet">Кран</span>
             </a>
-            <a href="deposit.html" class="btn btn-secondary btn-3d">
+            <a href="deposit.html" class="btn btn-secondary">
                 <span class="btn-icon">💰</span>
-                <span data-t="btn_deposit">Ввод</span>
+                <span data-t="nav_deposit">Ввод</span>
             </a>
-            <a href="withdraw.html" class="btn btn-secondary btn-3d">
+            <a href="withdraw.html" class="btn btn-secondary">
                 <span class="btn-icon">💸</span>
-                <span data-t="btn_withdraw">Вывод</span>
+                <span data-t="nav_withdraw">Вывод</span>
             </a>
         </div>
 
-        <!-- Info Card -->
-        <div class="info-card">
-            <div class="info-icon">💡</div>
-            <p data-t="how_it_works_desc">Забирай монеты с крана каждые 3 часа, копи на вывод или покупай за DOGE</p>
-        </div>
-
-        <!-- Footer -->
         <div class="footer">
-            <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+            <p data-t="footer">Безопасно • Быстро • Глобально</p>
         </div>
     </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span data-t="nav_home">Главная</span>
+        </a>
+        <a href="faucet.html" class="nav-item">
+            <span class="nav-icon">🚰</span>
+            <span data-t="nav_faucet">Кран</span>
+        </a>
+        <a href="deposit.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span data-t="nav_deposit">Ввод</span>
+        </a>
+        <a href="withdraw.html" class="nav-item">
+            <span class="nav-icon">💸</span>
+            <span data-t="nav_withdraw">Вывод</span>
+        </a>
+        <a href="admin.html" class="nav-item">
+            <span class="nav-icon">🔐</span>
+            <span data-t="nav_admin">Админ</span>
+        </a>
+    </nav>
 
     <script src="translations.js"></script>
     <script src="app.js"></script>
