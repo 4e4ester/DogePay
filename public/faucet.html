@@ -19,10 +19,12 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 16px;
         }
         .lang-switch:hover {
             border-color: var(--gold);
             transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(243, 198, 35, 0.3);
         }
         .reward-popup {
             text-align: center;
@@ -44,7 +46,7 @@
 <body>
     <div class="container">
         <!-- Language Switch -->
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇬🇧 EN</button>
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 | 🇬🇧</button>
         
         <!-- Header -->
         <div class="header">
@@ -93,13 +95,24 @@
     <script src="app.js"></script>
     <script>
         // ============================================
-        // FAUCET LOGIC (FIXED)
+        // FAUCET LOGIC (FULL CODE WITH SOUND)
         // ============================================
         
         const timerEl = document.getElementById('timer');
         const claimBtn = document.getElementById('claimBtn');
         const rewardPopup = document.getElementById('rewardPopup');
         const rewardAmount = document.getElementById('rewardAmount');
+
+        // 🔊 ЗВУК ПОБЕДЫ
+        const claimSound = new Audio('claim.mp3');
+        claimSound.volume = 0.7;
+
+        function playClaimSound() {
+            try {
+                claimSound.currentTime = 0;
+                claimSound.play().catch(() => {});
+            } catch (e) {}
+        }
 
         // Форматирование времени
         function formatTime(ms) {
@@ -129,13 +142,16 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    // Успех!
+                    // 🎉 ЗВУК ПОБЕДЫ!
+                    playClaimSound();
+                    
+                    // Показать награду
                     rewardAmount.innerText = data.reward;
                     rewardPopup.classList.remove('hidden');
                     
                     claimBtn.disabled = true;
                     claimBtn.innerHTML = `<span data-t="faucet_next">⏰ Следующий сбор через 3ч</span>`;
-                    timerEl.innerText = '⏰ ' + t('timer_started');
+                    timerEl.innerText = '⏰ Таймер запущен';
                     
                     // Обновить баланс
                     if (window.updateBalance) window.updateBalance();
