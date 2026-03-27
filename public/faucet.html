@@ -6,56 +6,94 @@
     <title>🚰 Кран - DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: var(--gold);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .lang-switch:hover {
+            border-color: var(--gold);
+            transform: scale(1.05);
+        }
+        .reward-popup {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 800;
+            color: #00d68f;
+            margin: 25px 0;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 4px 30px rgba(0, 214, 143, 0.5);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
     <div class="container">
+        <!-- Language Switch -->
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇬🇧 EN</button>
+        
         <!-- Header -->
         <div class="header">
-            <h1>🚰 Кран</h1>
-            <p class="subtitle">Забери бесплатные монеты</p>
+            <h1 data-t="faucet_title">🚰 Кран</h1>
+            <p class="subtitle" data-t="faucet_subtitle">Забери бесплатные монеты</p>
         </div>
 
         <!-- Reward Display -->
         <div id="rewardPopup" class="reward-popup hidden">
-            🎉 +<span id="rewardAmount">0</span> 🪙
+            <span data-t="success_claim">🎉 +</span><span id="rewardAmount">0</span> <span data-t="coins">🪙</span>
         </div>
 
         <!-- Timer / Button Card -->
         <div class="balance-card">
-            <p class="timer" id="timer">⏳ Проверка...</p>
+            <p class="timer" id="timer" data-t="faucet_checking">⏳ Проверка...</p>
             
             <button id="claimBtn" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
-                🎁 ЗАБРАТЬ (10-50 🪙)
+                <span data-t="faucet_claim">🎁 ЗАБРАТЬ (10-50 🪙)</span>
             </button>
             
-            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;">
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;" data-t="faucet_timer">
                 ⏰ Доступно каждые 3 часа
             </p>
         </div>
 
         <!-- Info -->
         <div class="form-card">
-            <p class="text-center" style="color: var(--text-secondary); font-size: 14px;">
-                💎 Каждая награда: <strong>10-50 🪙</strong><br>
+            <p class="text-center" style="color: var(--text-secondary); font-size: 14px; white-space: pre-line;" data-t="faucet_info">
+                💎 Каждая награда: 10-50 🪙
                 🔄 Следующий сбор: через 3 часа
             </p>
         </div>
 
         <!-- Back Button -->
         <a href="index.html" class="btn btn-secondary" style="width: 100%;">
-            ← Назад
+            <span data-t="btn_back">← Назад</span>
         </a>
 
         <!-- Footer -->
         <div class="footer">
-            <p>🐕 DogePay • Кран</p>
+            <p>🐕 DogePay • <span data-t="faucet_title">Кран</span></p>
         </div>
     </div>
 
+    <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
         // ============================================
-        // FAUCET LOGIC
+        // FAUCET LOGIC (FIXED)
         // ============================================
         
         const timerEl = document.getElementById('timer');
@@ -75,12 +113,12 @@
         // Проверка и сбор награды
         async function handleClaim() {
             if (!userId) {
-                showMessage('❌ Ошибка: пользователь не найден', 'error');
+                showMessage(t('error_user'), 'error');
                 return;
             }
 
             claimBtn.disabled = true;
-            claimBtn.innerHTML = '⏳ Обработка...';
+            claimBtn.innerHTML = `<span data-t="faucet_processing">⏳ Обработка...</span>`;
 
             try {
                 const res = await fetch('/api/claim', {
@@ -96,8 +134,8 @@
                     rewardPopup.classList.remove('hidden');
                     
                     claimBtn.disabled = true;
-                    claimBtn.innerHTML = '⏳ Следующий сбор через 3ч';
-                    timerEl.innerText = '⏰ Таймер запущен';
+                    claimBtn.innerHTML = `<span data-t="faucet_next">⏰ Следующий сбор через 3ч</span>`;
+                    timerEl.innerText = '⏰ ' + t('timer_started');
                     
                     // Обновить баланс
                     if (window.updateBalance) window.updateBalance();
@@ -110,18 +148,19 @@
                     
                 } else {
                     // Ещё рано
-                    timerEl.innerText = `⏰ ${data.message}`;
+                    const hours = Math.ceil(data.waitTime / 1000 / 3600) || 3;
+                    timerEl.innerText = `⏰ ${t('msg_wait')} ${hours} ${t('msg_hours')}.`;
                     claimBtn.disabled = true;
-                    claimBtn.innerHTML = '⏳ Жди';
+                    claimBtn.innerHTML = `<span data-t="faucet_wait">⏳ Жди</span>`;
                     
                     if (data.waitTime) {
                         startTimer(data.waitTime);
                     }
                 }
             } catch (err) {
-                showMessage('❌ Ошибка сети. Попробуй позже.', 'error');
+                showMessage(t('error_network'), 'error');
                 claimBtn.disabled = false;
-                claimBtn.innerHTML = '🎁 ЗАБРАТЬ (10-50 🪙)';
+                claimBtn.innerHTML = `<span data-t="faucet_claim">🎁 ЗАБРАТЬ (10-50 🪙)</span>`;
             }
         }
 
@@ -134,9 +173,9 @@
                 remaining -= 1000;
                 if (remaining <= 0) {
                     clearInterval(interval);
-                    timerEl.innerText = '✅ Можно забирать!';
+                    timerEl.innerText = t('faucet_available');
                     claimBtn.disabled = false;
-                    claimBtn.innerHTML = '🎁 ЗАБРАТЬ (10-50 🪙)';
+                    claimBtn.innerHTML = `<span data-t="faucet_claim">🎁 ЗАБРАТЬ (10-50 🪙)</span>`;
                     return;
                 }
                 timerEl.innerText = `⏰ ${formatTime(remaining)}`;
@@ -150,7 +189,7 @@
         if (userId) {
             handleClaim();
         } else {
-            timerEl.innerText = '❌ Войди в Telegram';
+            timerEl.innerText = t('error_user');
             claimBtn.disabled = true;
         }
     </script>
