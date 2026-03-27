@@ -11,8 +11,13 @@ const PORT = process.env.PORT || 3000;
 
 // ========== ПОДКЛЮЧЕНИЕ К SUPABASE (PostgreSQL) ==========
 const pool = new Pool({
+    // Берем ссылку из настроек Render
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    // ⚠️ ВАЖНО: Принудительно указываем правильный хост (замени на свой!)
+    host: 'db.xppivwbjpganbkdangmm.supabase.co', 
+    // Принудительно используем IPv4 (это исправляет ошибку ENETUNREACH)
+    family: 4 
 });
 
 // ========== СОЗДАНИЕ ТАБЛИЦЫ В БАЗЕ ДАННЫХ ==========
