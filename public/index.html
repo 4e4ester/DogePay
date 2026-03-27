@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🐕 DogePay</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🐕 DogePay</h1>
+            <p class="subtitle">Зарабатывай DOGE играя</p>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="balance-card float">
+            <p class="balance-label">Твой баланс</p>
+            <div class="balance-main">🪙 <span id="balance">0</span></div>
+            <p class="balance-doge">🐕 ~<span id="balance-doge">0.0000</span> DOGE</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="buttons-grid">
+            <a href="faucet.html" class="btn btn-primary">
+                <span class="btn-icon">🚰</span>
+                Кран
+            </a>
+            <a href="deposit.html" class="btn btn-secondary">
+                <span class="btn-icon">💰</span>
+                Ввод средств
+            </a>
+            <a href="withdraw.html" class="btn btn-secondary">
+                <span class="btn-icon">💸</span>
+                Вывод DOGE
+            </a>
+        </div>
+
+        <!-- Info Card -->
+        <div class="form-card">
+            <p class="text-center" style="color: var(--text-secondary); font-size: 14px;">
+                💡 <strong>Как работает:</strong><br>
+                Забирай монеты с крана каждые 3 часа,<br>
+                копи на вывод или покупай за реальные DOGE.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

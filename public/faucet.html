@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚰 Кран - DogePay</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚰 Кран</h1>
+            <p class="subtitle">Забери бесплатные монеты</p>
+        </div>
+
+        <!-- Reward Display -->
+        <div id="rewardPopup" class="reward-popup hidden">
+            🎉 +<span id="rewardAmount">0</span> 🪙
+        </div>
+
+        <!-- Timer / Button Card -->
+        <div class="balance-card">
+            <p class="timer" id="timer">⏳ Проверка...</p>
+            
+            <button id="claimBtn" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
+                🎁 ЗАБРАТЬ (10-50 🪙)
+            </button>
+            
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;">
+                ⏰ Доступно каждые 3 часа
+            </p>
+        </div>
+
+        <!-- Info -->
+        <div class="form-card">
+            <p class="text-center" style="color: var(--text-secondary); font-size: 14px;">
+                💎 Каждая награда: <strong>10-50 🪙</strong><br>
+                🔄 Следующий сбор: через 3 часа
+            </p>
+        </div>
+
+        <!-- Back Button -->
+        <a href="index.html" class="btn btn-secondary" style="width: 100%;">
+            ← Назад
+        </a>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🐕 DogePay • Кран</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // ============================================
+        // FAUCET LOGIC
+        // ============================================
+        
+        const timerEl = document.getElementById('timer');
+        const claimBtn = document.getElementById('claimBtn');
+        const rewardPopup = document.getElementById('rewardPopup');
+        const rewardAmount = document.getElementById('rewardAmount');
+
+        // Форматирование времени
+        function formatTime(ms) {
+            const totalSec = Math.max(0, Math.floor(ms / 1000));
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        // Проверка и сбор награды
+        async function handleClaim() {
+            if (!userId) {
+                showMessage('❌ Ошибка: пользователь не найден', 'error');
+                return;
+            }
+
+            claimBtn.disabled = true;
+            claimBtn.innerHTML = '⏳ Обработка...';
+
+            try {
+                const res = await fetch('/api/claim', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Успех!
+                    rewardAmount.innerText = data.reward;
+                    rewardPopup.classList.remove('hidden');
+                    
+                    claimBtn.disabled = true;
+                    claimBtn.innerHTML = '⏳ Следующий сбор через 3ч';
+                    timerEl.innerText = '⏰ Таймер запущен';
+                    
+                    // Обновить баланс
+                    if (window.updateBalance) window.updateBalance();
+                    
+                    // Скрыть попап через 3 секунды
+                    setTimeout(() => {
+                        rewardPopup.classList.add('hidden');
+                        startTimer(3 * 60 * 60 * 1000);
+                    }, 3000);
+                    
+                } else {
+                    // Ещё рано
+                    timerEl.innerText = `⏰ ${data.message}`;
+                    claimBtn.disabled = true;
+                    claimBtn.innerHTML = '⏳ Жди';
+                    
+                    if (data.waitTime) {
+                        startTimer(data.waitTime);
+                    }
+                }
+            } catch (err) {
+                showMessage('❌ Ошибка сети. Попробуй позже.', 'error');
+                claimBtn.disabled = false;
+                claimBtn.innerHTML = '🎁 ЗАБРАТЬ (10-50 🪙)';
+            }
+        }
+
+        // Таймер обратного отсчёта
+        function startTimer(ms) {
+            let remaining = ms;
+            timerEl.innerText = `⏰ ${formatTime(remaining)}`;
+            
+            const interval = setInterval(() => {
+                remaining -= 1000;
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    timerEl.innerText = '✅ Можно забирать!';
+                    claimBtn.disabled = false;
+                    claimBtn.innerHTML = '🎁 ЗАБРАТЬ (10-50 🪙)';
+                    return;
+                }
+                timerEl.innerText = `⏰ ${formatTime(remaining)}`;
+            }, 1000);
+        }
+
+        // Обработчик кнопки
+        claimBtn.addEventListener('click', handleClaim);
+
+        // Проверка при загрузке
+        if (userId) {
+            handleClaim();
+        } else {
+            timerEl.innerText = '❌ Войди в Telegram';
+            claimBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
