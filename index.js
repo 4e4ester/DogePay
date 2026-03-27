@@ -2,7 +2,6 @@ const express = require('express');
 const { Telegraf, Markup } = require('telegraf');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
 
 // ========== НАСТРОЙКИ ==========
 const app = express();
@@ -36,7 +35,6 @@ bot.start(async (ctx) => {
     const userId = ctx.from.id;
     const username = ctx.from.username;
     
-    // Регистрируем пользователя в базе (если нет)
     await User.findOneAndUpdate(
         { user_id: userId },
         { username },
@@ -49,7 +47,7 @@ bot.start(async (ctx) => {
         `💱 Курс: 1000 🪙 = 1 DOGE\n\n` +
         `Нажми кнопку ниже, чтобы открыть ферму! 🚀`,
         Markup.keyboard([
-            [Markup.button.webApp('🚀 Открыть DogePay', process.env.WEB_APP_URL || 'https://dogepay.onrender.com')]
+            [Markup.button.webApp('🚀 Открыть DogePay', process.env.WEB_APP_URL)]
         ]).resize()
     );
 });
@@ -109,7 +107,6 @@ app.post('/api/claim', async (req, res) => {
             });
         }
         
-        // Рандом от 10 до 50
         const reward = Math.floor(Math.random() * 41) + 10;
         
         user.balance += reward;
@@ -125,7 +122,7 @@ app.post('/api/claim', async (req, res) => {
 // Запрос на вывод средств
 app.post('/api/withdraw', async (req, res) => {
     const userId = req.body.user_id;
-    const amount = req.body.amount; // в коинах
+    const amount = req.body.amount;
     const wallet = req.body.wallet;
     
     if (!userId || !amount || !wallet) {
@@ -146,17 +143,16 @@ app.post('/api/withdraw', async (req, res) => {
         user.wallet_address = wallet;
         await user.save();
         
-        // Здесь потом будет логика отправки DOGE через API
         res.json({ success: true, message: 'Заявка создана! Ожидай выплаты.' });
     } catch (err) {
         res.json({ error: err.message });
     }
 });
 
-// Запрос на ввод средств (тестовый режим)
+// Запрос на ввод средств
 app.post('/api/deposit', async (req, res) => {
     const userId = req.body.user_id;
-    const amount = req.body.amount; // в DOGE
+    const amount = req.body.amount;
     
     if (!userId || !amount) {
         return res.json({ error: 'Заполните все поля' });
