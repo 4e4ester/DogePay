@@ -26,7 +26,7 @@ function playClaim() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('button, .btn, a, .nav-item, .copy-btn').forEach(el => {
+    document.querySelectorAll('button, .btn, a, .nav-item').forEach(el => {
         el.addEventListener('click', playClick);
     });
     updateNavActive();
@@ -79,6 +79,7 @@ function showMessage(text, type = 'info', duration = 4000) {
     }
 }
 
+// Переключение языка (только на index.html)
 window.toggleLanguage = function() {
     playClick();
     const newLang = currentLang === 'ru' ? 'en' : 'ru';
