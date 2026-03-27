@@ -11,67 +11,55 @@
 </head>
 <body>
     <div class="container">
+        <!-- ФЛАГИ (ТОЛЬКО ЗДЕСЬ) -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
         <div class="header">
             <div class="logo">🐕</div>
             <h1 class="gradient-text">DogePay</h1>
-            <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
+            <p class="subtitle">Зарабатывай DOGE играя</p>
         </div>
 
         <div class="balance-card">
-            <p class="balance-label" data-t="balance_label">Твой баланс</p>
+            <p class="balance-label">Твой баланс</p>
             <div class="balance-main">
                 <span class="coin-icon">🪙</span>
-                <span id="balance" class="count-animation">0</span>
+                <span id="balance">0</span>
             </div>
             <p class="balance-doge">
-                <span data-t="balance_doge">🐕 ~</span>
-                <span id="balance-doge" class="count-animation">0.0000</span>
-                <span data-t="balance_doge_suffix">DOGE</span>
+                🐕 ~<span id="balance-doge">0.0000</span> DOGE
             </p>
         </div>
 
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary">
                 <span class="btn-icon">🚰</span>
-                <span data-t="nav_faucet">Кран</span>
-            </a>
-            <a href="deposit.html" class="btn btn-secondary">
-                <span class="btn-icon">💰</span>
-                <span data-t="nav_deposit">Ввод</span>
+                <span>Кран</span>
             </a>
             <a href="withdraw.html" class="btn btn-secondary">
                 <span class="btn-icon">💸</span>
-                <span data-t="nav_withdraw">Вывод</span>
+                <span>Вывод</span>
             </a>
         </div>
 
         <div class="footer">
-            <p data-t="footer">Безопасно • Быстро • Глобально</p>
+            <p>🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
         </div>
     </div>
 
+    <!-- НИЖНЕЕ МЕНЮ (3 КНОПКИ) -->
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item active">
             <span class="nav-icon">🏠</span>
-            <span data-t="nav_home">Главная</span>
+            <span>Главная</span>
         </a>
         <a href="faucet.html" class="nav-item">
             <span class="nav-icon">🚰</span>
-            <span data-t="nav_faucet">Кран</span>
-        </a>
-        <a href="deposit.html" class="nav-item">
-            <span class="nav-icon">💰</span>
-            <span data-t="nav_deposit">Ввод</span>
+            <span>Кран</span>
         </a>
         <a href="withdraw.html" class="nav-item">
             <span class="nav-icon">💸</span>
-            <span data-t="nav_withdraw">Вывод</span>
-        </a>
-        <a href="admin.html" class="nav-item">
-            <span class="nav-icon">🔐</span>
-            <span data-t="nav_admin">Админ</span>
+            <span>Вывод</span>
         </a>
     </nav>
 
