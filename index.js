@@ -1,4 +1,3 @@
-// ⚠️ Принудительно используем IPv4 для всех подключений
 require('dns').setDefaultResultOrder('ipv4first');
 
 const express = require('express');
@@ -7,9 +6,10 @@ const { Pool } = require('pg');
 const cors = require('cors');
 
 const app = express();
+const bot = new Telegraf(process.env.BOT_TOKEN);
 const PORT = process.env.PORT || 3000;
 
-// 🔷 ПОДКЛЮЧЕНИЕ К БАЗЕ (Neon/PostgreSQL)
+// 🔷 БАЗА ДАННЫХ (Neon)
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -28,6 +28,7 @@ async function testDB() {
 
 async function initDB() {
     try {
+        // Таблица пользователей
         await pool.query(`CREATE TABLE IF NOT EXISTS users (
             user_id BIGINT PRIMARY KEY,
             username TEXT,
@@ -36,9 +37,33 @@ async function initDB() {
             wallet_address TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )`);
-        console.log('✅ Таблица users готова');
+        
+        // Таблица заявок на депозит
+        await pool.query(`CREATE TABLE IF NOT EXISTS deposit_requests (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            tx_hash TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT NOW(),
+            approved_at TIMESTAMP,
+            approved_by TEXT
+        )`);
+        
+        // Таблица админов
+        await pool.query(`CREATE TABLE IF NOT EXISTS admins (
+            id SERIAL PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        )`);
+        
+        // Создать админа по умолчанию (пароль: admin123)
+        await pool.query(`INSERT INTO admins (password_hash) 
+            VALUES ('admin123') ON CONFLICT DO NOTHING`);
+        
+        console.log('✅ Таблицы готовы');
     } catch (e) {
-        console.error('❌ Ошибка таблицы:', e.message);
+        console.error('❌ Ошибка таблиц:', e.message);
     }
 }
 
@@ -46,8 +71,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
-
+// 🔷 БОТ
 bot.start(async (ctx) => {
     const uid = ctx.from.id;
     const un = ctx.from.username || 'User';
@@ -64,25 +88,22 @@ bot.start(async (ctx) => {
             Markup.keyboard([[Markup.button.webApp('🚀 Открыть', process.env.WEB_APP_URL)]]).resize()
         );
     } catch (e) {
-        ctx.reply('❌ Ошибка сервера');
+        ctx.reply('❌ Ошибка');
     }
 });
 
 bot.command('balance', async (ctx) => {
-    try {
-        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
-        if (!r.rows[0]) return ctx.reply('❌ Нажми /start');
-        const b = r.rows[0].balance;
-        ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
-    } catch (e) {
-        ctx.reply('❌ Ошибка');
-    }
+    const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
+    if (!r.rows[0]) return ctx.reply('❌ Нажми /start');
+    const b = r.rows[0].balance;
+    ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
 });
 
 bot.launch().then(() => console.log('🤖 Бот запущен')).catch(e => console.error('❌ Бот:', e.message));
 process.on('SIGINT', () => bot?.stop());
 process.on('SIGTERM', () => bot?.stop());
 
+// 🔷 API: БАЛАНС
 app.get('/api/balance', async (req, res) => {
     try {
         const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [req.query.user_id]);
@@ -90,6 +111,7 @@ app.get('/api/balance', async (req, res) => {
     } catch (e) { res.json({ error: e.message }); }
 });
 
+// 🔷 API: КРАН
 app.post('/api/claim', async (req, res) => {
     try {
         const uid = req.body.user_id;
@@ -107,6 +129,23 @@ app.post('/api/claim', async (req, res) => {
     } catch (e) { res.json({ error: e.message }); }
 });
 
+// 🔷 API: ЗАПРОС НА ДЕПОЗИТ
+app.post('/api/deposit-request', async (req, res) => {
+    try {
+        const { user_id, amount, tx_hash } = req.body;
+        if (!user_id || !amount || !tx_hash) return res.json({ error: 'Заполни все поля' });
+        if (amount < 10) return res.json({ error: 'Мин. 10 DOGE' });
+        
+        await pool.query(
+            'INSERT INTO deposit_requests (user_id, amount, tx_hash) VALUES ($1, $2, $3)',
+            [user_id, amount, tx_hash]
+        );
+        
+        res.json({ success: true, message: 'Заявка отправлена на проверку' });
+    } catch (e) { res.json({ error: e.message }); }
+});
+
+// 🔷 API: ВЫВОД
 app.post('/api/withdraw', async (req, res) => {
     try {
         const { user_id, amount, wallet } = req.body;
@@ -119,16 +158,74 @@ app.post('/api/withdraw', async (req, res) => {
     } catch (e) { res.json({ error: e.message }); }
 });
 
-app.post('/api/deposit', async (req, res) => {
+// 🔷 API: АДМИН ЛОГИН
+app.post('/api/admin/login', async (req, res) => {
     try {
-        const { user_id, amount } = req.body;
-        if (!user_id || !amount) return res.json({ error: 'Заполни все поля' });
-        if (amount < 10) return res.json({ error: 'Мин. 10 DOGE' });
-        await pool.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [amount * 1000, user_id]);
-        res.json({ success: true, coins: amount * 1000, message: `+${amount*1000} 🪙` });
+        const { password } = req.body;
+        // Простая проверка (в продакшене используй хеширование!)
+        if (password === 'admin123') {
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, error: 'Неверный пароль' });
+        }
     } catch (e) { res.json({ error: e.message }); }
 });
 
+// 🔷 API: АДМИН - ЗАЯВКИ
+app.get('/api/admin/requests', async (req, res) => {
+    try {
+        const pending = await pool.query("SELECT * FROM deposit_requests WHERE status = 'pending' ORDER BY created_at DESC");
+        const approved = await pool.query("SELECT * FROM deposit_requests WHERE status = 'approved' ORDER BY approved_at DESC LIMIT 10");
+        const stats = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM users) as total_users,
+                (SELECT COUNT(*) FROM deposit_requests WHERE status = 'pending') as pending,
+                (SELECT COUNT(*) FROM deposit_requests WHERE status = 'approved') as total_deposits
+        `);
+        
+        res.json({
+            pending: pending.rows,
+            approved: approved.rows,
+            stats: stats.rows[0]
+        });
+    } catch (e) { res.json({ error: e.message }); }
+});
+
+// 🔷 API: АДМИН - ОДОБРИТЬ
+app.post('/api/admin/approve', async (req, res) => {
+    try {
+        const { request_id } = req.body;
+        
+        // Получить заявку
+        const reqData = await pool.query('SELECT * FROM deposit_requests WHERE id = $1', [request_id]);
+        if (reqData.rows.length === 0) return res.json({ error: 'Заявка не найдена' });
+        
+        const deposit = reqData.rows[0];
+        const coins = Math.floor(deposit.amount * 1000);
+        
+        // Начислить монеты
+        await pool.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [coins, deposit.user_id]);
+        
+        // Обновить статус
+        await pool.query(
+            "UPDATE deposit_requests SET status = 'approved', approved_at = NOW() WHERE id = $1",
+            [request_id]
+        );
+        
+        res.json({ success: true });
+    } catch (e) { res.json({ error: e.message }); }
+});
+
+// 🔷 API: АДМИН - ОТКЛОНИТЬ
+app.post('/api/admin/reject', async (req, res) => {
+    try {
+        const { request_id } = req.body;
+        await pool.query("UPDATE deposit_requests SET status = 'rejected' WHERE id = $1", [request_id]);
+        res.json({ success: true });
+    } catch (e) { res.json({ error: e.message }); }
+});
+
+// 🔷 ЗАПУСК
 (async () => {
     const ok = await testDB();
     if (ok) await initDB();
