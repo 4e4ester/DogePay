@@ -1,5 +1,5 @@
 // ============================================
-// DOGEPAY - CLIENT LOGIC
+// DOGEPAY - CLIENT LOGIC (with Language)
 // ============================================
 
 const tg = window.Telegram.WebApp;
@@ -17,8 +17,11 @@ async function updateBalance() {
         const data = await response.json();
         
         if (data.balance !== undefined) {
-            document.getElementById('balance')?.innerText = data.balance.toLocaleString('ru-RU');
-            document.getElementById('balance-doge')?.innerText = (data.balance / 1000).toFixed(4);
+            const balanceEl = document.getElementById('balance');
+            const dogeEl = document.getElementById('balance-doge');
+            
+            if (balanceEl) balanceEl.innerText = data.balance.toLocaleString('ru-RU');
+            if (dogeEl) dogeEl.innerText = (data.balance / 1000).toFixed(4);
         }
     } catch (err) {
         console.error('Ошибка загрузки баланса:', err);
@@ -26,24 +29,50 @@ async function updateBalance() {
 }
 
 // Показать сообщение
-function showMessage(text, type = 'info') {
+function showMessage(text, type = 'info', duration = 4000) {
     const msg = document.createElement('div');
     msg.className = `message ${type}`;
     msg.innerText = text;
+    msg.style.cssText = 'padding:15px 20px;border-radius:14px;margin:15px 0;font-size:14px;animation:slideIn 0.3s ease;';
+    
+    if (type === 'success') {
+        msg.style.background = 'rgba(0, 214, 143, 0.15)';
+        msg.style.border = '1px solid #00d68f';
+        msg.style.color = '#00d68f';
+    } else if (type === 'error') {
+        msg.style.background = 'rgba(255, 92, 92, 0.15)';
+        msg.style.border = '1px solid #ff5c5c';
+        msg.style.color = '#ff5c5c';
+    }
     
     const container = document.querySelector('.container');
-    container?.insertBefore(msg, container.firstChild);
-    
-    setTimeout(() => msg.remove(), 4000);
+    if (container) {
+        container.insertBefore(msg, container.firstChild);
+        setTimeout(() => msg.remove(), duration);
+    }
 }
+
+// Переключение языка (глобальная функция)
+window.toggleLanguage = function() {
+    const newLang = currentLang === 'ru' ? 'en' : 'ru';
+    setLanguage(newLang);
+    // Перезагрузить страницу для применения переводов
+    setTimeout(() => window.location.reload(), 100);
+};
 
 // Глобальные функции
 window.updateBalance = updateBalance;
 window.showMessage = showMessage;
 
-// Загрузить баланс при старте
+// Загрузить баланс и язык при старте
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateBalance);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSavedLanguage();
+        updatePageLanguage();
+        updateBalance();
+    });
 } else {
+    loadSavedLanguage();
+    updatePageLanguage();
     updateBalance();
 }
