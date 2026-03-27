@@ -28,7 +28,6 @@ async function testDB() {
 
 async function initDB() {
     try {
-        // Таблица пользователей
         await pool.query(`CREATE TABLE IF NOT EXISTS users (
             user_id BIGINT PRIMARY KEY,
             username TEXT,
@@ -38,7 +37,6 @@ async function initDB() {
             created_at TIMESTAMP DEFAULT NOW()
         )`);
         
-        // Таблица заявок на депозит
         await pool.query(`CREATE TABLE IF NOT EXISTS deposit_requests (
             id SERIAL PRIMARY KEY,
             user_id BIGINT NOT NULL,
@@ -49,17 +47,6 @@ async function initDB() {
             approved_at TIMESTAMP,
             approved_by TEXT
         )`);
-        
-        // Таблица админов
-        await pool.query(`CREATE TABLE IF NOT EXISTS admins (
-            id SERIAL PRIMARY KEY,
-            password_hash TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW()
-        )`);
-        
-        // Создать админа по умолчанию (пароль: admin123)
-        await pool.query(`INSERT INTO admins (password_hash) 
-            VALUES ('admin123') ON CONFLICT DO NOTHING`);
         
         console.log('✅ Таблицы готовы');
     } catch (e) {
@@ -135,12 +122,10 @@ app.post('/api/deposit-request', async (req, res) => {
         const { user_id, amount, tx_hash } = req.body;
         if (!user_id || !amount || !tx_hash) return res.json({ error: 'Заполни все поля' });
         if (amount < 10) return res.json({ error: 'Мин. 10 DOGE' });
-        
         await pool.query(
             'INSERT INTO deposit_requests (user_id, amount, tx_hash) VALUES ($1, $2, $3)',
             [user_id, amount, tx_hash]
         );
-        
         res.json({ success: true, message: 'Заявка отправлена на проверку' });
     } catch (e) { res.json({ error: e.message }); }
 });
@@ -162,7 +147,6 @@ app.post('/api/withdraw', async (req, res) => {
 app.post('/api/admin/login', async (req, res) => {
     try {
         const { password } = req.body;
-        // Простая проверка (в продакшене используй хеширование!)
         if (password === 'admin123') {
             res.json({ success: true });
         } else {
@@ -182,12 +166,7 @@ app.get('/api/admin/requests', async (req, res) => {
                 (SELECT COUNT(*) FROM deposit_requests WHERE status = 'pending') as pending,
                 (SELECT COUNT(*) FROM deposit_requests WHERE status = 'approved') as total_deposits
         `);
-        
-        res.json({
-            pending: pending.rows,
-            approved: approved.rows,
-            stats: stats.rows[0]
-        });
+        res.json({ pending: pending.rows, approved: approved.rows, stats: stats.rows[0] });
     } catch (e) { res.json({ error: e.message }); }
 });
 
@@ -195,23 +174,12 @@ app.get('/api/admin/requests', async (req, res) => {
 app.post('/api/admin/approve', async (req, res) => {
     try {
         const { request_id } = req.body;
-        
-        // Получить заявку
         const reqData = await pool.query('SELECT * FROM deposit_requests WHERE id = $1', [request_id]);
         if (reqData.rows.length === 0) return res.json({ error: 'Заявка не найдена' });
-        
         const deposit = reqData.rows[0];
         const coins = Math.floor(deposit.amount * 1000);
-        
-        // Начислить монеты
         await pool.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [coins, deposit.user_id]);
-        
-        // Обновить статус
-        await pool.query(
-            "UPDATE deposit_requests SET status = 'approved', approved_at = NOW() WHERE id = $1",
-            [request_id]
-        );
-        
+        await pool.query("UPDATE deposit_requests SET status = 'approved', approved_at = NOW() WHERE id = $1", [request_id]);
         res.json({ success: true });
     } catch (e) { res.json({ error: e.message }); }
 });
