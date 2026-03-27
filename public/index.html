@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🐕 DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +11,7 @@
 </head>
 <body>
     <div class="container">
+        <!-- ФЛАГИ (ЛЕВЫЙ ВЕРХНИЙ УГОЛ) -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
         <div class="header">
@@ -32,17 +33,18 @@
             </p>
         </div>
 
+        <!-- 3 КНОПКИ (1 ИКОНКА) -->
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary">
-                <span class="btn-icon">🚰</span>
+                <span>🚰</span>
                 <span data-t="btn_faucet">Кран</span>
             </a>
             <a href="ads.html" class="btn btn-primary">
-                <span class="btn-icon">📢</span>
+                <span>📢</span>
                 <span data-t="btn_ads">Реклама</span>
             </a>
             <a href="withdraw.html" class="btn btn-secondary">
-                <span class="btn-icon">💸</span>
+                <span>💸</span>
                 <span data-t="btn_withdraw">Вывод</span>
             </a>
         </div>
