@@ -11,73 +11,65 @@
 </head>
 <body>
     <div class="container">
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
+        <!-- НЕТ ФЛАГОВ -->
         
         <div class="header">
             <div class="logo">💸</div>
-            <h1 class="gradient-text" data-t="withdraw_title">Вывод DOGE</h1>
-            <p class="subtitle" data-t="withdraw_subtitle">Выведи на кошелёк</p>
+            <h1 class="gradient-text">Вывод DOGE</h1>
+            <p class="subtitle">Выведи на свой кошелёк</p>
         </div>
 
         <div class="form-card">
             <div class="form-group">
-                <label class="form-label" data-t="withdraw_wallet_label">Твой DOGE кошелёк</label>
-                <input type="text" id="wallet" class="form-input" data-t-placeholder="withdraw_wallet_placeholder" placeholder="Адрес кошелька">
+                <label class="form-label">Твой DOGE кошелёк</label>
+                <input type="text" id="wallet" class="form-input" placeholder="Адрес кошелька (например: DD5...)">
             </div>
 
             <div class="form-group">
-                <label class="form-label" data-t="withdraw_amount_label">Сумма в 🪙</label>
-                <input type="number" id="amount" class="form-input" data-t-placeholder="withdraw_amount_placeholder" placeholder="Минимум 10000 🪙 (10 DOGE)" step="100" min="10000">
+                <label class="form-label">Сумма в 🪙</label>
+                <input type="number" id="amount" class="form-input" placeholder="Минимум 10000 🪙 (10 DOGE)" step="100" min="10000">
                 <p class="conversion" id="conversion">10000 🪙 = 10 DOGE</p>
             </div>
 
             <div class="wallet-display">
-                <span data-t="withdraw_balance">Твой баланс:</span> <strong id="currentBalance" style="color: var(--gold);">0</strong> 🪙
+                Твой баланс: <strong id="currentBalance" style="color: var(--gold);">0</strong> 🪙
             </div>
 
-            <p style="color: var(--error); font-size: 13px; text-align: center; margin: 15px 0;" data-t="withdraw_warning">
+            <p style="color: var(--error); font-size: 13px; text-align: center; margin: 15px 0;">
                 ⚠️ Проверяй адрес! Транзакции необратимы.
             </p>
 
             <button id="withdrawBtn" class="btn btn-primary" style="width: 100%;">
-                <span data-t="withdraw_btn">Запросить вывод</span>
+                Запросить вывод
             </button>
 
             <div class="info-box">
-                <p data-t="withdraw_info">Мин. вывод: 10000 🪙
-Обработка: до 24 часов</p>
+                <p>💡 Мин. вывод: 10000 🪙</p>
+                <p>⏱ Обработка: до 24 часов</p>
             </div>
         </div>
 
         <div class="footer">
-            <p>🐕 DogePay • <span data-t="nav_withdraw">Вывод</span></p>
+            <p>🐕 DogePay • Вывод</p>
         </div>
     </div>
 
+    <!-- НИЖНЕЕ МЕНЮ (3 КНОПКИ) -->
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
             <span class="nav-icon">🏠</span>
-            <span data-t="nav_home">Главная</span>
+            <span>Главная</span>
         </a>
         <a href="faucet.html" class="nav-item">
             <span class="nav-icon">🚰</span>
-            <span data-t="nav_faucet">Кран</span>
-        </a>
-        <a href="deposit.html" class="nav-item">
-            <span class="nav-icon">💰</span>
-            <span data-t="nav_deposit">Ввод</span>
+            <span>Кран</span>
         </a>
         <a href="withdraw.html" class="nav-item active">
             <span class="nav-icon">💸</span>
-            <span data-t="nav_withdraw">Вывод</span>
-        </a>
-        <a href="admin.html" class="nav-item">
-            <span class="nav-icon">🔐</span>
-            <span data-t="nav_admin">Админ</span>
+            <span>Вывод</span>
         </a>
     </nav>
 
-    <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
@@ -111,7 +103,7 @@
 
         withdrawBtn.addEventListener('click', async () => {
             if (!userId) {
-                showMessage(t('error_user'), 'error');
+                showMessage('❌ Пользователь не найден', 'error');
                 return;
             }
 
@@ -151,12 +143,12 @@
                 } else {
                     showMessage('❌ ' + data.error, 'error');
                     withdrawBtn.disabled = false;
-                    withdrawBtn.innerHTML = `<span data-t="withdraw_btn">Запросить вывод</span>`;
+                    withdrawBtn.innerHTML = 'Запросить вывод';
                 }
             } catch (err) {
-                showMessage(t('error_network'), 'error');
+                showMessage('❌ Ошибка сети', 'error');
                 withdrawBtn.disabled = false;
-                withdrawBtn.innerHTML = `<span data-t="withdraw_btn">Запросить вывод</span>`;
+                withdrawBtn.innerHTML = 'Запросить вывод';
             }
         });
 
