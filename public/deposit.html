@@ -5,151 +5,146 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>💰 Ввод - DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .lang-switch {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--bg-card);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 10px 16px;
-            color: var(--gold);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .lang-switch:hover {
-            border-color: var(--gold);
-            transform: scale(1.05);
-        }
-        .rate-info {
-            background: rgba(243, 198, 35, 0.1);
-            border: 1px solid var(--gold);
-            border-radius: 12px;
-            padding: 15px;
-            margin: 15px 0;
-            text-align: center;
-            color: var(--gold);
-            font-weight: 600;
-        }
-        .conversion {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-top: 10px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
         <!-- Language Switch -->
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇬🇧 EN</button>
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
         <!-- Header -->
         <div class="header">
-            <h1 data-t="deposit_title">💰 Ввод средств</h1>
-            <p class="subtitle" data-t="deposit_subtitle">Пополни баланс DOGE</p>
+            <h1 class="gradient-text">💰 Ввод DOGE</h1>
+            <p class="subtitle" data-t="deposit_subtitle">Пополни баланс</p>
+        </div>
+
+        <!-- Wallet Address Card -->
+        <div class="wallet-card glow">
+            <p class="wallet-label">📬 Отправь DOGE на:</p>
+            <div class="wallet-address" onclick="copyAddress()">
+                <span id="walletAddress">DD5YYnSWfvYT4g4UGN62RsCraEyiGDXRfK</span>
+                <span class="copy-icon">📋</span>
+            </div>
+            <p class="copy-hint" id="copyHint">Нажми чтобы скопировать</p>
         </div>
 
         <!-- Form Card -->
         <div class="form-card">
             <div class="form-group">
-                <label class="form-label" data-t="deposit_label">Сумма в DOGE</label>
-                <input type="number" id="amount" class="form-input" data-t-placeholder="deposit_placeholder" placeholder="Минимум 10 DOGE" step="0.01" min="10">
+                <label class="form-label">Сумма в DOGE</label>
+                <input type="number" id="amount" class="form-input" placeholder="Мин. 10 DOGE" step="0.01" min="10">
                 <p class="conversion" id="conversion">10 DOGE = 10000 🪙</p>
             </div>
 
-            <div class="rate-info">
-                💡 1 DOGE = 1000 🪙
+            <div class="form-group">
+                <label class="form-label">TX Hash (обязательно)</label>
+                <input type="text" id="txHash" class="form-input" placeholder="Вставь хеш транзакции">
+                <p class="form-hint">Найди TX Hash в своём кошельке после отправки</p>
             </div>
 
-            <button id="depositBtn" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
-                <span data-t="deposit_btn">✅ Пополнить</span>
+            <button id="depositBtn" class="btn btn-primary btn-3d" style="width: 100%;">
+                <span>✅ Отправить на проверку</span>
             </button>
 
-            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;" data-t="deposit_info">
-                💡 Курс: 1 DOGE = 1000 🪙
-                ⚡ Зачисление моментальное
-            </p>
+            <div class="info-box">
+                <p>⏱ Проверка: 5-30 минут</p>
+                <p>💡 Мин. депозит: 10 DOGE</p>
+                <p>💱 Курс: 1 DOGE = 1000 🪙</p>
+            </div>
         </div>
 
         <!-- Back Button -->
-        <a href="index.html" class="btn btn-secondary" style="width: 100%;">
-            <span data-t="btn_back">← Назад</span>
+        <a href="index.html" class="btn btn-secondary btn-3d" style="width: 100%;">
+            ← Назад
         </a>
 
         <!-- Footer -->
         <div class="footer">
-            <p>🐕 DogePay • <span data-t="deposit_title">Ввод</span></p>
+            <p>🐕 DogePay • Ввод</p>
         </div>
     </div>
 
     <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
-        // ============================================
-        // DEPOSIT LOGIC
-        // ============================================
-        
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const userId = tg.initDataUnsafe?.user?.id;
+
         const amountInput = document.getElementById('amount');
+        const txHashInput = document.getElementById('txHash');
         const depositBtn = document.getElementById('depositBtn');
         const conversionEl = document.getElementById('conversion');
+        const copyHint = document.getElementById('copyHint');
 
-        // Обновление конвертации
+        // Конвертация
         amountInput.addEventListener('input', () => {
             const amount = parseFloat(amountInput.value) || 0;
             const coins = Math.floor(amount * 1000);
             conversionEl.innerText = `${amount} DOGE = ${coins.toLocaleString('ru-RU')} 🪙`;
         });
 
-        // Обработка депозита
+        // Копирование адреса
+        function copyAddress() {
+            const address = document.getElementById('walletAddress').innerText;
+            navigator.clipboard.writeText(address).then(() => {
+                copyHint.innerText = '✅ Скопировано!';
+                copyHint.style.color = '#00d68f';
+                playClick();
+                setTimeout(() => {
+                    copyHint.innerText = 'Нажми чтобы скопировать';
+                    copyHint.style.color = 'var(--text-secondary)';
+                }, 2000);
+            });
+        }
+
+        // Отправка депозита
         depositBtn.addEventListener('click', async () => {
             if (!userId) {
-                showMessage(t('error_user'), 'error');
+                showMessage('❌ Пользователь не найден', 'error');
                 return;
             }
 
             const amount = parseFloat(amountInput.value);
-            
+            const txHash = txHashInput.value.trim();
+
             if (!amount || amount < 10) {
                 showMessage('❌ Минимум 10 DOGE', 'error');
                 return;
             }
 
+            if (!txHash || txHash.length < 10) {
+                showMessage('❌ Введи TX Hash', 'error');
+                return;
+            }
+
             depositBtn.disabled = true;
-            depositBtn.innerHTML = '⏳ Обработка...';
+            depositBtn.innerHTML = '⏳ Отправка...';
 
             try {
-                const res = await fetch('/api/deposit', {
+                const res = await fetch('/api/deposit-request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, amount })
+                    body: JSON.stringify({ user_id: userId, amount, tx_hash: txHash })
                 });
                 const data = await res.json();
 
                 if (data.success) {
-                    showMessage(`✅ ${data.message}`, 'success');
+                    showMessage('✅ Заявка отправлена! Ожидай проверки.', 'success');
                     amountInput.value = '';
-                    conversionEl.innerText = '10 DOGE = 10000 🪙';
-                    
-                    // Обновить баланс
-                    if (window.updateBalance) window.updateBalance();
-                    
-                    // Перенаправить на главную через 2 секунды
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 2000);
+                    txHashInput.value = '';
+                    setTimeout(() => window.location.href = 'index.html', 2500);
                 } else {
                     showMessage(`❌ ${data.error}`, 'error');
                     depositBtn.disabled = false;
-                    depositBtn.innerHTML = `<span data-t="deposit_btn">✅ Пополнить</span>`;
+                    depositBtn.innerHTML = '<span>✅ Отправить на проверку</span>';
                 }
             } catch (err) {
-                showMessage(t('error_network'), 'error');
+                showMessage('❌ Ошибка сети', 'error');
                 depositBtn.disabled = false;
-                depositBtn.innerHTML = `<span data-t="deposit_btn">✅ Пополнить</span>`;
+                depositBtn.innerHTML = '<span>✅ Отправить на проверку</span>';
             }
         });
     </script>
