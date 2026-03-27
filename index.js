@@ -11,13 +11,13 @@ const PORT = process.env.PORT || 3000;
 
 // ========== ПОДКЛЮЧЕНИЕ К SUPABASE (PostgreSQL) ==========
 const pool = new Pool({
-    // Берем ссылку из настроек Render
-    connectionString: process.env.DATABASE_URL,
+    host: 'db.xppivwbjpganbkdangmm.supabase.co',
+    port: 5432,
+    database: 'postgres',
+    user: 'postgres',
+    password: process.env.DB_PASSWORD,
     ssl: { rejectUnauthorized: false },
-    // ⚠️ ВАЖНО: Принудительно указываем правильный хост (замени на свой!)
-    host: 'db.xppivwbjpganbkdangmm.supabase.co', 
-    // Принудительно используем IPv4 (это исправляет ошибку ENETUNREACH)
-    family: 4 
+    family: 4
 });
 
 // ========== СОЗДАНИЕ ТАБЛИЦЫ В БАЗЕ ДАННЫХ ==========
@@ -46,12 +46,10 @@ app.use(express.static('public'));
 
 // ========== БОТ TELEGRAM ==========
 
-// Команда /start
 bot.start(async (ctx) => {
     const userId = ctx.from.id;
     const username = ctx.from.username;
     
-    // Сохраняем пользователя в базе (если новый)
     await pool.query(
         `INSERT INTO users (user_id, username, balance, last_claim) 
          VALUES ($1, $2, 0, NOW() - INTERVAL '3 hours') 
@@ -70,7 +68,6 @@ bot.start(async (ctx) => {
     );
 });
 
-// Команда /balance
 bot.command('balance', async (ctx) => {
     const userId = ctx.from.id;
     const result = await pool.query(
@@ -88,13 +85,11 @@ bot.command('balance', async (ctx) => {
     ctx.reply(`🪙 Твой баланс: ${balance} коинов\n🐕 (~${doge} DOGE)`);
 });
 
-// Запуск бота
 bot.launch();
 console.log('🤖 Бот запущен!');
 
 // ========== API ДЛЯ МИНИ-АППА ==========
 
-// 📊 Получить баланс пользователя
 app.get('/api/balance', async (req, res) => {
     const userId = req.query.user_id;
     if (!userId) return res.json({ error: 'Нет user_id' });
@@ -110,13 +105,11 @@ app.get('/api/balance', async (req, res) => {
     }
 });
 
-// 🚰 Забрать с крана (10-50 коинов, раз в 3 часа)
 app.post('/api/claim', async (req, res) => {
     const userId = req.body.user_id;
     if (!userId) return res.json({ error: 'Нет user_id' });
     
     try {
-        // Получаем данные пользователя
         const result = await pool.query(
             'SELECT * FROM users WHERE user_id = $1', 
             [userId]
@@ -131,7 +124,6 @@ app.post('/api/claim', async (req, res) => {
         const lastClaim = new Date(user.last_claim);
         const hoursPassed = (now - lastClaim) / 1000 / 60 / 60;
         
-        // Проверяем таймер 3 часа
         if (hoursPassed < 3) {
             const remaining = Math.ceil(3 - hoursPassed);
             return res.json({ 
@@ -141,10 +133,8 @@ app.post('/api/claim', async (req, res) => {
             });
         }
         
-        // Генерируем награду 10-50 коинов
         const reward = Math.floor(Math.random() * 41) + 10;
         
-        // Обновляем баланс и время сбора
         await pool.query(
             'UPDATE users SET balance = balance + $1, last_claim = NOW() WHERE user_id = $2',
             [reward, userId]
@@ -161,24 +151,20 @@ app.post('/api/claim', async (req, res) => {
     }
 });
 
-// 💸 Запрос на вывод средств
 app.post('/api/withdraw', async (req, res) => {
     const userId = req.body.user_id;
-    const amount = req.body.amount; // в коинах
-    const wallet = req.body.wallet; // адрес DOGE
+    const amount = req.body.amount;
+    const wallet = req.body.wallet;
     
-    // Проверка полей
     if (!userId || !amount || !wallet) {
         return res.json({ error: 'Заполните все поля' });
     }
     
-    // Мин. вывод 10000 коинов = 10 DOGE
     if (amount < 10000) {
         return res.json({ error: 'Мин. вывод 10000 🪙 (10 DOGE)' });
     }
     
     try {
-        // Проверяем баланс
         const result = await pool.query(
             'SELECT balance FROM users WHERE user_id = $1', 
             [userId]
@@ -188,13 +174,11 @@ app.post('/api/withdraw', async (req, res) => {
             return res.json({ error: 'Недостаточно средств' });
         }
         
-        // Списываем баланс и сохраняем адрес кошелька
         await pool.query(
             'UPDATE users SET balance = balance - $1, wallet_address = $2 WHERE user_id = $3',
             [amount, wallet, userId]
         );
         
-        // Здесь потом будет автоматическая отправка DOGE
         res.json({ 
             success: true, 
             message: '✅ Заявка создана! Ожидай выплаты.' 
@@ -205,21 +189,18 @@ app.post('/api/withdraw', async (req, res) => {
     }
 });
 
-// 💰 Запрос на ввод средств (тестовый режим)
 app.post('/api/deposit', async (req, res) => {
     const userId = req.body.user_id;
-    const amount = req.body.amount; // в DOGE
+    const amount = req.body.amount;
     
     if (!userId || !amount) {
         return res.json({ error: 'Заполните все поля' });
     }
     
-    // Мин. ввод 10 DOGE
     if (amount < 10) {
         return res.json({ error: 'Мин. ввод 10 DOGE' });
     }
     
-    // Конвертируем: 1 DOGE = 1000 коинов
     const coins = amount * 1000;
     
     try {
