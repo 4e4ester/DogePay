@@ -6,7 +6,14 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔷 ПОДКЛЮЧЕНИЕ К БАЗЕ — ТОЛЬКО ЯВНЫЕ ПАРАМЕТРЫ (БЕЗ connectionString!)
+// 🔷 ЛОГИРОВАНИЕ ПЕРЕМЕННЫХ (для отладки)
+console.log('🔍 DB_HOST:', process.env.DB_HOST);
+console.log('🔍 DB_PORT:', process.env.DB_PORT);
+console.log('🔍 DB_NAME:', process.env.DB_NAME);
+console.log('🔍 DB_USER:', process.env.DB_USER);
+console.log('🔍 DB_PASSWORD:', process.env.DB_PASSWORD ? '***' : 'НЕ ЗАДАН!');
+
+// 🔷 ПОДКЛЮЧЕНИЕ — ТОЛЬКО ЯВНЫЕ ПАРАМЕТРЫ (без connectionString!)
 const pool = new Pool({
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT) || 5432,
@@ -19,11 +26,14 @@ const pool = new Pool({
 
 async function testDB() {
     try {
+        console.log('🔄 Попытка подключения к БД...');
         await pool.query('SELECT 1');
         console.log('✅ База подключена (IPv4)');
         return true;
     } catch (e) {
         console.error('❌ Ошибка БД:', e.message);
+        console.error('❌ Код ошибки:', e.code);
+        console.error('❌ Адрес:', e.address);
         return false;
     }
 }
@@ -48,73 +58,106 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// 🔷 БОТ (с проверкой, чтобы не запускать дважды)
+let botLaunched = false;
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 bot.start(async (ctx) => {
     const uid = ctx.from.id;
     const un = ctx.from.username || 'User';
-    await pool.query(
-        `INSERT INTO users (user_id, username, balance, last_claim) 
-         VALUES ($1, $2, 0, NOW() - INTERVAL '3 hours') 
-         ON CONFLICT (user_id) DO NOTHING`,
-        [uid, un]
-    );
-    ctx.reply(
-        `🐕 *DogePay*\n\n🪙 Баланс: 0\n💱 1000 🪙 = 1 DOGE`,
-        { parse_mode: 'Markdown' },
-        Markup.keyboard([[Markup.button.webApp('🚀 Открыть', process.env.WEB_APP_URL)]]).resize()
-    );
+    try {
+        await pool.query(
+            `INSERT INTO users (user_id, username, balance, last_claim) 
+             VALUES ($1, $2, 0, NOW() - INTERVAL '3 hours') 
+             ON CONFLICT (user_id) DO NOTHING`,
+            [uid, un]
+        );
+        ctx.reply(
+            `🐕 *DogePay*\n\n🪙 Баланс: 0\n💱 1000 🪙 = 1 DOGE`,
+            { parse_mode: 'Markdown' },
+            Markup.keyboard([[Markup.button.webApp('🚀 Открыть', process.env.WEB_APP_URL)]]).resize()
+        );
+    } catch (e) {
+        console.error('Ошибка /start:', e.message);
+        ctx.reply('❌ Ошибка сервера');
+    }
 });
 
 bot.command('balance', async (ctx) => {
-    const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
-    if (!r.rows[0]) return ctx.reply('❌ Нажми /start');
-    const b = r.rows[0].balance;
-    ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
+    try {
+        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
+        if (!r.rows[0]) return ctx.reply('❌ Нажми /start');
+        const b = r.rows[0].balance;
+        ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
+    } catch (e) {
+        ctx.reply('❌ Ошибка');
+    }
 });
 
-bot.launch().then(() => console.log('🤖 Бот запущен')).catch(e => console.error('❌ Бот:', e.message));
-process.on('SIGINT', () => bot?.stop());
-process.on('SIGTERM', () => bot?.stop());
+// Запуск бота только один раз
+if (!botLaunched && !process.env.NO_BOT) {
+    botLaunched = true;
+    bot.launch()
+        .then(() => console.log('🤖 Бот запущен'))
+        .catch(e => {
+            if (e.description?.includes('terminated')) {
+                console.log('⚠️ Бот уже запущен в другом месте — этот экземпляр пропущен');
+            } else {
+                console.error('❌ Ошибка бота:', e.message);
+            }
+        });
+    process.on('SIGINT', () => bot?.stop());
+    process.on('SIGTERM', () => bot?.stop());
+}
 
+// 🔷 API
 app.get('/api/balance', async (req, res) => {
-    const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [req.query.user_id]);
-    res.json({ balance: r.rows[0]?.balance || 0 });
+    try {
+        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [req.query.user_id]);
+        res.json({ balance: r.rows[0]?.balance || 0 });
+    } catch (e) { res.json({ error: e.message }); }
 });
 
 app.post('/api/claim', async (req, res) => {
-    const uid = req.body.user_id;
-    if (!uid) return res.json({ error: 'Нет ID' });
-    const r = await pool.query('SELECT * FROM users WHERE user_id = $1', [uid]);
-    if (!r.rows[0]) return res.json({ error: 'Не найден' });
-    const hours = (new Date() - new Date(r.rows[0].last_claim)) / 36e5;
-    if (hours < 3) {
-        const w = Math.ceil(3 - hours);
-        return res.json({ success: false, message: `Жди ещё ${w} ч.`, waitTime: w * 36e5 });
-    }
-    const reward = Math.floor(Math.random() * 41) + 10;
-    await pool.query('UPDATE users SET balance = balance + $1, last_claim = NOW() WHERE user_id = $2', [reward, uid]);
-    res.json({ success: true, reward, message: `+${reward} 🪙` });
+    try {
+        const uid = req.body.user_id;
+        if (!uid) return res.json({ error: 'Нет ID' });
+        const r = await pool.query('SELECT * FROM users WHERE user_id = $1', [uid]);
+        if (!r.rows[0]) return res.json({ error: 'Не найден' });
+        const hours = (new Date() - new Date(r.rows[0].last_claim)) / 36e5;
+        if (hours < 3) {
+            const w = Math.ceil(3 - hours);
+            return res.json({ success: false, message: `Жди ещё ${w} ч.`, waitTime: w * 36e5 });
+        }
+        const reward = Math.floor(Math.random() * 41) + 10;
+        await pool.query('UPDATE users SET balance = balance + $1, last_claim = NOW() WHERE user_id = $2', [reward, uid]);
+        res.json({ success: true, reward, message: `+${reward} 🪙` });
+    } catch (e) { res.json({ error: e.message }); }
 });
 
 app.post('/api/withdraw', async (req, res) => {
-    const { user_id, amount, wallet } = req.body;
-    if (!user_id || !amount || !wallet) return res.json({ error: 'Заполни все поля' });
-    if (amount < 10000) return res.json({ error: 'Мин. 10000 🪙 (10 DOGE)' });
-    const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [user_id]);
-    if (r.rows[0].balance < amount) return res.json({ error: 'Мало средств' });
-    await pool.query('UPDATE users SET balance = balance - $1, wallet_address = $2 WHERE user_id = $3', [amount, wallet, user_id]);
-    res.json({ success: true, message: '✅ Заявка создана!' });
+    try {
+        const { user_id, amount, wallet } = req.body;
+        if (!user_id || !amount || !wallet) return res.json({ error: 'Заполни все поля' });
+        if (amount < 10000) return res.json({ error: 'Мин. 10000 🪙 (10 DOGE)' });
+        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [user_id]);
+        if (r.rows[0].balance < amount) return res.json({ error: 'Мало средств' });
+        await pool.query('UPDATE users SET balance = balance - $1, wallet_address = $2 WHERE user_id = $3', [amount, wallet, user_id]);
+        res.json({ success: true, message: '✅ Заявка создана!' });
+    } catch (e) { res.json({ error: e.message }); }
 });
 
 app.post('/api/deposit', async (req, res) => {
-    const { user_id, amount } = req.body;
-    if (!user_id || !amount) return res.json({ error: 'Заполни все поля' });
-    if (amount < 10) return res.json({ error: 'Мин. 10 DOGE' });
-    await pool.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [amount * 1000, user_id]);
-    res.json({ success: true, coins: amount * 1000, message: `+${amount*1000} 🪙` });
+    try {
+        const { user_id, amount } = req.body;
+        if (!user_id || !amount) return res.json({ error: 'Заполни все поля' });
+        if (amount < 10) return res.json({ error: 'Мин. 10 DOGE' });
+        await pool.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [amount * 1000, user_id]);
+        res.json({ success: true, coins: amount * 1000, message: `+${amount*1000} 🪙` });
+    } catch (e) { res.json({ error: e.message }); }
 });
 
+// 🔷 ЗАПУСК
 (async () => {
     const ok = await testDB();
     if (ok) await initDB();
