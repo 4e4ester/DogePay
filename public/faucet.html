@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚰 Кран - DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,56 +11,35 @@
 </head>
 <body>
     <div class="container">
-        <!-- НЕТ ФЛАГОВ -->
-        
         <div class="header">
             <div class="logo">🚰</div>
-            <h1 class="gradient-text">Кран</h1>
-            <p class="subtitle">Забери бесплатные монеты</p>
+            <h1 class="gradient-text" data-t="faucet_title">Кран</h1>
+            <p class="subtitle" data-t="faucet_subtitle">Забери бесплатные монеты</p>
         </div>
 
         <div id="rewardPopup" class="reward-popup hidden">
-            🎉 +<span id="rewardAmount">0</span> 🪙
+            <span data-t="success_claim">🎉 +</span><span id="rewardAmount">0</span> <span data-t="coins">🪙</span>
         </div>
 
         <div class="form-card">
-            <p class="timer" id="timer">⏳ Проверка...</p>
-            
-            <button id="claimBtn" class="btn btn-primary" style="width: 100%;">
-                ЗАБРАТЬ (10-50 🪙)
-            </button>
-            
-            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;">
-                ⏰ Доступно каждые 3 часа
-            </p>
+            <p class="timer" id="timer" data-t="faucet_checking">⏳ Проверка...</p>
+            <button id="claimBtn" class="btn btn-primary" style="width: 100%;" data-t="faucet_claim">ЗАБРАТЬ (10-50 🪙)</button>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;" data-t="faucet_timer">⏰ Доступно каждые 3 часа</p>
         </div>
 
         <div class="info-box">
-            <p>💎 Каждая награда: 10-50 🪙</p>
-            <p>🔄 Следующий сбор: через 3 часа</p>
+            <p data-t="faucet_info">Каждая награда: 10-50 🪙
+Следующий сбор: через 3 часа</p>
         </div>
+
+        <a href="index.html" class="btn btn-secondary" style="width: 100%;" data-t="btn_back">← На главную</a>
 
         <div class="footer">
             <p>🐕 DogePay • Кран</p>
         </div>
     </div>
 
-    <!-- НИЖНЕЕ МЕНЮ (3 КНОПКИ) -->
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item">
-            <span class="nav-icon">🏠</span>
-            <span>Главная</span>
-        </a>
-        <a href="faucet.html" class="nav-item active">
-            <span class="nav-icon">🚰</span>
-            <span>Кран</span>
-        </a>
-        <a href="withdraw.html" class="nav-item">
-            <span class="nav-icon">💸</span>
-            <span>Вывод</span>
-        </a>
-    </nav>
-
+    <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
@@ -81,14 +60,9 @@
         }
 
         async function handleClaim() {
-            if (!userId) {
-                showMessage('❌ Пользователь не найден', 'error');
-                return;
-            }
-
+            if (!userId) { showMessage(t('error_user'), 'error'); return; }
             claimBtn.disabled = true;
-            claimBtn.innerHTML = '⏳ Обработка...';
-
+            claimBtn.innerText = t('faucet_processing');
             try {
                 const res = await fetch('/api/claim', {
                     method: 'POST',
@@ -96,30 +70,24 @@
                     body: JSON.stringify({ user_id: userId })
                 });
                 const data = await res.json();
-
                 if (data.success) {
                     playClaim();
                     rewardAmount.innerText = data.reward;
                     rewardPopup.classList.remove('hidden');
-                    claimBtn.disabled = true;
-                    claimBtn.innerHTML = '⏰ Следующий сбор через 3ч';
-                    timerEl.innerText = '⏰ Таймер запущен';
+                    claimBtn.innerText = t('faucet_next');
+                    timerEl.innerText = '⏰ ' + t('timer_started');
                     if (window.updateBalance) window.updateBalance();
-                    setTimeout(() => {
-                        rewardPopup.classList.add('hidden');
-                        startTimer(3 * 60 * 60 * 1000);
-                    }, 3000);
+                    setTimeout(() => { rewardPopup.classList.add('hidden'); startTimer(3 * 60 * 60 * 1000); }, 3000);
                 } else {
                     const hours = Math.ceil(data.waitTime / 1000 / 3600) || 3;
-                    timerEl.innerText = `⏰ Подожди ещё ${hours} ч.`;
-                    claimBtn.disabled = true;
-                    claimBtn.innerHTML = '⏳ Жди';
+                    timerEl.innerText = `⏰ ${t('msg_wait')} ${hours} ${t('msg_hours')}.`;
+                    claimBtn.innerText = t('faucet_wait');
                     if (data.waitTime) startTimer(data.waitTime);
                 }
             } catch (err) {
-                showMessage('❌ Ошибка сети', 'error');
+                showMessage(t('error_network'), 'error');
                 claimBtn.disabled = false;
-                claimBtn.innerHTML = 'ЗАБРАТЬ (10-50 🪙)';
+                claimBtn.innerText = t('faucet_claim');
             }
         }
 
@@ -130,9 +98,9 @@
                 remaining -= 1000;
                 if (remaining <= 0) {
                     clearInterval(interval);
-                    timerEl.innerText = '✅ Можно забирать!';
+                    timerEl.innerText = t('faucet_available');
                     claimBtn.disabled = false;
-                    claimBtn.innerHTML = 'ЗАБРАТЬ (10-50 🪙)';
+                    claimBtn.innerText = t('faucet_claim');
                     return;
                 }
                 timerEl.innerText = `⏰ ${formatTime(remaining)}`;
@@ -140,13 +108,7 @@
         }
 
         claimBtn.addEventListener('click', handleClaim);
-
-        if (userId) {
-            handleClaim();
-        } else {
-            timerEl.innerText = '❌ Пользователь не найден';
-            claimBtn.disabled = true;
-        }
+        if (userId) { handleClaim(); } else { timerEl.innerText = t('error_user'); claimBtn.disabled = true; }
     </script>
 </body>
 </html>
