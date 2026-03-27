@@ -1,5 +1,5 @@
 // ============================================
-// DOGEPAY - CLIENT LOGIC (SOUND + FLAGS)
+// DOGEPAY - CLIENT LOGIC (PREMIUM)
 // ============================================
 
 const tg = window.Telegram.WebApp;
@@ -8,12 +8,14 @@ tg.enableClosingConfirmation();
 
 const userId = tg.initDataUnsafe?.user?.id;
 
-// 🔊 ЗВУКОВЫЕ ЭФФЕКТЫ
-const clickSound = new Audio('click.mp3');
-const claimSound = new Audio('claim.mp3');
+// 🔊 ЗВУКИ (CDN - не нужно загружать файлы)
+const clickSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+const claimSound = new Audio('https://www.soundjay.com/misc/sounds/magic-chime-01.mp3');
+const successSound = new Audio('https://www.soundjay.com/misc/sounds/success-01.mp3');
 
-clickSound.volume = 0.5;
-claimSound.volume = 0.7;
+clickSound.volume = 0.4;
+claimSound.volume = 0.6;
+successSound.volume = 0.5;
 
 // Воспроизвести звук клика
 function playClick() {
@@ -31,18 +33,22 @@ function playClaim() {
     } catch (e) {}
 }
 
+// Воспроизвести звук успеха
+function playSuccess() {
+    try {
+        successSound.currentTime = 0;
+        successSound.play().catch(() => {});
+    } catch (e) {}
+}
+
 // Добавить звук на все кнопки
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('button, .btn, a').forEach(el => {
+    document.querySelectorAll('button, .btn, a, .wallet-address').forEach(el => {
         el.addEventListener('click', playClick);
     });
 });
 
-// Глобальные функции
-window.playClick = playClick;
-window.playClaim = playClaim;
-
-// Обновление баланса на странице
+// Обновление баланса с анимацией
 async function updateBalance() {
     if (!userId) return;
     
@@ -51,15 +57,39 @@ async function updateBalance() {
         const data = await response.json();
         
         if (data.balance !== undefined) {
-            const balanceEl = document.getElementById('balance');
-            const dogeEl = document.getElementById('balance-doge');
-            
-            if (balanceEl) balanceEl.innerText = data.balance.toLocaleString('ru-RU');
-            if (dogeEl) dogeEl.innerText = (data.balance / 1000).toFixed(4);
+            animateValue('balance', data.balance);
+            document.getElementById('balance-doge').innerText = (data.balance / 1000).toFixed(4);
         }
     } catch (err) {
         console.error('Ошибка загрузки баланса:', err);
     }
+}
+
+// Анимация счётчика
+function animateValue(elementId, end) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const start = parseInt(element.innerText.replace(/,/g, '')) || 0;
+    const duration = 1500;
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        
+        const current = Math.floor(start + (end - start) * easeOutQuart);
+        element.innerText = current.toLocaleString('ru-RU');
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    requestAnimationFrame(update);
 }
 
 // Показать сообщение
@@ -67,26 +97,18 @@ function showMessage(text, type = 'info', duration = 4000) {
     const msg = document.createElement('div');
     msg.className = `message ${type}`;
     msg.innerText = text;
-    msg.style.cssText = 'padding:15px 20px;border-radius:14px;margin:15px 0;font-size:14px;animation:slideIn 0.3s ease;';
-    
-    if (type === 'success') {
-        msg.style.background = 'rgba(0, 214, 143, 0.15)';
-        msg.style.border = '1px solid #00d68f';
-        msg.style.color = '#00d68f';
-    } else if (type === 'error') {
-        msg.style.background = 'rgba(255, 92, 92, 0.15)';
-        msg.style.border = '1px solid #ff5c5c';
-        msg.style.color = '#ff5c5c';
-    }
     
     const container = document.querySelector('.container');
     if (container) {
         container.insertBefore(msg, container.firstChild);
-        setTimeout(() => msg.remove(), duration);
+        setTimeout(() => {
+            msg.style.animation = 'slideInRight 0.3s ease reverse';
+            setTimeout(() => msg.remove(), 300);
+        }, duration);
     }
 }
 
-// Переключение языка (с флагами)
+// Переключение языка
 window.toggleLanguage = function() {
     playClick();
     const newLang = currentLang === 'ru' ? 'en' : 'ru';
@@ -99,31 +121,25 @@ window.toggleLanguage = function() {
 function updateLanguageButton() {
     const langBtn = document.getElementById('langSwitch');
     if (langBtn) {
-        if (currentLang === 'ru') {
-            langBtn.innerHTML = '🇷🇺 | 🇬🇧';
-        } else {
-            langBtn.innerHTML = '🇬🇧 | 🇷🇺';
-        }
+        langBtn.innerHTML = currentLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
     }
 }
 
 // Глобальные функции
 window.updateBalance = updateBalance;
 window.showMessage = showMessage;
+window.playClick = playClick;
+window.playClaim = playClaim;
+window.playSuccess = playSuccess;
 window.updateLanguageButton = updateLanguageButton;
 
-// Загрузить баланс и язык при старте
+// Инициализация
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         loadSavedLanguage();
         updatePageLanguage();
         updateLanguageButton();
         updateBalance();
-        
-        // Добавить звук на все кнопки
-        document.querySelectorAll('button, .btn, a').forEach(el => {
-            el.addEventListener('click', playClick);
-        });
     });
 } else {
     loadSavedLanguage();
