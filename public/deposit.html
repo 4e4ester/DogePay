@@ -6,65 +6,70 @@
     <title>💰 Ввод - DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <!-- Language Switch -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
-        <!-- Header -->
         <div class="header">
-            <h1 class="gradient-text">💰 Ввод DOGE</h1>
+            <div class="logo">💰</div>
+            <h1 class="gradient-text" data-t="deposit_title">Ввод DOGE</h1>
             <p class="subtitle" data-t="deposit_subtitle">Пополни баланс</p>
         </div>
 
-        <!-- Wallet Address Card -->
-        <div class="wallet-card glow">
-            <p class="wallet-label">📬 Отправь DOGE на:</p>
-            <div class="wallet-address" onclick="copyAddress()">
-                <span id="walletAddress">DD5YYnSWfvYT4g4UGN62RsCraEyiGDXRfK</span>
-                <span class="copy-icon">📋</span>
-            </div>
-            <p class="copy-hint" id="copyHint">Нажми чтобы скопировать</p>
-        </div>
-
-        <!-- Form Card -->
         <div class="form-card">
             <div class="form-group">
-                <label class="form-label">Сумма в DOGE</label>
-                <input type="number" id="amount" class="form-input" placeholder="Мин. 10 DOGE" step="0.01" min="10">
+                <label class="form-label" data-t="deposit_label">Сумма в DOGE</label>
+                <input type="number" id="amount" class="form-input" data-t-placeholder="deposit_placeholder" placeholder="Минимум 10 DOGE" step="0.01" min="10">
                 <p class="conversion" id="conversion">10 DOGE = 10000 🪙</p>
             </div>
 
             <div class="form-group">
-                <label class="form-label">TX Hash (обязательно)</label>
-                <input type="text" id="txHash" class="form-input" placeholder="Вставь хеш транзакции">
-                <p class="form-hint">Найди TX Hash в своём кошельке после отправки</p>
+                <label class="form-label" data-t="deposit_tx_label">TX Hash</label>
+                <input type="text" id="txHash" class="form-input" data-t-placeholder="deposit_tx_placeholder" placeholder="Вставь хеш транзакции">
+                <p class="form-hint" data-t="deposit_tx_hint">Найди TX Hash в кошельке после отправки</p>
             </div>
 
-            <button id="depositBtn" class="btn btn-primary btn-3d" style="width: 100%;">
-                <span>✅ Отправить на проверку</span>
+            <button id="depositBtn" class="btn btn-primary" style="width: 100%;">
+                <span data-t="deposit_btn">Отправить на проверку</span>
             </button>
 
             <div class="info-box">
-                <p>⏱ Проверка: 5-30 минут</p>
-                <p>💡 Мин. депозит: 10 DOGE</p>
-                <p>💱 Курс: 1 DOGE = 1000 🪙</p>
+                <p data-t="deposit_info">Проверка: 5-30 минут
+Мин. депозит: 10 DOGE
+Курс: 1 DOGE = 1000 🪙</p>
             </div>
         </div>
 
-        <!-- Back Button -->
-        <a href="index.html" class="btn btn-secondary btn-3d" style="width: 100%;">
-            ← Назад
-        </a>
-
-        <!-- Footer -->
         <div class="footer">
-            <p>🐕 DogePay • Ввод</p>
+            <p>🐕 DogePay • <span data-t="nav_deposit">Ввод</span></p>
         </div>
     </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span data-t="nav_home">Главная</span>
+        </a>
+        <a href="faucet.html" class="nav-item">
+            <span class="nav-icon">🚰</span>
+            <span data-t="nav_faucet">Кран</span>
+        </a>
+        <a href="deposit.html" class="nav-item active">
+            <span class="nav-icon">💰</span>
+            <span data-t="nav_deposit">Ввод</span>
+        </a>
+        <a href="withdraw.html" class="nav-item">
+            <span class="nav-icon">💸</span>
+            <span data-t="nav_withdraw">Вывод</span>
+        </a>
+        <a href="admin.html" class="nav-item">
+            <span class="nav-icon">🔐</span>
+            <span data-t="nav_admin">Админ</span>
+        </a>
+    </nav>
 
     <script src="translations.js"></script>
     <script src="app.js"></script>
@@ -77,33 +82,16 @@
         const txHashInput = document.getElementById('txHash');
         const depositBtn = document.getElementById('depositBtn');
         const conversionEl = document.getElementById('conversion');
-        const copyHint = document.getElementById('copyHint');
 
-        // Конвертация
         amountInput.addEventListener('input', () => {
             const amount = parseFloat(amountInput.value) || 0;
             const coins = Math.floor(amount * 1000);
             conversionEl.innerText = `${amount} DOGE = ${coins.toLocaleString('ru-RU')} 🪙`;
         });
 
-        // Копирование адреса
-        function copyAddress() {
-            const address = document.getElementById('walletAddress').innerText;
-            navigator.clipboard.writeText(address).then(() => {
-                copyHint.innerText = '✅ Скопировано!';
-                copyHint.style.color = '#00d68f';
-                playClick();
-                setTimeout(() => {
-                    copyHint.innerText = 'Нажми чтобы скопировать';
-                    copyHint.style.color = 'var(--text-secondary)';
-                }, 2000);
-            });
-        }
-
-        // Отправка депозита
         depositBtn.addEventListener('click', async () => {
             if (!userId) {
-                showMessage('❌ Пользователь не найден', 'error');
+                showMessage(t('error_user'), 'error');
                 return;
             }
 
@@ -132,19 +120,20 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    showMessage('✅ Заявка отправлена! Ожидай проверки.', 'success');
+                    showMessage('✅ ' + data.message, 'success');
+                    playClaim();
                     amountInput.value = '';
                     txHashInput.value = '';
                     setTimeout(() => window.location.href = 'index.html', 2500);
                 } else {
-                    showMessage(`❌ ${data.error}`, 'error');
+                    showMessage('❌ ' + data.error, 'error');
                     depositBtn.disabled = false;
-                    depositBtn.innerHTML = '<span>✅ Отправить на проверку</span>';
+                    depositBtn.innerHTML = `<span data-t="deposit_btn">Отправить на проверку</span>`;
                 }
             } catch (err) {
-                showMessage('❌ Ошибка сети', 'error');
+                showMessage(t('error_network'), 'error');
                 depositBtn.disabled = false;
-                depositBtn.innerHTML = '<span>✅ Отправить на проверку</span>';
+                depositBtn.innerHTML = `<span data-t="deposit_btn">Отправить на проверку</span>`;
             }
         });
     </script>
