@@ -5,66 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🚰 Кран - DogePay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .lang-switch {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--bg-card);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 10px 16px;
-            color: var(--gold);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 16px;
-        }
-        .lang-switch:hover {
-            border-color: var(--gold);
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(243, 198, 35, 0.3);
-        }
-        .reward-popup {
-            text-align: center;
-            font-size: 36px;
-            font-weight: 800;
-            color: #00d68f;
-            margin: 25px 0;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 0 4px 30px rgba(0, 214, 143, 0.5);
-        }
-        @keyframes popIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .hidden { display: none !important; }
-    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Language Switch -->
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 | 🇬🇧</button>
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
-        <!-- Header -->
         <div class="header">
-            <h1 data-t="faucet_title">🚰 Кран</h1>
+            <div class="logo">🚰</div>
+            <h1 class="gradient-text" data-t="faucet_title">Кран</h1>
             <p class="subtitle" data-t="faucet_subtitle">Забери бесплатные монеты</p>
         </div>
 
-        <!-- Reward Display -->
         <div id="rewardPopup" class="reward-popup hidden">
             <span data-t="success_claim">🎉 +</span><span id="rewardAmount">0</span> <span data-t="coins">🪙</span>
         </div>
 
-        <!-- Timer / Button Card -->
-        <div class="balance-card">
+        <div class="form-card">
             <p class="timer" id="timer" data-t="faucet_checking">⏳ Проверка...</p>
             
-            <button id="claimBtn" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
-                <span data-t="faucet_claim">🎁 ЗАБРАТЬ (10-50 🪙)</span>
+            <button id="claimBtn" class="btn btn-primary" style="width: 100%;">
+                <span data-t="faucet_claim">ЗАБРАТЬ (10-50 🪙)</span>
             </button>
             
             <p style="color: var(--text-secondary); font-size: 13px; margin-top: 15px; text-align: center;" data-t="faucet_timer">
@@ -72,49 +35,47 @@
             </p>
         </div>
 
-        <!-- Info -->
-        <div class="form-card">
-            <p class="text-center" style="color: var(--text-secondary); font-size: 14px; white-space: pre-line;" data-t="faucet_info">
-                💎 Каждая награда: 10-50 🪙
-                🔄 Следующий сбор: через 3 часа
-            </p>
+        <div class="info-box">
+            <p data-t="faucet_info">Каждая награда: 10-50 🪙
+Следующий сбор: через 3 часа</p>
         </div>
 
-        <!-- Back Button -->
-        <a href="index.html" class="btn btn-secondary" style="width: 100%;">
-            <span data-t="btn_back">← Назад</span>
-        </a>
-
-        <!-- Footer -->
         <div class="footer">
-            <p>🐕 DogePay • <span data-t="faucet_title">Кран</span></p>
+            <p>🐕 DogePay • <span data-t="nav_faucet">Кран</span></p>
         </div>
     </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span data-t="nav_home">Главная</span>
+        </a>
+        <a href="faucet.html" class="nav-item active">
+            <span class="nav-icon">🚰</span>
+            <span data-t="nav_faucet">Кран</span>
+        </a>
+        <a href="deposit.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span data-t="nav_deposit">Ввод</span>
+        </a>
+        <a href="withdraw.html" class="nav-item">
+            <span class="nav-icon">💸</span>
+            <span data-t="nav_withdraw">Вывод</span>
+        </a>
+        <a href="admin.html" class="nav-item">
+            <span class="nav-icon">🔐</span>
+            <span data-t="nav_admin">Админ</span>
+        </a>
+    </nav>
 
     <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
-        // ============================================
-        // FAUCET LOGIC (FULL CODE WITH SOUND)
-        // ============================================
-        
         const timerEl = document.getElementById('timer');
         const claimBtn = document.getElementById('claimBtn');
         const rewardPopup = document.getElementById('rewardPopup');
         const rewardAmount = document.getElementById('rewardAmount');
 
-        // 🔊 ЗВУК ПОБЕДЫ
-        const claimSound = new Audio('claim.mp3');
-        claimSound.volume = 0.7;
-
-        function playClaimSound() {
-            try {
-                claimSound.currentTime = 0;
-                claimSound.play().catch(() => {});
-            } catch (e) {}
-        }
-
-        // Форматирование времени
         function formatTime(ms) {
             const totalSec = Math.max(0, Math.floor(ms / 1000));
             const h = Math.floor(totalSec / 3600);
@@ -123,7 +84,6 @@
             return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         }
 
-        // Проверка и сбор награды
         async function handleClaim() {
             if (!userId) {
                 showMessage(t('error_user'), 'error');
@@ -142,66 +102,49 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    // 🎉 ЗВУК ПОБЕДЫ!
-                    playClaimSound();
-                    
-                    // Показать награду
+                    playClaim();
                     rewardAmount.innerText = data.reward;
                     rewardPopup.classList.remove('hidden');
-                    
                     claimBtn.disabled = true;
                     claimBtn.innerHTML = `<span data-t="faucet_next">⏰ Следующий сбор через 3ч</span>`;
-                    timerEl.innerText = '⏰ Таймер запущен';
-                    
-                    // Обновить баланс
+                    timerEl.innerText = '⏰ ' + t('timer_started');
                     if (window.updateBalance) window.updateBalance();
-                    
-                    // Скрыть попап через 3 секунды
                     setTimeout(() => {
                         rewardPopup.classList.add('hidden');
                         startTimer(3 * 60 * 60 * 1000);
                     }, 3000);
-                    
                 } else {
-                    // Ещё рано
                     const hours = Math.ceil(data.waitTime / 1000 / 3600) || 3;
                     timerEl.innerText = `⏰ ${t('msg_wait')} ${hours} ${t('msg_hours')}.`;
                     claimBtn.disabled = true;
                     claimBtn.innerHTML = `<span data-t="faucet_wait">⏳ Жди</span>`;
-                    
-                    if (data.waitTime) {
-                        startTimer(data.waitTime);
-                    }
+                    if (data.waitTime) startTimer(data.waitTime);
                 }
             } catch (err) {
                 showMessage(t('error_network'), 'error');
                 claimBtn.disabled = false;
-                claimBtn.innerHTML = `<span data-t="faucet_claim">🎁 ЗАБРАТЬ (10-50 🪙)</span>`;
+                claimBtn.innerHTML = `<span data-t="faucet_claim">ЗАБРАТЬ (10-50 🪙)</span>`;
             }
         }
 
-        // Таймер обратного отсчёта
         function startTimer(ms) {
             let remaining = ms;
             timerEl.innerText = `⏰ ${formatTime(remaining)}`;
-            
             const interval = setInterval(() => {
                 remaining -= 1000;
                 if (remaining <= 0) {
                     clearInterval(interval);
                     timerEl.innerText = t('faucet_available');
                     claimBtn.disabled = false;
-                    claimBtn.innerHTML = `<span data-t="faucet_claim">🎁 ЗАБРАТЬ (10-50 🪙)</span>`;
+                    claimBtn.innerHTML = `<span data-t="faucet_claim">ЗАБРАТЬ (10-50 🪙)</span>`;
                     return;
                 }
                 timerEl.innerText = `⏰ ${formatTime(remaining)}`;
             }, 1000);
         }
 
-        // Обработчик кнопки
         claimBtn.addEventListener('click', handleClaim);
 
-        // Проверка при загрузке
         if (userId) {
             handleClaim();
         } else {
