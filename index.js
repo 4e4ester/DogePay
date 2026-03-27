@@ -6,14 +6,18 @@ const { Pool } = require('pg');
 const cors = require('cors');
 
 const app = express();
-const bot = new Telegraf(process.env.BOT_TOKEN);
 const PORT = process.env.PORT || 3000;
 
+// 🔷 ОДИН БОТ (глобальная переменная)
+let bot = null;
+
+// 🔷 БАЗА ДАННЫХ
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
+// 🔷 ПРОВЕРКА БД
 async function testDB() {
     try {
         await pool.query('SELECT 1');
@@ -25,6 +29,7 @@ async function testDB() {
     }
 }
 
+// 🔷 СОЗДАНИЕ ТАБЛИЦ
 async function initDB() {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS users (
@@ -53,101 +58,121 @@ async function initDB() {
     }
 }
 
+// 🔷 НАСТРОЙКА EXPRESS
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-bot.start(async (ctx) => {
-    const uid = ctx.from.id;
-    const un = ctx.from.username || 'User';
-    try {
-        await pool.query(
-            `INSERT INTO users (user_id, username, balance, last_claim, last_ads) 
-             VALUES ($1, $2, 0, NOW() - INTERVAL '3 hours', NOW() - INTERVAL '1 hour') 
-             ON CONFLICT (user_id) DO NOTHING`,
-            [uid, un]
-        );
-        ctx.reply(
-            `🐕 *DogePay*\n\n🪙 Баланс: 0\n💱 1000 🪙 = 1 DOGE`,
-            { parse_mode: 'Markdown' },
-            Markup.keyboard([[Markup.button.webApp('🚀 Открыть', process.env.WEB_APP_URL)]]).resize()
-        );
-    } catch (e) {
-        ctx.reply('❌ Ошибка');
+// 🔷 БОТ (СОЗДАЁТСЯ 1 РАЗ)
+function initBot() {
+    if (bot) {
+        console.log('⚠️ Бот уже инициализирован');
+        return;
     }
-});
+    
+    bot = new Telegraf(process.env.BOT_TOKEN);
+    
+    bot.start(async (ctx) => {
+        const uid = ctx.from.id;
+        const un = ctx.from.username || 'User';
+        try {
+            await pool.query(
+                `INSERT INTO users (user_id, username, balance, last_claim, last_ads) 
+                 VALUES ($1, $2, 0, NOW() - INTERVAL '3 hours', NOW() - INTERVAL '1 hour') 
+                 ON CONFLICT (user_id) DO NOTHING`,
+                [uid, un]
+            );
+            ctx.reply(
+                `🐕 DogePay\n\n🪙 Баланс: 0\n💱 1000 🪙 = 1 DOGE`,
+                Markup.keyboard([[Markup.button.webApp('🚀 Открыть', process.env.WEB_APP_URL)]]).resize()
+            );
+        } catch (e) {
+            ctx.reply('❌ Ошибка: ' + e.message);
+        }
+    });
 
-bot.command('balance', async (ctx) => {
-    const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
-    if (!r.rows[0]) return ctx.reply('❌ Нажми /start');
-    const b = r.rows[0].balance;
-    ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
-});
+    bot.command('balance', async (ctx) => {
+        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
+        if (!r.rows[0]) return ctx.reply('❌ Нажми /start');
+        const b = r.rows[0].balance;
+        ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
+    });
 
-bot.launch().then(() => console.log('🤖 Бот запущен')).catch(e => console.error('❌ Бот:', e.message));
-process.on('SIGINT', () => bot?.stop());
-process.on('SIGTERM', () => bot?.stop());
+    // 🔷 ЗАПУСК БОТА (ТОЛЬКО 1 РАЗ!)
+    bot.launch()
+        .then(() => console.log('🤖 Бот запущен'))
+        .catch(e => console.error('❌ Ошибка бота:', e.message));
 
+    // 🔷 ОСТАНОВКА ПРИ ЗАВЕРШЕНИИ
+    process.once('SIGINT', () => {
+        console.log('🛑 SIGINT received, stopping bot...');
+        bot.stop('SIGINT');
+    });
+    
+    process.once('SIGTERM', () => {
+        console.log('🛑 SIGTERM received, stopping bot...');
+        bot.stop('SIGTERM');
+    });
+}
+
+// 🔷 API: БАЛАНС
 app.get('/api/balance', async (req, res) => {
     try {
         const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [req.query.user_id]);
         res.json({ balance: r.rows[0]?.balance || 0 });
-    } catch (e) { res.json({ error: e.message }); }
+    } catch (e) { 
+        console.error('API Balance Error:', e);
+        res.json({ error: e.message }); 
+    }
 });
 
+// 🔷 API: КРАН
 app.post('/api/claim', async (req, res) => {
+    console.log('🚰 CLAIM:', req.body);
     try {
         const uid = req.body.user_id;
         if (!uid) return res.json({ error: 'Нет ID' });
+        
         const r = await pool.query('SELECT * FROM users WHERE user_id = $1', [uid]);
         if (!r.rows[0]) return res.json({ error: 'Не найден' });
+        
         const hours = (new Date() - new Date(r.rows[0].last_claim)) / 36e5;
         if (hours < 3) {
             const w = Math.ceil(3 - hours);
-            return res.json({ success: false, message: `Жди ещё ${w} ч.`, waitTime: w * 36e5 });
+            return res.json({ success: false, message: 'Жди ещё ' + w + ' ч.', waitTime: w * 36e5 });
         }
+        
         const reward = Math.floor(Math.random() * 41) + 10;
         await pool.query('UPDATE users SET balance = balance + $1, last_claim = NOW() WHERE user_id = $2', [reward, uid]);
-        res.json({ success: true, reward, message: `+${reward} 🪙` });
-    } catch (e) { res.json({ error: e.message }); }
+        res.json({ success: true, reward: reward, message: '+' + reward + ' 🪙' });
+    } catch (e) { 
+        console.error('CLAIM ERROR:', e);
+        res.json({ error: e.message }); 
+    }
 });
 
-app.post('/api/ads-reward', async (req, res) => {
-    try {
-        const uid = req.body.user_id;
-        if (!uid) return res.json({ error: 'Нет ID' });
-        const r = await pool.query('SELECT * FROM users WHERE user_id = $1', [uid]);
-        if (!r.rows[0]) return res.json({ error: 'Не найден' });
-        const hours = (new Date() - new Date(r.rows[0].last_ads)) / 36e5;
-        if (hours < 1) {
-            const w = Math.ceil(1 - hours);
-            return res.json({ success: false, message: `Жди ещё ${w} ч.`, waitTime: w * 36e5 });
-        }
-        const reward = Math.floor(Math.random() * 16) + 5;
-        await pool.query('UPDATE users SET balance = balance + $1, last_ads = NOW() WHERE user_id = $2', [reward, uid]);
-        res.json({ success: true, reward, message: `+${reward} 🪙` });
-    } catch (e) { res.json({ error: e.message }); }
-});
-
+// 🔷 API: ВЫВОД
 app.post('/api/withdraw', async (req, res) => {
     try {
         const { user_id, amount, wallet } = req.body;
         if (!user_id || !amount || !wallet) return res.json({ error: 'Заполни все поля' });
-        if (amount < 10000) return res.json({ error: 'Мин. 10000 🪙 (10 DOGE)' });
+        if (amount < 10000) return res.json({ error: 'Мин. 10000 🪙' });
+        
         const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [user_id]);
         if (r.rows[0].balance < amount) return res.json({ error: 'Мало средств' });
+        
         await pool.query('UPDATE users SET balance = balance - $1 WHERE user_id = $2', [amount, user_id]);
         await pool.query('INSERT INTO withdraw_requests (user_id, amount, wallet_address) VALUES ($1, $2, $3)', [user_id, amount, wallet]);
-        res.json({ success: true, message: '✅ Заявка создана! Ожидай проверки.' });
+        
+        res.json({ success: true, message: '✅ Заявка создана!' });
     } catch (e) { res.json({ error: e.message }); }
 });
 
+// 🔷 API: АДМИН
 app.post('/api/admin/login', async (req, res) => {
-    try {
-        const { password } = req.body;
-        if (password === 'admin123') res.json({ success: true });
-        else res.json({ success: false, error: 'Неверный пароль' });
-    } catch (e) { res.json({ error: e.message }); }
+    const { password } = req.body;
+    if (password === 'admin123') res.json({ success: true });
+    else res.json({ success: false, error: 'Неверный пароль' });
 });
 
 app.get('/api/admin/requests', async (req, res) => {
@@ -185,8 +210,15 @@ app.post('/api/admin/reject', async (req, res) => {
     } catch (e) { res.json({ error: e.message }); }
 });
 
+// 🔷 ЗАПУСК СЕРВЕРА (БОТ ЗАПУСКАЕТСЯ ОТДЕЛЬНО)
 (async () => {
     const ok = await testDB();
     if (ok) await initDB();
-    app.listen(PORT, () => console.log(`🌐 Порт ${PORT} | 🔗 ${process.env.WEB_APP_URL}`));
+    
+    app.listen(PORT, () => {
+        console.log('🌐 Порт ' + PORT + ' | ' + process.env.WEB_APP_URL);
+    });
+    
+    // 🔷 БОТ ЗАПУСКАЕТСЯ 1 РАЗ ПОСЛЕ СТАРТА СЕРВЕРА
+    initBot();
 })();
