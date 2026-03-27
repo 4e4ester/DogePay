@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Админ - DogePay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-card { max-width: 400px; margin: 50px auto; }
+        .request-item { background: var(--bg-card); border-radius: 16px; padding: 20px; margin: 15px 0; border: 1px solid rgba(255,255,255,0.1); }
+        .request-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .request-status { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-pending { background: rgba(243, 198, 35, 0.2); color: var(--gold); }
+        .status-approved { background: rgba(0, 214, 143, 0.2); color: #00d68f; }
+        .status-rejected { background: rgba(255, 92, 92, 0.2); color: #ff5c5c; }
+        .request-details { font-size: 14px; color: var(--text-secondary); margin: 10px 0; }
+        .request-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-approve { background: #00d68f; color: #000; flex: 1; }
+        .btn-reject { background: #ff5c5c; color: #fff; flex: 1; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Form -->
+        <div id="loginForm" class="login-card form-card">
+            <h2 class="gradient-text" style="text-align: center; margin-bottom: 20px;">🔐 Админ Панель</h2>
+            <div class="form-group">
+                <label class="form-label">Пароль</label>
+                <input type="password" id="adminPassword" class="form-input" placeholder="Введи пароль">
+            </div>
+            <button id="loginBtn" class="btn btn-primary btn-3d" style="width: 100%;">Войти</button>
+            <p id="loginError" class="message error hidden" style="margin-top: 15px;"></p>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminDashboard" class="hidden">
+            <div class="header">
+                <h1 class="gradient-text">📊 Панель управления</h1>
+                <p class="subtitle">Заявки на депозит</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Пользователей</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingRequests">0</div>
+                    <div class="stat-label">На проверке</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDeposits">0</div>
+                    <div class="stat-label">Всего депозитов</div>
+                </div>
+            </div>
+
+            <h3 style="margin: 25px 0 15px; color: var(--gold);">⏳ Новые заявки</h3>
+            <div id="pendingList"></div>
+
+            <h3 style="margin: 25px 0 15px; color: var(--gold);">✅ Одобрено</h3>
+            <div id="approvedList"></div>
+
+            <a href="index.html" class="btn btn-secondary btn-3d" style="width: 100%; margin-top: 20px;">
+                ← На сайт
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const adminDashboard = document.getElementById('adminDashboard');
+        const adminPassword = document.getElementById('adminPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+
+        // Проверка сессии
+        if (localStorage.getItem('admin_logged') === 'true') {
+            showDashboard();
+        }
+
+        // Вход
+        loginBtn.addEventListener('click', async () => {
+            const password = adminPassword.value;
+            
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('admin_logged', 'true');
+                    showDashboard();
+                } else {
+                    loginError.innerText = '❌ Неверный пароль';
+                    loginError.classList.remove('hidden');
+                }
+            } catch (err) {
+                loginError.innerText = '❌ Ошибка сети';
+                loginError.classList.remove('hidden');
+            }
+        });
+
+        // Показать панель
+        async function showDashboard() {
+            loginForm.classList.add('hidden');
+            adminDashboard.classList.remove('hidden');
+            await loadRequests();
+        }
+
+        // Загрузка заявок
+        async function loadRequests() {
+            try {
+                const res = await fetch('/api/admin/requests');
+                const data = await res.json();
+                
+                document.getElementById('totalUsers').innerText = data.stats?.total_users || 0;
+                document.getElementById('pendingRequests').innerText = data.stats?.pending || 0;
+                document.getElementById('totalDeposits').innerText = data.stats?.total_deposits || 0;
+
+                renderRequests(data.pending, 'pendingList', false);
+                renderRequests(data.approved, 'approvedList', true);
+            } catch (err) {
+                console.error('Ошибка загрузки:', err);
+            }
+        }
+
+        // Рендер заявок
+        function renderRequests(requests, elementId, isApproved) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Нет заявок</p>';
+                return;
+            }
+
+            requests.forEach(req => {
+                const item = document.createElement('div');
+                item.className = 'request-item';
+                item.innerHTML = `
+                    <div class="request-header">
+                        <span style="font-weight: 700; color: var(--text-primary);">User: ${req.user_id}</span>
+                        <span class="request-status ${isApproved ? 'status-approved' : 'status-pending'}">
+                            ${isApproved ? '✅ Одобрено' : '⏳ На проверке'}
+                        </span>
+                    </div>
+                    <div class="request-details">
+                        <p>💰 Сумма: <strong style="color: var(--gold);">${req.amount} DOGE</strong></p>
+                        <p>🪙 Монет: <strong style="color: var(--gold);">${req.amount * 1000} 🪙</strong></p>
+                        <p>📝 TX: <code style="background: var(--bg-secondary); padding: 5px 10px; border-radius: 8px; font-size: 12px;">${req.tx_hash.substring(0, 20)}...</code></p>
+                        <p>🕐 Дата: ${new Date(req.created_at).toLocaleString('ru-RU')}</p>
+                    </div>
+                    ${!isApproved ? `
+                    <div class="request-actions">
+                        <button class="btn btn-approve btn-3d" onclick="approveRequest(${req.id})">✅ Одобрить</button>
+                        <button class="btn btn-reject btn-3d" onclick="rejectRequest(${req.id})">❌ Отклонить</button>
+                    </div>
+                    ` : ''}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Одобрить
+        window.approveRequest = async (id) => {
+            if (!confirm('Одобрить этот депозит?')) return;
+            
+            try {
+                const res = await fetch('/api/admin/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ request_id: id })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('✅ Депозит одобрен!');
+                    loadRequests();
+                } else {
+                    alert('❌ Ошибка: ' + data.error);
+                }
+            } catch (err) {
+                alert('❌ Ошибка сети');
+            }
+        };
+
+        // Отклонить
+        window.rejectRequest = async (id) => {
+            if (!confirm('Отклонить этот депозит?')) return;
+            
+            try {
+                const res = await fetch('/api/admin/reject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ request_id: id })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('❌ Депозит отклонён');
+                    loadRequests();
+                } else {
+                    alert('❌ Ошибка: ' + data.error);
+                }
+            } catch (err) {
+                alert('❌ Ошибка сети');
+            }
+        };
+    </script>
+</body>
+</html>
