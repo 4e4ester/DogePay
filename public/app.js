@@ -5,27 +5,38 @@ const claimSound = new Audio('claim.mp3');
 clickSound.volume = 0.5;
 claimSound.volume = 0.7;
 
+// Воспроизвести звук клика
 function playClick() {
     try {
         clickSound.currentTime = 0;
-        clickSound.play().catch(() => {});
-    } catch (e) {}
+        clickSound.play().catch(() => {
+            console.log('Звук клика не воспроизвёлся');
+        });
+    } catch (e) {
+        console.log('Ошибка звука клика:', e);
+    }
 }
 
+// Воспроизвести звук победы
 function playClaim() {
     try {
         claimSound.currentTime = 0;
-        claimSound.play().catch(() => {});
-    } catch (e) {}
+        claimSound.play().catch(() => {
+            console.log('Звук победы не воспроизвёлся');
+        });
+    } catch (e) {
+        console.log('Ошибка звука победы:', e);
+    }
 }
 
+// Глобальные функции
 window.playClick = playClick;
 window.playClaim = playClaim;
 
 // Telegram WebApp
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.enableClosingConfirmation();
+tg.ready();
 
 const userId = tg.initDataUnsafe?.user?.id;
 
@@ -44,25 +55,6 @@ async function updateBalance() {
     } catch (err) {
         console.error('Ошибка баланса:', err);
     }
-}
-
-// Анимация счётчика
-function animateValue(elementId, end) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    const start = parseInt(element.innerText.replace(/,/g, '')) || 0;
-    const duration = 1500;
-    const startTime = performance.now();
-    
-    function update(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-        const current = Math.floor(start + (end - start) * easeOutQuart);
-        element.innerText = current.toLocaleString('ru-RU');
-        if (progress < 1) requestAnimationFrame(update);
-    }
-    requestAnimationFrame(update);
 }
 
 // Показать сообщение
@@ -88,10 +80,18 @@ window.toggleLanguage = function() {
     setTimeout(() => window.location.reload(), 100);
 };
 
+// Обновление кнопки языка
+function updateLanguageButton() {
+    const langBtn = document.getElementById('langSwitch');
+    if (langBtn) {
+        langBtn.innerHTML = currentLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
+    }
+}
+
 // Глобальные функции
 window.updateBalance = updateBalance;
 window.showMessage = showMessage;
-window.animateValue = animateValue;
+window.updateLanguageButton = updateLanguageButton;
 
 // Инициализация
 if (document.readyState === 'loading') {
