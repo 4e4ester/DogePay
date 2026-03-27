@@ -10,84 +10,62 @@
 </head>
 <body>
     <div class="container">
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
+        <!-- НЕТ ФЛАГОВ -->
         
         <div id="loginForm" class="form-card" style="max-width: 400px; margin: 50px auto;">
             <div class="header">
                 <div class="logo">🔐</div>
-                <h1 class="gradient-text" data-t="admin_title">Админ Панель</h1>
-                <p class="subtitle" data-t="admin_subtitle">Заявки на депозит</p>
+                <h1 class="gradient-text">Админ Панель</h1>
+                <p class="subtitle">Заявки на депозит</p>
             </div>
             <div class="form-group">
-                <label class="form-label" data-t="admin_password">Пароль</label>
-                <input type="password" id="adminPassword" class="form-input" data-t-placeholder="admin_password_placeholder" placeholder="Введи пароль">
+                <label class="form-label">Пароль</label>
+                <input type="password" id="adminPassword" class="form-input" placeholder="Введи пароль">
             </div>
-            <button id="loginBtn" class="btn btn-primary" style="width: 100%;" data-t="admin_login">Войти</button>
+            <button id="loginBtn" class="btn btn-primary" style="width: 100%;">Войти</button>
             <p id="loginError" class="message error hidden" style="margin-top: 15px;"></p>
         </div>
 
         <div id="adminDashboard" class="hidden">
             <div class="header">
                 <div class="logo">📊</div>
-                <h1 class="gradient-text" data-t="admin_dashboard">Панель управления</h1>
-                <p class="subtitle" data-t="admin_subtitle">Заявки на депозит</p>
+                <h1 class="gradient-text">Панель управления</h1>
+                <p class="subtitle">Заявки на депозит</p>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="totalUsers">0</div>
-                    <div class="stat-label" data-t="admin_stats_users">Пользователей</div>
+                    <div class="stat-label">Пользователей</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="pendingRequests">0</div>
-                    <div class="stat-label" data-t="admin_stats_pending">На проверке</div>
+                    <div class="stat-label">На проверке</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="totalDeposits">0</div>
-                    <div class="stat-label" data-t="admin_stats_deposits">Всего депозитов</div>
+                    <div class="stat-label">Всего депозитов</div>
                 </div>
             </div>
 
-            <h3 style="margin: 25px 0 15px; color: var(--gold);" data-t="admin_new_requests">Новые заявки</h3>
+            <h3 style="margin: 25px 0 15px; color: var(--gold);">Новые заявки</h3>
             <div id="pendingList"></div>
 
-            <h3 style="margin: 25px 0 15px; color: var(--gold);" data-t="admin_approved">Одобрено</h3>
+            <h3 style="margin: 25px 0 15px; color: var(--gold);">Одобрено</h3>
             <div id="approvedList"></div>
 
-            <a href="index.html" class="btn btn-secondary" style="width: 100%; margin-top: 20px;" data-t="admin_back">
+            <a href="index.html" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">
                 ← На сайт
             </a>
         </div>
 
         <div class="footer">
-            <p>🐕 DogePay • <span data-t="nav_admin">Админ</span></p>
+            <p>🐕 DogePay • Админ</p>
         </div>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item">
-            <span class="nav-icon">🏠</span>
-            <span data-t="nav_home">Главная</span>
-        </a>
-        <a href="faucet.html" class="nav-item">
-            <span class="nav-icon">🚰</span>
-            <span data-t="nav_faucet">Кран</span>
-        </a>
-        <a href="deposit.html" class="nav-item">
-            <span class="nav-icon">💰</span>
-            <span data-t="nav_deposit">Ввод</span>
-        </a>
-        <a href="withdraw.html" class="nav-item">
-            <span class="nav-icon">💸</span>
-            <span data-t="nav_withdraw">Вывод</span>
-        </a>
-        <a href="admin.html" class="nav-item active">
-            <span class="nav-icon">🔐</span>
-            <span data-t="nav_admin">Админ</span>
-        </a>
-    </nav>
+    <!-- НЕТ НИЖНЕГО МЕНЮ В АДМИНКЕ -->
 
-    <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
         const loginForm = document.getElementById('loginForm');
@@ -113,7 +91,7 @@
                     localStorage.setItem('admin_logged', 'true');
                     showDashboard();
                 } else {
-                    loginError.innerText = '❌ ' + t('admin_login_error');
+                    loginError.innerText = '❌ Неверный пароль';
                     loginError.classList.remove('hidden');
                 }
             } catch (err) {
@@ -146,7 +124,7 @@
             const container = document.getElementById(elementId);
             container.innerHTML = '';
             if (!requests || requests.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);" data-t="admin_no_requests">Нет заявок</p>';
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Нет заявок</p>';
                 return;
             }
             requests.forEach(req => {
