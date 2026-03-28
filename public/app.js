@@ -21,7 +21,6 @@ try {
     console.log('Звук победы не загружен');
 }
 
-// Воспроизвести звук клика
 function playClick() {
     if (tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
@@ -32,7 +31,6 @@ function playClick() {
     }
 }
 
-// Воспроизвести звук победы
 function playClaim() {
     if (tg.HapticFeedback) {
         tg.HapticFeedback.notificationOccurred('success');
@@ -46,7 +44,6 @@ function playClaim() {
 window.playClick = playClick;
 window.playClaim = playClaim;
 
-// Обновление баланса
 function updateBalance() {
     const balance = parseInt(localStorage.getItem('balance') || '0');
     const balanceEl = document.getElementById('balance');
@@ -55,20 +52,25 @@ function updateBalance() {
     if (dogeEl) dogeEl.innerText = (balance / 1000).toFixed(4);
 }
 
-// Переключение языка
+// 🔷 ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА (ТОЛЬКО ФЛАГИ!)
 window.toggleLanguage = function() {
     playClick();
     const newLang = currentLang === 'ru' ? 'en' : 'ru';
     setLanguage(newLang);
-    // Обновить кнопку
+    
+    // 🔥 ОБНОВИТЬ КНОПКУ ВРУЧНУЮ (ТОЛЬКО ФЛАГИ!)
     const langBtn = document.getElementById('langSwitch');
     if (langBtn) {
-        langBtn.innerHTML = newLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
+        if (newLang === 'ru') {
+            langBtn.innerHTML = '🇷🇺 🇬🇧';
+        } else {
+            langBtn.innerHTML = '🇬🇧 🇷🇺';
+        }
     }
+    
     setTimeout(() => window.location.reload(), 100);
 };
 
-// Глобальные функции
 window.updateBalance = updateBalance;
 
 // Звуки на все кнопки
@@ -87,7 +89,6 @@ document.addEventListener('click', function(e) {
     }
 }, true);
 
-// Инициализация с загрузкой
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 } else {
@@ -95,23 +96,24 @@ if (document.readyState === 'loading') {
 }
 
 function initApp() {
-    // Загрузить язык
     if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
     if (typeof updatePageLanguage === 'function') updatePageLanguage();
-    
-    // Обновить баланс
     updateBalance();
     
-    // Скрыть загрузку через 1.5 секунды
+    // 🔥 УСТАНОВИТЬ ПРАВИЛЬНЫЕ ФЛАГИ ПРИ ЗАГРУЗКЕ
+    const langBtn = document.getElementById('langSwitch');
+    if (langBtn) {
+        if (currentLang === 'ru') {
+            langBtn.innerHTML = '🇷🇺 🇬🇧';
+        } else {
+            langBtn.innerHTML = '🇬🇧 🇷🇺';
+        }
+    }
+    
     setTimeout(() => {
         const loadingScreen = document.getElementById('loadingScreen');
         const mainContent = document.getElementById('mainContent');
-        
-        if (loadingScreen) {
-            loadingScreen.classList.add('hidden');
-        }
-        if (mainContent) {
-            mainContent.style.display = 'block';
-        }
+        if (loadingScreen) loadingScreen.classList.add('hidden');
+        if (mainContent) mainContent.style.display = 'block';
     }, 1500);
 }
