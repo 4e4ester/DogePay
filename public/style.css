@@ -1195,3 +1195,272 @@ body::-webkit-scrollbar-thumb {
         font-size: 18px;
     }
 }
+
+/* ===== 💸 WITHDRAW PAGE STYLES ===== */
+
+/* Карточка формы */
+.form-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: var(--border-gold);
+    border-radius: var(--border-radius-lg);
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+}
+
+/* Группы полей */
+.form-group {
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Обёртка инпута с иконкой */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    font-size: 20px;
+    color: var(--text-secondary);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.form-input {
+    width: 100%;
+    padding: 16px 20px 16px 50px;
+    font-size: 16px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(243, 198, 35, 0.2);
+    border-radius: 16px;
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.form-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: rgba(243, 198, 35, 0.05);
+    box-shadow: 0 0 0 4px var(--gold-glow-soft), 0 0 20px var(--gold-glow-soft);
+}
+
+.form-input.valid {
+    border-color: var(--text-success);
+    box-shadow: 0 0 0 4px rgba(0, 214, 143, 0.1);
+}
+
+.form-input.invalid {
+    border-color: var(--text-error);
+    animation: shake 0.3s ease;
+    box-shadow: 0 0 0 4px rgba(255, 92, 92, 0.1);
+}
+
+/* Кнопка MAX */
+.input-max {
+    position: absolute;
+    right: 8px;
+    padding: 6px 14px;
+    background: var(--gold);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.input-max:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(243, 198, 35, 0.4);
+}
+
+.input-max:active {
+    transform: scale(0.98);
+}
+
+/* Подсказки и ошибки */
+.form-hint {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    margin-left: 4px;
+}
+
+.form-hint.hidden,
+.form-error.hidden {
+    display: none;
+}
+
+.form-error {
+    font-size: 13px;
+    color: var(--text-error);
+    margin-top: 8px;
+    margin-left: 4px;
+    font-weight: 500;
+    animation: errorFade 0.3s ease;
+}
+
+@keyframes errorFade {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Конвертация */
+.conversion-box {
+    background: rgba(243, 198, 35, 0.08);
+    border: 1px solid rgba(243, 198, 35, 0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.conversion-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.conversion-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.conversion-value.active {
+    opacity: 1;
+}
+
+@keyframes conversionPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); color: var(--gold-light); }
+    100% { transform: scale(1); }
+}
+
+/* Предупреждение */
+.warning-box {
+    background: rgba(255, 92, 92, 0.08);
+    border: 1px solid rgba(255, 92, 92, 0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 20px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.warning-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.warning-text {
+    font-size: 13px;
+    color: var(--text-error);
+    line-height: 1.4;
+}
+
+/* Кнопка с лоадером */
+.btn-large {
+    padding: 20px 28px;
+    font-size: 17px;
+    margin-top: 8px;
+}
+
+.btn-loader {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-left: 10px;
+}
+
+.btn-loader.hidden {
+    display: none;
+}
+
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Инфо блок */
+.info-box {
+    background: rgba(0, 214, 143, 0.08);
+    border: 1px solid rgba(0, 214, 143, 0.3);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin: 20px 0 28px;
+}
+
+.info-box p {
+    color: var(--text-success);
+    font-size: 14px;
+    margin: 6px 0;
+    line-height: 1.4;
+}
+
+.info-box strong {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+/* Адаптив */
+@media (max-width: 480px) {
+    .form-card {
+        padding: 24px 20px;
+    }
+    
+    .form-input {
+        padding: 14px 18px 14px 46px;
+        font-size: 15px;
+    }
+    
+    .conversion-box {
+        padding: 10px 14px;
+    }
+    
+    .conversion-value {
+        font-size: 15px;
+    }
+    
+    .btn-large {
+        padding: 18px 24px;
+        font-size: 16px;
+    }
+}
+
+/* Анимация шейка для ошибок */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
