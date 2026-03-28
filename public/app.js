@@ -1,169 +1,92 @@
 // ==================== app.js ====================
 
-// Telegram WebApp
 const tg = window.Telegram?.WebApp || {};
 if (tg.expand) tg.expand();
 if (tg.ready) tg.ready();
 
-// 🔊 ЗВУКИ
-let clickSound = null;
-let claimSound = null;
+// Звуки
+let clickSound, claimSound;
 
 function initSounds() {
-    try {
-        clickSound = new Audio('click.mp3');
-        clickSound.volume = 0.6;
-    } catch (e) {
-        console.warn('click.mp3 не удалось загрузить');
-    }
-
-    try {
-        claimSound = new Audio('claim.mp3');
-        claimSound.volume = 0.8;
-    } catch (e) {
-        console.warn('claim.mp3 не удалось загрузить');
-    }
+    clickSound = new Audio('click.mp3');
+    claimSound = new Audio('claim.mp3');
+    clickSound.volume = 0.6;
+    claimSound.volume = 0.8;
 }
 
 function playClick() {
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('light');
-    }
-    if (clickSound) {
-        clickSound.currentTime = 0;
-        clickSound.play().catch(() => {});
-    }
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    if (clickSound) clickSound.play().catch(() => {});
 }
 
 function playClaim() {
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.notificationOccurred('success');
-    }
-    if (claimSound) {
-        claimSound.currentTime = 0;
-        claimSound.play().catch(() => {});
-    }
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    if (claimSound) claimSound.play().catch(() => {});
 }
 
-// Глобальные функции
-window.playClick = playClick;
-window.playClaim = playClaim;
-
-// ==================== БАЛАНС ====================
+// Баланс
 let currentBalance = parseFloat(localStorage.getItem('dogeBalance')) || 0.00000000;
 
 function updateBalance() {
-    const balanceEl = document.getElementById('balance');
-    const dogeEl = document.getElementById('balanceDoge');
-
-    if (balanceEl) {
-        balanceEl.textContent = currentBalance.toFixed(8);
-    }
-    if (dogeEl) {
-        dogeEl.textContent = currentBalance.toFixed(4);
-    }
+    document.getElementById('balance').textContent = currentBalance.toFixed(8);
+    document.getElementById('balanceDoge').textContent = currentBalance.toFixed(4);
 }
 
-// ==================== ЯЗЫК ====================
-let currentLang = localStorage.getItem('lang') || 'ru';
+// Язык
+let currentLang = localStorage.getItem('dogepay_lang') || 'ru';
 
-function setLanguage(lang) {
-    currentLang = lang;
-    localStorage.setItem('lang', lang);
-}
-
-window.toggleLanguage = function() {
+function toggleLanguage() {
     playClick();
+    currentLang = currentLang === 'ru' ? 'en' : 'ru';
+    localStorage.setItem('dogepay_lang', currentLang);
     
-    const newLang = currentLang === 'ru' ? 'en' : 'ru';
-    setLanguage(newLang);
-
-    // Меняем флаги на кнопке
     const langBtn = document.getElementById('langSwitch');
-    if (langBtn) {
-        langBtn.innerHTML = newLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
-    }
+    if (langBtn) langBtn.innerHTML = currentLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
 
-    // Применяем переводы
-    if (typeof applyTranslations === 'function') {
-        applyTranslations();
-    }
+    applyTranslations();
+}
 
-    // Не делаем полный reload — лучше обновить только тексты
-    // setTimeout(() => window.location.reload(), 100); // убрал полный релоад
-};
-
-// ==================== ПЕРЕВОДЫ ====================
+// Применение переводов
 function applyTranslations() {
     const t = window.translations ? window.translations[currentLang] : {};
 
-    // Главная страница
-    if (document.getElementById('title')) 
-        document.getElementById('title').textContent = t.title || 'DogePay';
+    const map = {
+        title: 'title',
+        subtitle: 'subtitle',
+        balanceLabel: 'balanceLabel',
+        btnFaucet: 'faucet',
+        btnAds: 'ads',
+        btnWithdraw: 'withdraw',
+        footerText: 'footer',
+        loadingText: 'loading'
+    };
 
-    if (document.getElementById('subtitle')) 
-        document.getElementById('subtitle').textContent = t.subtitle || 'Зарабатывай DOGE играя';
-
-    if (document.getElementById('balanceLabel')) 
-        document.getElementById('balanceLabel').textContent = t.balanceLabel || 'Твой баланс';
-
-    if (document.getElementById('balanceDogeLabel')) 
-        document.getElementById('balanceDogeLabel').innerHTML = 
-            `~<span id="balanceDoge">${currentBalance.toFixed(4)}</span> DOGE`;
-
-    if (document.getElementById('btnFaucet')) 
-        document.getElementById('btnFaucet').textContent = t.faucet || 'Кран';
-
-    if (document.getElementById('btnAds')) 
-        document.getElementById('btnAds').textContent = t.ads || 'Реклама';
-
-    if (document.getElementById('btnWithdraw')) 
-        document.getElementById('btnWithdraw').textContent = t.withdraw || 'Вывод';
-
-    if (document.getElementById('footerText')) 
-        document.getElementById('footerText').textContent = t.footer || '🔐 Безопасно • ⚡ Быстро • 🌍 Глобально';
-
-    if (document.getElementById('loadingText')) 
-        document.getElementById('loadingText').textContent = t.loading || 'Загрузка DogePay...';
+    Object.keys(map).forEach(id => {
+        const el = document.getElementById(id);
+        if (el && t[map[id]]) {
+            el.textContent = t[map[id]];
+        }
+    });
 }
 
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+// Главная функция инициализации
 function initApp() {
     initSounds();
-
-    // Загружаем язык
-    currentLang = localStorage.getItem('lang') || 'ru';
-
-    // Устанавливаем правильные флаги
-    const langBtn = document.getElementById('langSwitch');
-    if (langBtn) {
-        langBtn.innerHTML = currentLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
-    }
-
-    // Применяем переводы
     applyTranslations();
-
-    // Обновляем баланс
     updateBalance();
 
-    // Прячем экран загрузки
+    // Прячем загрузку и показываем контент
     setTimeout(() => {
-        const loadingScreen = document.getElementById('loadingScreen');
-        const mainContent = document.getElementById('mainContent');
-
-        if (loadingScreen) loadingScreen.style.display = 'none';
-        if (mainContent) mainContent.style.display = 'block';
-    }, 1200);
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+    }, 800);
 }
 
-// Запуск приложения
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
-}
+// Запуск
+document.addEventListener('DOMContentLoaded', initApp);
 
-// Глобальные функции для других страниц
+// Делаем функции доступными глобально
+window.toggleLanguage = toggleLanguage;
+window.playClick = playClick;
+window.playClaim = playClaim;
 window.updateBalance = updateBalance;
-window.applyTranslations = applyTranslations;
-window.setLanguage = setLanguage;
