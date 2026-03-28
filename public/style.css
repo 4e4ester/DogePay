@@ -1464,3 +1464,551 @@ body::-webkit-scrollbar-thumb {
     25% { transform: translateX(-6px); }
     75% { transform: translateX(6px); }
 }
+
+/* ===== 🔐 ADMIN PAGE STYLES ===== */
+
+/* Auth карточка */
+.auth-card {
+    max-width: 400px;
+    margin: 60px auto 0;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: var(--border-gold);
+    border-radius: var(--border-radius-lg);
+    padding: 32px 28px;
+    box-shadow: var(--shadow-lg), var(--shadow-gold-soft);
+    text-align: center;
+    animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-header {
+    margin-bottom: 28px;
+}
+
+.auth-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: inline-block;
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.auth-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.auth-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.auth-link:hover {
+    color: var(--gold);
+}
+
+/* Кнопка показать пароль */
+.input-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.6;
+    transition: var(--transition-fast);
+}
+
+.input-toggle:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Админ шапка */
+.admin-header {
+    text-align: center;
+    padding: 50px 0 24px;
+    position: relative;
+}
+
+.admin-title-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.admin-icon {
+    font-size: 32px;
+    animation: shieldPulse 2s ease-in-out infinite;
+}
+
+@keyframes shieldPulse {
+    0%, 100% { filter: drop-shadow(0 0 10px var(--gold-glow-soft)); }
+    50% { filter: drop-shadow(0 0 25px var(--gold-glow)); }
+}
+
+.btn-logout {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 92, 92, 0.1);
+    border: 1px solid rgba(255, 92, 92, 0.3);
+    color: var(--text-error);
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-logout:hover {
+    background: rgba(255, 92, 92, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Статистика */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: var(--border-gold);
+    border-radius: 16px;
+    padding: 16px 12px;
+    text-align: center;
+    position: relative;
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold);
+    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+}
+
+.stat-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--gold);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 6px;
+}
+
+.stat-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--text-success);
+    color: var(--bg-primary);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+    text-transform: uppercase;
+}
+
+.stat-pending .stat-number { color: var(--gold); }
+.stat-users .stat-number { color: var(--text-success); }
+.stat-processed .stat-number { color: var(--text-secondary); }
+
+/* Заголовок секции */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 0 4px;
+}
+
+.section-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.btn-refresh {
+    background: var(--bg-card);
+    border: var(--border-gold);
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-refresh:hover {
+    border-color: var(--gold);
+    transform: rotate(180deg);
+}
+
+.refresh-icon {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+/* Список заявок */
+.requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.request-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(243, 198, 35, 0.2);
+    border-radius: 16px;
+    padding: 18px;
+    transition: var(--transition);
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.request-card:hover {
+    border-color: var(--gold);
+    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+    transform: translateY(-2px) !important;
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.request-id {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(243, 198, 35, 0.1);
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+
+.request-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.request-body {
+    margin-bottom: 16px;
+}
+
+.request-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.request-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.request-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.request-value.highlight {
+    color: var(--gold);
+    font-weight: 700;
+}
+
+.request-value.wallet {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Кнопки действий */
+.request-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+}
+
+.btn-approve {
+    background: rgba(0, 214, 143, 0.1);
+    border-color: rgba(0, 214, 143, 0.3);
+    color: var(--text-success);
+}
+
+.btn-approve:hover {
+    background: rgba(0, 214, 143, 0.2);
+    border-color: var(--text-success);
+    box-shadow: 0 4px 16px rgba(0, 214, 143, 0.2);
+}
+
+.btn-reject {
+    background: rgba(255, 92, 92, 0.1);
+    border-color: rgba(255, 92, 92, 0.3);
+    color: var(--text-error);
+}
+
+.btn-reject:hover {
+    background: rgba(255, 92, 92, 0.2);
+    border-color: var(--text-error);
+    box-shadow: 0 4px 16px rgba(255, 92, 92, 0.2);
+}
+
+.action-icon {
+    font-size: 16px;
+}
+
+/* Пустой список */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-secondary);
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-hint {
+    font-size: 13px;
+    margin-top: 8px;
+    opacity: 0.7;
+}
+
+/* Лоадер */
+.loader-placeholder {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.loader-placeholder .spinner {
+    margin: 0 auto 16px;
+}
+
+/* Ошибка */
+.error-placeholder {
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.error-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.error-placeholder .btn {
+    margin-top: 16px;
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal-card {
+    position: relative;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: var(--border-gold);
+    border-radius: 20px;
+    padding: 24px;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: var(--shadow-lg), var(--shadow-gold);
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.modal-icon {
+    font-size: 28px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.modal-text {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.4;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.modal-actions .btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--text-success), #00b377);
+    color: var(--bg-primary);
+    border: none;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--text-error), #cc4a4a);
+    color: white;
+    border: none;
+}
+
+/* Футер админки */
+.admin-footer {
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Адаптив */
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 14px 12px;
+    }
+    
+    .stat-number {
+        font-size: 22px;
+    }
+    
+    .request-card {
+        padding: 16px;
+    }
+    
+    .request-actions {
+        flex-direction: column;
+    }
+    
+    .btn-action {
+        width: 100%;
+    }
+    
+    .modal-card {
+        padding: 20px;
+        margin: 0 12px;
+    }
+}
+
+/* Анимация шейка для ошибок */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
