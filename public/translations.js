@@ -1,11 +1,7 @@
 const translations = {
     ru: {
-        app_title: 'DogePay',
         subtitle: 'Зарабатывай DOGE играя',
         balance_label: 'Твой баланс',
-        btn_faucet: 'Кран',
-        btn_ads: 'Реклама',
-        btn_withdraw: 'Вывод',
         footer: '🔐 Безопасно • ⚡ Быстро • 🌍 Глобально',
         faucet_title: 'Кран',
         faucet_subtitle: 'Забери бесплатные монеты',
@@ -34,12 +30,8 @@ const translations = {
         btn_back: '← На главную'
     },
     en: {
-        app_title: 'DogePay',
         subtitle: 'Earn DOGE by playing',
         balance_label: 'Your balance',
-        btn_faucet: 'Faucet',
-        btn_ads: 'Ads',
-        btn_withdraw: 'Withdraw',
         footer: '🔐 Secure • ⚡ Fast • 🌍 Global',
         faucet_title: 'Faucet',
         faucet_subtitle: 'Claim free coins',
