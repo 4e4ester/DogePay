@@ -26,15 +26,24 @@
 
         <div id="rewardPopup" class="reward-popup hidden"></div>
 
+        <!-- CAPTCHA -->
+        <div id="captchaContainer" class="captcha-container hidden">
+            <p class="captcha-question" id="captchaQuestion"></p>
+            <input type="number" id="captchaInput" class="form-input" placeholder="Введи ответ">
+            <button id="captchaSubmit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Проверить</button>
+            <p id="captchaError" class="message error hidden"></p>
+        </div>
+
         <div class="form-card">
             <p class="timer" id="timer">⏳ Проверка...</p>
-            <button id="claimBtn" class="btn btn-primary" style="width: 100%;">ЗАБРАТЬ (10-50 🪙)</button>
-            <p style="color: #888; font-size: 13px; margin-top: 15px; text-align: center;">⏰ Доступно каждые 3 часа</p>
+            <button id="claimBtn" class="btn btn-primary" style="width: 100%;">ЗАБРАТЬ (10-30 🪙)</button>
+            <p style="color: #888; font-size: 13px; margin-top: 15px; text-align: center;">⏰ Доступно каждые 60 секунд</p>
         </div>
 
         <div class="info-box">
-            <p>💎 Каждая награда: 10-50 🪙</p>
-            <p>🔄 Следующий сбор: через 3 часа</p>
+            <p>💎 Каждая награда: 10-30 🪙</p>
+            <p>🔄 Следующий сбор: через 60 секунд</p>
+            <p>🔐 CAPTCHA для защиты от ботов</p>
         </div>
 
         <a href="index.html" class="btn btn-secondary" style="width: 100%;">← На главную</a>
@@ -52,14 +61,36 @@
         const timerEl = document.getElementById('timer');
         const claimBtn = document.getElementById('claimBtn');
         const rewardPopup = document.getElementById('rewardPopup');
+        const captchaContainer = document.getElementById('captchaContainer');
+        const captchaQuestion = document.getElementById('captchaQuestion');
+        const captchaInput = document.getElementById('captchaInput');
+        const captchaSubmit = document.getElementById('captchaSubmit');
+        const captchaError = document.getElementById('captchaError');
 
+        let currentCaptcha = 0;
+        let pendingReward = 0;
+
+        // Генерация CAPTCHA (простая математика)
+        function generateCaptcha() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            const operators = ['+', '-', '*'];
+            const operator = operators[Math.floor(Math.random() * operators.length)];
+            
+            currentCaptcha = eval(`${num1} ${operator} ${num2}`);
+            captchaQuestion.innerText = `Сколько будет ${num1} ${operator} ${num2}?`;
+            captchaInput.value = '';
+            captchaError.classList.add('hidden');
+        }
+
+        // Проверка таймера при загрузке
         function checkTimer() {
             const lastClaim = localStorage.getItem('lastClaim');
             if (lastClaim) {
                 const elapsed = Date.now() - parseInt(lastClaim);
-                const threeHours = 3 * 60 * 60 * 1000;
-                if (elapsed < threeHours) {
-                    const remaining = threeHours - elapsed;
+                const sixtySeconds = 60 * 1000;
+                if (elapsed < sixtySeconds) {
+                    const remaining = sixtySeconds - elapsed;
                     startTimer(remaining);
                     claimBtn.disabled = true;
                     claimBtn.innerText = '⏳ Жди';
@@ -67,28 +98,48 @@
                 } else {
                     timerEl.innerText = '✅ Можно забирать!';
                     claimBtn.disabled = false;
-                    claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
+                    claimBtn.innerText = 'ЗАБРАТЬ (10-30 🪙)';
                 }
             } else {
                 timerEl.innerText = '✅ Можно забирать!';
                 claimBtn.disabled = false;
-                claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
+                claimBtn.innerText = 'ЗАБРАТЬ (10-30 🪙)';
             }
         }
 
         function formatTime(ms) {
             const totalSec = Math.max(0, Math.floor(ms / 1000));
-            const h = Math.floor(totalSec / 3600);
-            const m = Math.floor((totalSec % 3600) / 60);
+            const m = Math.floor(totalSec / 60);
             const s = totalSec % 60;
-            return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            return `${m}:${String(s).padStart(2,'0')}`;
         }
 
+        // Нажатие на кнопку "ЗАБРАТЬ"
         claimBtn.addEventListener('click', () => {
+            // Показать CAPTCHA
+            generateCaptcha();
+            captchaContainer.classList.remove('hidden');
+            claimBtn.disabled = true;
+        });
+
+        // Проверка CAPTCHA
+        captchaSubmit.addEventListener('click', () => {
+            const userAnswer = parseInt(captchaInput.value);
+            
+            if (userAnswer !== currentCaptcha) {
+                captchaError.innerText = '❌ Неверно! Попробуй ещё раз.';
+                captchaError.classList.remove('hidden');
+                generateCaptcha();
+                return;
+            }
+
+            // CAPTCHA пройдена → начисляем награду
+            captchaContainer.classList.add('hidden');
+            
             if (typeof playClaim === 'function') playClaim();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
-            const reward = Math.floor(Math.random() * 41) + 10;
+            const reward = Math.floor(Math.random() * 21) + 10; // 10-30
             
             const currentBalance = parseInt(localStorage.getItem('balance') || '0');
             localStorage.setItem('balance', (currentBalance + reward).toString());
@@ -97,21 +148,21 @@
             rewardPopup.innerText = '🎉 +' + reward + ' 🪙';
             rewardPopup.classList.remove('hidden');
             
-            claimBtn.disabled = true;
-            claimBtn.innerText = '⏰ Следующий сбор через 3ч';
+            claimBtn.innerText = '⏰ Следующий сбор через 60 сек';
             timerEl.innerText = '⏰ Таймер запущен';
 
             if (typeof updateBalance === 'function') updateBalance();
 
             setTimeout(() => { 
                 rewardPopup.classList.add('hidden'); 
-                startTimer(3 * 60 * 60 * 1000); 
+                startTimer(60 * 1000); 
             }, 3000);
         });
 
         function startTimer(ms) {
             let remaining = ms;
             timerEl.innerText = '⏰ ' + formatTime(remaining);
+            claimBtn.disabled = true;
             
             const interval = setInterval(() => {
                 remaining -= 1000;
@@ -119,7 +170,7 @@
                     clearInterval(interval);
                     timerEl.innerText = '✅ Можно забирать!';
                     claimBtn.disabled = false;
-                    claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
+                    claimBtn.innerText = 'ЗАБРАТЬ (10-30 🪙)';
                     return;
                 }
                 timerEl.innerText = '⏰ ' + formatTime(remaining);
