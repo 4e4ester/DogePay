@@ -23,11 +23,9 @@ try {
 
 // Воспроизвести звук клика
 function playClick() {
-    // Вибрация Telegram
     if (tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
     }
-    // Звук
     if (clickSound) {
         clickSound.currentTime = 0;
         clickSound.play().catch(() => {});
@@ -36,11 +34,9 @@ function playClick() {
 
 // Воспроизвести звук победы
 function playClaim() {
-    // Вибрация Telegram
     if (tg.HapticFeedback) {
         tg.HapticFeedback.notificationOccurred('success');
     }
-    // Звук
     if (claimSound) {
         claimSound.currentTime = 0;
         claimSound.play().catch(() => {});
@@ -59,12 +55,12 @@ function updateBalance() {
     if (dogeEl) dogeEl.innerText = (balance / 1000).toFixed(4);
 }
 
-// Переключение языка (БЕЗ ПЕРЕВОДА КНОПКИ!)
+// Переключение языка
 window.toggleLanguage = function() {
     playClick();
     const newLang = currentLang === 'ru' ? 'en' : 'ru';
     setLanguage(newLang);
-    // Обновить текст кнопки вручную
+    // Обновить кнопку
     const langBtn = document.getElementById('langSwitch');
     if (langBtn) {
         langBtn.innerHTML = newLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
@@ -75,9 +71,8 @@ window.toggleLanguage = function() {
 // Глобальные функции
 window.updateBalance = updateBalance;
 
-// 🔊 ЗВУКИ НА ВСЕ ЭЛЕМЕНТЫ (включая вложенные)
+// Звуки на все кнопки
 document.addEventListener('click', function(e) {
-    // Проверяем сам элемент и его родителей
     let target = e.target;
     while (target && target !== document) {
         if (target.tagName === 'BUTTON' || 
@@ -90,17 +85,33 @@ document.addEventListener('click', function(e) {
         }
         target = target.parentElement;
     }
-}, true); // useCapture = true для перехвата на всех уровнях
+}, true);
 
-// Инициализация
+// Инициализация с загрузкой
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
-        if (typeof updatePageLanguage === 'function') updatePageLanguage();
-        updateBalance();
-    });
+    document.addEventListener('DOMContentLoaded', initApp);
 } else {
+    initApp();
+}
+
+function initApp() {
+    // Загрузить язык
     if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
     if (typeof updatePageLanguage === 'function') updatePageLanguage();
+    
+    // Обновить баланс
     updateBalance();
+    
+    // Скрыть загрузку через 1.5 секунды
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const mainContent = document.getElementById('mainContent');
+        
+        if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+        }
+        if (mainContent) {
+            mainContent.style.display = 'block';
+        }
+    }, 1500);
 }
