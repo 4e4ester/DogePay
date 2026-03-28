@@ -2,81 +2,88 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DogePay - Earn Free DOGE</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DogePay</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- LOADING SCREEN -->
-    <div id="loadingScreen" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-logo">🐕</div>
-            <div class="loading-spinner"></div>
-            <p id="loadingText" class="loading-text">Загрузка DogePay...</p>
+    <!-- 🎨 ЭКРАН ЗАГРУЗКИ -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-content">
+            <div class="logo-bounce">🐕</div>
+            <div class="spinner"></div>
+            <p class="loading-text">Загрузка...</p>
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="container" id="mainContent">
+    <!-- 🎨 ОСНОВНОЙ КОНТЕНТ -->
+    <div class="container" id="main-content">
+        
+        <!-- 🇷🇺🇬🇧 ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА (ФЛАГИ - НЕ ПЕРЕВОДИТЬ!) -->
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
+        
+        <!-- 🎨 ШАПКА -->
+        <div class="header">
+            <div class="logo-float">🐕</div>
+            <h1 class="gradient-title">DogePay</h1>
+            <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
+        </div>
 
-        <!-- Language Switch -->
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">
-            🇷🇺 🇬🇧
-        </button>
-
-        <header class="header">
-            <div class="logo-wrapper">
-                <div class="logo">🐕</div>
-            </div>
-            <h1 id="title" class="gradient-text">DogePay</h1>
-            <p id="subtitle" class="subtitle">Зарабатывай DOGE с удовольствием</p>
-        </header>
-
-        <!-- Balance Card -->
+        <!-- 🎨 КАРТОЧКА БАЛАНСА -->
         <div class="balance-card">
-            <div class="balance-header">
-                <p id="balanceLabel" class="balance-label">ТВОЙ БАЛАНС</p>
-            </div>
+            <p class="balance-label" data-t="balance_label">Твой баланс</p>
             <div class="balance-main">
-                <span id="balance">0.00000000</span>
-                <span class="coin-symbol">🪙</span>
+                <span class="coin-icon">🪙</span>
+                <span id="balance" class="balance-number">0</span>
             </div>
-            <div class="balance-doge">
-                ≈ <span id="balanceDoge">0.0000</span> DOGE
-            </div>
+            <p class="balance-doge">
+                <span data-t="balance_doge">🐕 ~</span>
+                <span id="balance-doge">0.0000</span>
+                <span data-t="balance_doge_suffix">DOGE</span>
+            </p>
         </div>
 
-        <!-- Action Buttons -->
+        <!-- 🎨 КНОПКИ -->
         <div class="buttons-grid">
-            <a href="faucet.html" class="btn btn-primary">
+            <a href="faucet.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">🚰</span>
-                <span id="btnFaucet">Кран</span>
+                <span data-t="btn_faucet">Кран</span>
             </a>
-            
-            <a href="ads.html" class="btn btn-primary">
-                <span class="btn-icon">📺</span>
-                <span id="btnAds">Реклама</span>
+            <a href="ads.html" class="btn btn-primary" onclick="playClick()">
+                <span class="btn-icon">📢</span>
+                <span data-t="btn_ads">Реклама</span>
             </a>
-            
-            <a href="withdraw.html" class="btn btn-secondary">
+            <a href="withdraw.html" class="btn btn-secondary" onclick="playClick()">
                 <span class="btn-icon">💸</span>
-                <span id="btnWithdraw">Вывод</span>
+                <span data-t="btn_withdraw">Вывод</span>
             </a>
         </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <p id="footerText">🔐 Безопасно • ⚡ Мгновенно • 🌍 Для всех</p>
-        </footer>
+        <!-- 🎨 ФУТЕР -->
+        <div class="footer">
+            <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+        </div>
     </div>
 
-    <!-- Audio -->
-    <audio id="clickSound" src="click.mp3" preload="auto"></audio>
-    <audio id="claimSound" src="claim.mp3" preload="auto"></audio>
-
-    <!-- Scripts -->
     <script src="translations.js"></script>
     <script src="app.js"></script>
+    <script>
+        // Инициализация после загрузки
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const loading = document.getElementById('loading-screen');
+                const main = document.getElementById('main-content');
+                if (loading) loading.classList.add('hidden');
+                if (main) {
+                    main.style.display = 'block';
+                    main.classList.add('fade-in');
+                }
+                if (window.initApp) window.initApp();
+            }, 1500);
+        });
+    </script>
 </body>
 </html>
