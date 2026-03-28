@@ -18,7 +18,7 @@
         <div id="rewardPopup" class="reward-popup hidden"></div>
 
         <div class="form-card">
-            <p class="timer" id="timer">✅ Можно забирать!</p>
+            <p class="timer" id="timer">⏳ Проверка...</p>
             <button id="claimBtn" class="btn btn-primary" style="width: 100%;">ЗАБРАТЬ (10-50 🪙)</button>
             <p style="color: #888; font-size: 13px; margin-top: 15px; text-align: center;">⏰ Доступно каждые 3 часа</p>
         </div>
@@ -35,7 +35,6 @@
         </div>
     </div>
 
-    <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
@@ -45,7 +44,7 @@
         const claimBtn = document.getElementById('claimBtn');
         const rewardPopup = document.getElementById('rewardPopup');
 
-        // Проверка таймера
+        // Проверка таймера при загрузке
         const lastClaim = localStorage.getItem('lastClaim');
         if (lastClaim) {
             const elapsed = Date.now() - parseInt(lastClaim);
@@ -55,7 +54,16 @@
                 startTimer(remaining);
                 claimBtn.disabled = true;
                 claimBtn.innerText = '⏳ Жди';
+                timerEl.innerText = '⏰ ' + formatTime(remaining);
+            } else {
+                timerEl.innerText = '✅ Можно забирать!';
+                claimBtn.disabled = false;
+                claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
             }
+        } else {
+            timerEl.innerText = '✅ Можно забирать!';
+            claimBtn.disabled = false;
+            claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
         }
 
         function formatTime(ms) {
@@ -77,12 +85,15 @@
             localStorage.setItem('balance', (currentBalance + reward).toString());
             localStorage.setItem('lastClaim', Date.now().toString());
 
+            // Показать награду
             rewardPopup.innerText = '🎉 +' + reward + ' 🪙';
             rewardPopup.classList.remove('hidden');
+            
             claimBtn.disabled = true;
             claimBtn.innerText = '⏰ Следующий сбор через 3ч';
             timerEl.innerText = '⏰ Таймер запущен';
 
+            // Обновить баланс на главной
             if (typeof updateBalance === 'function') updateBalance();
 
             setTimeout(() => { 
