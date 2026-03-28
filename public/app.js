@@ -59,52 +59,48 @@ function updateBalance() {
     if (dogeEl) dogeEl.innerText = (balance / 1000).toFixed(4);
 }
 
-// Переключение языка
+// Переключение языка (БЕЗ ПЕРЕВОДА КНОПКИ!)
 window.toggleLanguage = function() {
     playClick();
     const newLang = currentLang === 'ru' ? 'en' : 'ru';
     setLanguage(newLang);
+    // Обновить текст кнопки вручную
+    const langBtn = document.getElementById('langSwitch');
+    if (langBtn) {
+        langBtn.innerHTML = newLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
+    }
     setTimeout(() => window.location.reload(), 100);
 };
 
-// Обновление кнопки языка
-function updateLanguageButton() {
-    const langBtn = document.getElementById('langSwitch');
-    if (langBtn) {
-        langBtn.innerHTML = currentLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
-    }
-}
-
 // Глобальные функции
 window.updateBalance = updateBalance;
-window.updateLanguageButton = updateLanguageButton;
 
-// 🔊 ЗВУКИ НА ВСЕ КНОПКИ (ДЕЛЕГИРОВАНИЕ)
+// 🔊 ЗВУКИ НА ВСЕ ЭЛЕМЕНТЫ (включая вложенные)
 document.addEventListener('click', function(e) {
-    const target = e.target;
-    // Проверяем все возможные элементы
-    if (target.tagName === 'BUTTON' || 
-        target.tagName === 'A' || 
-        target.classList.contains('btn') ||
-        target.classList.contains('btn-icon') ||
-        target.closest('.btn') ||
-        target.closest('button') ||
-        target.closest('a')) {
-        playClick();
+    // Проверяем сам элемент и его родителей
+    let target = e.target;
+    while (target && target !== document) {
+        if (target.tagName === 'BUTTON' || 
+            target.tagName === 'A' || 
+            target.classList.contains('btn') ||
+            target.classList.contains('btn-icon') ||
+            target.classList.contains('lang-switch')) {
+            playClick();
+            break;
+        }
+        target = target.parentElement;
     }
-});
+}, true); // useCapture = true для перехвата на всех уровнях
 
 // Инициализация
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
         if (typeof updatePageLanguage === 'function') updatePageLanguage();
-        updateLanguageButton();
         updateBalance();
     });
 } else {
     if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
     if (typeof updatePageLanguage === 'function') updatePageLanguage();
-    updateLanguageButton();
     updateBalance();
 }
