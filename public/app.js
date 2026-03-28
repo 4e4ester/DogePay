@@ -418,3 +418,58 @@
     }
 
 })();
+
+// Прямое обновление текстов (если translations.js не работает)
+function updateTextsDirectly() {
+    const lang = window.currentLang || 'ru';
+    
+    const texts = {
+        ru: {
+            subtitle: 'Зарабатывай DOGE играя',
+            balance_label: 'Твой баланс',
+            balance_doge_prefix: '🐕 ~',
+            balance_doge_suffix: 'DOGE',
+            btn_faucet: 'Кран',
+            btn_ads: 'Реклама',
+            btn_withdraw: 'Вывод',
+            footer: '🔐 Безопасно • ⚡ Быстро • 🌍 Глобально'
+        },
+        en: {
+            subtitle: 'Earn DOGE while playing',
+            balance_label: 'Your balance',
+            balance_doge_prefix: '🐕 ~',
+            balance_doge_suffix: 'DOGE',
+            btn_faucet: 'Faucet',
+            btn_ads: 'Ads',
+            btn_withdraw: 'Withdraw',
+            footer: '🔐 Secure • ⚡ Fast • 🌍 Global'
+        }
+    };
+    
+    const t = texts[lang];
+    
+    // Обновляем элементы
+    const updateEl = (selector, text) => {
+        const el = document.querySelector(selector);
+        if (el) el.textContent = text;
+    };
+    
+    updateEl('[data-t="subtitle"]', t.subtitle);
+    updateEl('[data-t="balance_label"]', t.balance_label);
+    document.getElementById('balance-doge-prefix').textContent = t.balance_doge_prefix;
+    document.getElementById('balance-doge-suffix').textContent = t.balance_doge_suffix;
+    updateEl('[data-t="footer"]', t.footer);
+    
+    // Обновляем кнопки
+    const buttons = document.querySelectorAll('.buttons-grid .btn span:last-child');
+    buttons[0].textContent = t.btn_faucet;
+    buttons[1].textContent = t.btn_ads;
+    buttons[2].textContent = t.btn_withdraw;
+}
+
+// Добавь вызов в initApp
+const originalInitApp = window.initApp;
+window.initApp = function() {
+    if (originalInitApp) originalInitApp();
+    updateTextsDirectly();
+};
