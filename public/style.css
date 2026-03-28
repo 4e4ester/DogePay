@@ -2012,3 +2012,352 @@ body::-webkit-scrollbar-thumb {
     25% { transform: translateX(-6px); }
     75% { transform: translateX(6px); }
 }
+
+/* ===== 📢 ADS PAGE STYLES ===== */
+
+/* Карточка рекламы */
+.ads-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: var(--border-gold);
+    border-radius: var(--border-radius-lg);
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+    position: relative;
+    overflow: hidden;
+}
+
+.ads-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(243, 198, 35, 0.05) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.ads-card:hover::before {
+    opacity: 1;
+}
+
+/* Статус */
+.ads-status {
+    margin-bottom: 24px;
+}
+
+.status-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: inline-block;
+    animation: statusBounce 2s ease-in-out infinite;
+}
+
+@keyframes statusBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.05); }
+}
+
+.status-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.status-text.status-ready {
+    color: var(--text-success);
+    animation: statusGlow 1.5s ease-in-out infinite;
+}
+
+.status-text.status-waiting {
+    color: var(--text-secondary);
+}
+
+@keyframes statusGlow {
+    0%, 100% { text-shadow: none; }
+    50% { text-shadow: 0 0 15px var(--text-success); }
+}
+
+/* Таймер */
+.timer-wrapper {
+    margin: 20px 0;
+}
+
+.timer-display {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--gold);
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 20px var(--gold-glow-soft);
+    margin: 8px 0;
+    animation: timerPulse 2s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+}
+
+.timer-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Прогресс-бар */
+.progress-wrapper {
+    margin: 24px 0;
+}
+
+.progress-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s linear;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+.progress-label span {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+/* Кнопка просмотра */
+.watch-wrapper {
+    margin-top: 16px;
+}
+
+.watch-btn {
+    padding: 20px 32px;
+    font-size: 17px;
+    margin-bottom: 12px;
+}
+
+.watch-btn .btn-icon {
+    font-size: 24px;
+    animation: playPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes playPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.reward-preview {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.reward-preview strong {
+    color: var(--gold);
+}
+
+/* Оверлей просмотра */
+.watching-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-lg);
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.watching-overlay.hidden {
+    display: none;
+}
+
+.watching-overlay:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.watching-content {
+    text-align: center;
+    padding: 24px;
+}
+
+.watching-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(243, 198, 35, 0.2);
+    border-top: 3px solid var(--gold);
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    animation: spin 0.8s linear infinite;
+}
+
+.watching-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+.watching-progress {
+    width: 200px;
+    max-width: 80%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.watching-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.1s linear;
+}
+
+/* Мини-статистика */
+.stats-mini {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.stat-item {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(243, 198, 35, 0.2);
+    border-radius: 16px;
+    padding: 16px 12px;
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Тост с наградой */
+.reward-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+    color: var(--bg-primary);
+    padding: 14px 28px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    z-index: 10000;
+    box-shadow: 0 10px 40px rgba(243, 198, 35, 0.5);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.reward-toast.reward-show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.reward-icon {
+    font-size: 22px;
+    animation: bounce 0.6s ease infinite;
+}
+
+.reward-text {
+    color: var(--bg-primary);
+}
+
+/* Анимация готовности */
+@keyframes pulseReady {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); box-shadow: 0 0 30px var(--gold-glow); }
+    100% { transform: scale(1); }
+}
+
+/* Адаптив */
+@media (max-width: 480px) {
+    .ads-card {
+        padding: 24px 20px;
+    }
+    
+    .timer-display {
+        font-size: 36px;
+    }
+    
+    .watch-btn {
+        padding: 18px 28px;
+        font-size: 16px;
+    }
+    
+    .stats-mini {
+        grid-template-columns: 1fr;
+    }
+    
+    .watching-progress {
+        width: 160px;
+    }
+}
+
+/* Скрытие элементов */
+.hidden {
+    display: none !important;
+}
