@@ -1,24 +1,28 @@
+// ==================== app.js ====================
+
 // Telegram WebApp
-const tg = window.Telegram.WebApp;
-tg.expand();
-tg.ready();
+const tg = window.Telegram?.WebApp || {};
+if (tg.expand) tg.expand();
+if (tg.ready) tg.ready();
 
 // 🔊 ЗВУКИ
 let clickSound = null;
 let claimSound = null;
 
-try {
-    clickSound = new Audio('click.mp3');
-    clickSound.volume = 0.5;
-} catch(e) {
-    console.log('Звук клика не загружен');
-}
+function initSounds() {
+    try {
+        clickSound = new Audio('click.mp3');
+        clickSound.volume = 0.6;
+    } catch (e) {
+        console.warn('click.mp3 не удалось загрузить');
+    }
 
-try {
-    claimSound = new Audio('claim.mp3');
-    claimSound.volume = 0.7;
-} catch(e) {
-    console.log('Звук победы не загружен');
+    try {
+        claimSound = new Audio('claim.mp3');
+        claimSound.volume = 0.8;
+    } catch (e) {
+        console.warn('claim.mp3 не удалось загрузить');
+    }
 }
 
 function playClick() {
@@ -41,79 +45,125 @@ function playClaim() {
     }
 }
 
+// Глобальные функции
 window.playClick = playClick;
 window.playClaim = playClaim;
 
+// ==================== БАЛАНС ====================
+let currentBalance = parseFloat(localStorage.getItem('dogeBalance')) || 0.00000000;
+
 function updateBalance() {
-    const balance = parseInt(localStorage.getItem('balance') || '0');
     const balanceEl = document.getElementById('balance');
-    const dogeEl = document.getElementById('balance-doge');
-    if (balanceEl) balanceEl.innerText = balance.toLocaleString('ru-RU');
-    if (dogeEl) dogeEl.innerText = (balance / 1000).toFixed(4);
+    const dogeEl = document.getElementById('balanceDoge');
+
+    if (balanceEl) {
+        balanceEl.textContent = currentBalance.toFixed(8);
+    }
+    if (dogeEl) {
+        dogeEl.textContent = currentBalance.toFixed(4);
+    }
 }
 
-// 🔷 ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА (ТОЛЬКО ФЛАГИ!)
+// ==================== ЯЗЫК ====================
+let currentLang = localStorage.getItem('lang') || 'ru';
+
+function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+}
+
 window.toggleLanguage = function() {
     playClick();
+    
     const newLang = currentLang === 'ru' ? 'en' : 'ru';
     setLanguage(newLang);
-    
-    // 🔥 ОБНОВИТЬ КНОПКУ ВРУЧНУЮ (ТОЛЬКО ФЛАГИ!)
+
+    // Меняем флаги на кнопке
     const langBtn = document.getElementById('langSwitch');
     if (langBtn) {
-        if (newLang === 'ru') {
-            langBtn.innerHTML = '🇷🇺 🇬🇧';
-        } else {
-            langBtn.innerHTML = '🇬🇧 🇷🇺';
-        }
+        langBtn.innerHTML = newLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
     }
-    
-    setTimeout(() => window.location.reload(), 100);
+
+    // Применяем переводы
+    if (typeof applyTranslations === 'function') {
+        applyTranslations();
+    }
+
+    // Не делаем полный reload — лучше обновить только тексты
+    // setTimeout(() => window.location.reload(), 100); // убрал полный релоад
 };
 
-window.updateBalance = updateBalance;
+// ==================== ПЕРЕВОДЫ ====================
+function applyTranslations() {
+    const t = window.translations ? window.translations[currentLang] : {};
 
-// Звуки на все кнопки
-document.addEventListener('click', function(e) {
-    let target = e.target;
-    while (target && target !== document) {
-        if (target.tagName === 'BUTTON' || 
-            target.tagName === 'A' || 
-            target.classList.contains('btn') ||
-            target.classList.contains('btn-icon') ||
-            target.classList.contains('lang-switch')) {
-            playClick();
-            break;
-        }
-        target = target.parentElement;
+    // Главная страница
+    if (document.getElementById('title')) 
+        document.getElementById('title').textContent = t.title || 'DogePay';
+
+    if (document.getElementById('subtitle')) 
+        document.getElementById('subtitle').textContent = t.subtitle || 'Зарабатывай DOGE играя';
+
+    if (document.getElementById('balanceLabel')) 
+        document.getElementById('balanceLabel').textContent = t.balanceLabel || 'Твой баланс';
+
+    if (document.getElementById('balanceDogeLabel')) 
+        document.getElementById('balanceDogeLabel').innerHTML = 
+            `~<span id="balanceDoge">${currentBalance.toFixed(4)}</span> DOGE`;
+
+    if (document.getElementById('btnFaucet')) 
+        document.getElementById('btnFaucet').textContent = t.faucet || 'Кран';
+
+    if (document.getElementById('btnAds')) 
+        document.getElementById('btnAds').textContent = t.ads || 'Реклама';
+
+    if (document.getElementById('btnWithdraw')) 
+        document.getElementById('btnWithdraw').textContent = t.withdraw || 'Вывод';
+
+    if (document.getElementById('footerText')) 
+        document.getElementById('footerText').textContent = t.footer || '🔐 Безопасно • ⚡ Быстро • 🌍 Глобально';
+
+    if (document.getElementById('loadingText')) 
+        document.getElementById('loadingText').textContent = t.loading || 'Загрузка DogePay...';
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+function initApp() {
+    initSounds();
+
+    // Загружаем язык
+    currentLang = localStorage.getItem('lang') || 'ru';
+
+    // Устанавливаем правильные флаги
+    const langBtn = document.getElementById('langSwitch');
+    if (langBtn) {
+        langBtn.innerHTML = currentLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
     }
-}, true);
 
+    // Применяем переводы
+    applyTranslations();
+
+    // Обновляем баланс
+    updateBalance();
+
+    // Прячем экран загрузки
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const mainContent = document.getElementById('mainContent');
+
+        if (loadingScreen) loadingScreen.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'block';
+    }, 1200);
+}
+
+// Запуск приложения
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 } else {
     initApp();
 }
 
-function initApp() {
-    if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
-    if (typeof updatePageLanguage === 'function') updatePageLanguage();
-    updateBalance();
-    
-    // 🔥 УСТАНОВИТЬ ПРАВИЛЬНЫЕ ФЛАГИ ПРИ ЗАГРУЗКЕ
-    const langBtn = document.getElementById('langSwitch');
-    if (langBtn) {
-        if (currentLang === 'ru') {
-            langBtn.innerHTML = '🇷🇺 🇬🇧';
-        } else {
-            langBtn.innerHTML = '🇬🇧 🇷🇺';
-        }
-    }
-    
-    setTimeout(() => {
-        const loadingScreen = document.getElementById('loadingScreen');
-        const mainContent = document.getElementById('mainContent');
-        if (loadingScreen) loadingScreen.classList.add('hidden');
-        if (mainContent) mainContent.style.display = 'block';
-    }, 1500);
-}
+// Глобальные функции для других страниц
+window.updateBalance = updateBalance;
+window.applyTranslations = applyTranslations;
+window.setLanguage = setLanguage;
