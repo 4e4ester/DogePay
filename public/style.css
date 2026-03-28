@@ -748,3 +748,264 @@ body::-webkit-scrollbar-thumb {
         box-shadow: none;
     }
 }
+
+/* ===== 🎨 FAUCET PAGE STYLES ===== */
+
+/* Таймер карточка */
+.timer-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: var(--border-gold);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    box-shadow: var(--shadow-md), var(--shadow-glow-soft);
+}
+
+.timer-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.timer-display {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--gold);
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 20px var(--gold-glow-soft);
+    margin: 8px 0;
+    animation: timerPulse 2s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.timer-status {
+    font-size: 14px;
+    color: var(--text-success);
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.timer-status.status-waiting {
+    color: var(--text-secondary);
+}
+
+.timer-status.status-ready {
+    color: var(--text-success);
+    animation: statusGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes statusGlow {
+    0%, 100% { text-shadow: none; }
+    50% { text-shadow: 0 0 10px var(--text-success); }
+}
+
+/* Большая кнопка */
+.btn-large {
+    padding: 20px 28px;
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.btn-large .btn-icon {
+    font-size: 26px;
+    width: 40px;
+    height: 40px;
+}
+
+/* CAPTCHA контейнер */
+.captcha-container {
+    margin-bottom: 20px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.captcha-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--gold);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    text-align: center;
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    animation: captchaEnter 0.4s ease;
+}
+
+@keyframes captchaEnter {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.captcha-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 16px;
+}
+
+.captcha-question {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.captcha-input {
+    width: 100%;
+    max-width: 120px;
+    padding: 14px;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(243, 198, 35, 0.3);
+    border-radius: 16px;
+    color: var(--gold);
+    margin-bottom: 16px;
+    transition: var(--transition);
+}
+
+.captcha-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 20px var(--gold-glow);
+}
+
+.captcha-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.captcha-error {
+    color: var(--text-error);
+    font-size: 14px;
+    margin-top: 12px;
+    font-weight: 500;
+}
+
+.captcha-error.hidden {
+    display: none;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+/* Попап награды */
+.reward-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.reward-popup.hidden {
+    display: none;
+}
+
+.reward-content {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+    color: var(--bg-primary);
+    padding: 24px 40px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 20px 60px rgba(243, 198, 35, 0.5);
+    animation: rewardPop 0.5s ease forwards;
+}
+
+@keyframes rewardPop {
+    0% { 
+        opacity: 0; 
+        transform: translate(-50%, -50%) scale(0.3); 
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.1); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1); 
+    }
+}
+
+.reward-icon {
+    font-size: 36px;
+    animation: bounce 0.6s ease infinite;
+}
+
+.reward-text {
+    font-size: 28px;
+    font-weight: 800;
+}
+
+/* Инфо блок */
+.info-box {
+    background: rgba(0, 214, 143, 0.08);
+    border: 1px solid rgba(0, 214, 143, 0.3);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin: 20px 0;
+}
+
+.info-box p {
+    color: var(--text-success);
+    font-size: 14px;
+    margin: 6px 0;
+    line-height: 1.4;
+}
+
+.info-box strong {
+    color: var(--gold);
+}
+
+/* Состояния кнопок */
+.btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn.disabled:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+/* Адаптив для крана */
+@media (max-width: 480px) {
+    .timer-display {
+        font-size: 40px;
+    }
+    
+    .captcha-question {
+        font-size: 20px;
+    }
+    
+    .captcha-input {
+        font-size: 24px;
+        padding: 12px;
+    }
+    
+    .reward-content {
+        padding: 20px 30px;
+    }
+    
+    .reward-text {
+        font-size: 24px;
+    }
+}
