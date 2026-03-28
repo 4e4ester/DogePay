@@ -473,3 +473,34 @@ window.initApp = function() {
     if (originalInitApp) originalInitApp();
     updateTextsDirectly();
 };
+
+// Принудительное обновление баланса
+window.forceUpdateBalance = async function(userId) {
+    try {
+        const uid = userId || getUserId();
+        const res = await fetch(`/api/balance?user_id=${uid}`);
+        const data = await res.json();
+        
+        if (data.success && typeof data.balance === 'number') {
+            // Обновляем на ВСЕХ страницах
+            const balanceEl = document.getElementById('balance');
+            const dogeEl = document.getElementById('balance-doge');
+            
+            if (balanceEl) {
+                balanceEl.textContent = data.balance.toLocaleString('ru-RU');
+            }
+            if (dogeEl) {
+                dogeEl.textContent = (data.balance / 1000).toFixed(4);
+            }
+            
+            // Сохраняем
+            localStorage.setItem('currentBalance', data.balance.toString());
+            
+            console.log('✅ Force balance update:', data.balance);
+            return data.balance;
+        }
+    } catch (err) {
+        console.error('❌ Force update error:', err);
+    }
+    return null;
+};
