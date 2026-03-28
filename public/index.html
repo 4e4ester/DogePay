@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- 🎨 ЭКРАН ЗАГРУЗКИ -->
+    <!-- ЭКРАН ЗАГРУЗКИ -->
     <div id="loading-screen" class="loading-screen">
         <div class="loader-content">
             <div class="logo-bounce">🐕</div>
@@ -19,20 +19,20 @@
         </div>
     </div>
 
-    <!-- 🎨 ОСНОВНОЙ КОНТЕНТ -->
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div class="container" id="main-content">
         
-        <!-- 🇷🇺🇬🇧 ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА (ФЛАГИ - НЕ ПЕРЕВОДИТЬ!) -->
+        <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
-        <!-- 🎨 ШАПКА -->
+        <!-- ШАПКА -->
         <div class="header">
             <div class="logo-float">🐕</div>
             <h1 class="gradient-title">DogePay</h1>
             <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
         </div>
 
-        <!-- 🎨 КАРТОЧКА БАЛАНСА -->
+        <!-- КАРТОЧКА БАЛАНСА -->
         <div class="balance-card">
             <p class="balance-label" data-t="balance_label">Твой баланс</p>
             <div class="balance-main">
@@ -40,13 +40,13 @@
                 <span id="balance" class="balance-number">0</span>
             </div>
             <p class="balance-doge">
-                <span data-t="balance_doge">🐕 ~</span>
+                <span data-t="balance_doge_prefix">🐕 ~</span>
                 <span id="balance-doge">0.0000</span>
                 <span data-t="balance_doge_suffix">DOGE</span>
             </p>
         </div>
 
-        <!-- 🎨 КНОПКИ -->
+        <!-- КНОПКИ (БЕЗ ДУБЛЕЙ!) -->
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">🚰</span>
@@ -62,7 +62,7 @@
             </a>
         </div>
 
-        <!-- 🎨 ФУТЕР -->
+        <!-- ФУТЕР -->
         <div class="footer">
             <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
         </div>
@@ -71,7 +71,6 @@
     <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
-        // Инициализация после загрузки
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
