@@ -1,7 +1,7 @@
 // index.js — DogePay Telegram Mini App Server
 // Node.js + Express + Telegraf + PostgreSQL (Neon)
+// ✅ УБРАЛ dotenv — работает напрямую с Render
 
-require('dotenv').config();
 const express = require('express');
 const { Telegraf } = require('telegraf');
 const { Pool } = require('pg');
@@ -12,18 +12,14 @@ const crypto = require('crypto');
 // ==================== КОНФИГУРАЦИЯ ====================
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = 'admin123';
-// Генерируем случайный админский токен при старте (для безопасности)
 const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex');
 
 // ==================== ИНИЦИАЛИЗАЦИЯ EXPRESS ====================
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Логирование запросов (для отладки)
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
@@ -32,10 +28,9 @@ app.use((req, res, next) => {
 // ==================== ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ ====================
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }, // Требуется для Neon
+    ssl: { rejectUnauthorized: false },
 });
 
-// Проверка подключения
 pool.on('error', (err) => {
     console.error('❌ Неожиданная ошибка PostgreSQL:', err);
     process.exit(1);
@@ -47,7 +42,6 @@ const createTables = async () => {
     try {
         await client.query('BEGIN');
 
-        // Таблица users
         await client.query(`
             CREATE TABLE IF NOT EXISTS users (
                 user_id BIGINT PRIMARY KEY,
@@ -59,7 +53,6 @@ const createTables = async () => {
             )
         `);
 
-        // Таблица withdraw_requests
         await client.query(`
             CREATE TABLE IF NOT EXISTS withdraw_requests (
                 id SERIAL PRIMARY KEY,
@@ -72,15 +65,8 @@ const createTables = async () => {
             )
         `);
 
-        // Индексы для ускорения запросов
-        await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_withdraw_requests_status 
-            ON withdraw_requests(status)
-        `);
-        await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_withdraw_requests_user_id 
-            ON withdraw_requests(user_id)
-        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_withdraw_requests_status ON withdraw_requests(status)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_withdraw_requests_user_id ON withdraw_requests(user_id)`);
 
         await client.query('COMMIT');
         console.log('✅ Таблицы созданы / проверены');
@@ -96,30 +82,20 @@ const createTables = async () => {
 // ==================== TELEGRAM БОТ ====================
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-// Обработчик команды /start
 bot.start(async (ctx) => {
     const userId = ctx.from.id;
     const username = ctx.from.username || '';
-
     try {
-        // Регистрируем пользователя (upsert)
         await pool.query(
-            `INSERT INTO users (user_id, username) 
-             VALUES ($1, $2) 
-             ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
+            `INSERT INTO users (user_id, username) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
             [userId, username]
         );
-
         const webAppUrl = process.env.WEB_APP_URL;
         await ctx.reply(
-            `🐕 Добро пожаловать в DogePay!\n\n` +
-            `Здесь вы можете получать криптовалюту в кране и выводить её.\n\n` +
-            `Нажмите кнопку ниже, чтобы открыть Mini App.`,
+            `🐕 Добро пожаловать в DogePay!\n\nЗдесь вы можете получать криптовалюту в кране и выводить её.\n\nНажмите кнопку ниже, чтобы открыть Mini App.`,
             {
                 reply_markup: {
-                    inline_keyboard: [
-                        [{ text: '🚀 Открыть Mini App', web_app: { url: webAppUrl } }]
-                    ]
+                    inline_keyboard: [[{ text: '🚀 Открыть Mini App', web_app: { url: webAppUrl } }]]
                 }
             }
         );
@@ -129,14 +105,10 @@ bot.start(async (ctx) => {
     }
 });
 
-// Обработчик команды /balance
 bot.command('balance', async (ctx) => {
     const userId = ctx.from.id;
     try {
-        const result = await pool.query(
-            `SELECT balance FROM users WHERE user_id = $1`,
-            [userId]
-        );
+        const result = await pool.query(`SELECT balance FROM users WHERE user_id = $1`, [userId]);
         const balance = result.rows[0]?.balance ?? 0;
         await ctx.reply(`💰 Ваш баланс: ${balance} 🪙`);
     } catch (err) {
@@ -145,7 +117,6 @@ bot.command('balance', async (ctx) => {
     }
 });
 
-// Запускаем бота с защитой от двойного запуска
 let botLaunched = false;
 const launchBot = async () => {
     if (botLaunched) return;
@@ -160,7 +131,6 @@ const launchBot = async () => {
 };
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-// Проверка админского токена (простая, для демонстрации)
 const isAdmin = (req) => {
     const authHeader = req.headers.authorization;
     return authHeader === `Bearer ${ADMIN_TOKEN}`;
@@ -168,18 +138,11 @@ const isAdmin = (req) => {
 
 // ==================== API ENDPOINTS ====================
 
-// 1. Получение баланса пользователя
 app.get('/api/balance', async (req, res) => {
     try {
         const { user_id } = req.query;
-        if (!user_id) {
-            return res.status(400).json({ success: false, error: 'user_id is required' });
-        }
-
-        const result = await pool.query(
-            `SELECT balance FROM users WHERE user_id = $1`,
-            [user_id]
-        );
+        if (!user_id) return res.status(400).json({ success: false, error: 'user_id is required' });
+        const result = await pool.query(`SELECT balance FROM users WHERE user_id = $1`, [user_id]);
         const balance = result.rows[0]?.balance ?? 0;
         res.json({ success: true, balance });
     } catch (err) {
@@ -188,28 +151,18 @@ app.get('/api/balance', async (req, res) => {
     }
 });
 
-// 2. Начисление монет (кран)
 app.post('/api/claim', async (req, res) => {
     const client = await pool.connect();
     try {
         const { user_id, username } = req.body;
-        if (!user_id) {
-            return res.status(400).json({ success: false, error: 'user_id is required' });
-        }
+        if (!user_id) return res.status(400).json({ success: false, error: 'user_id is required' });
 
-        // Регистрируем пользователя, если его нет
         await client.query(
-            `INSERT INTO users (user_id, username) 
-             VALUES ($1, $2) 
-             ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
+            `INSERT INTO users (user_id, username) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
             [user_id, username || null]
         );
 
-        // Проверяем время последнего клейма
-        const claimCheck = await client.query(
-            `SELECT last_claim, balance FROM users WHERE user_id = $1 FOR UPDATE`,
-            [user_id]
-        );
+        const claimCheck = await client.query(`SELECT last_claim, balance FROM users WHERE user_id = $1 FOR UPDATE`, [user_id]);
         const lastClaim = claimCheck.rows[0]?.last_claim;
         const currentBalance = claimCheck.rows[0]?.balance ?? 0;
 
@@ -219,31 +172,17 @@ app.post('/api/claim', async (req, res) => {
             const diffSeconds = (now - lastClaimDate) / 1000;
             if (diffSeconds < 60) {
                 const waitSeconds = Math.ceil(60 - diffSeconds);
-                return res.status(429).json({
-                    success: false,
-                    error: `Подождите ${waitSeconds} секунд`,
-                    nextClaimIn: waitSeconds
-                });
+                return res.status(429).json({ success: false, error: `Подождите ${waitSeconds} секунд`, nextClaimIn: waitSeconds });
             }
         }
 
-        // Генерируем случайную сумму от 10 до 30
         const amount = Math.floor(Math.random() * (30 - 10 + 1) + 10);
         const newBalance = currentBalance + amount;
         const now = new Date();
 
-        await client.query(
-            `UPDATE users SET balance = $1, last_claim = $2 WHERE user_id = $3`,
-            [newBalance, now, user_id]
-        );
-
+        await client.query(`UPDATE users SET balance = $1, last_claim = $2 WHERE user_id = $3`, [newBalance, now, user_id]);
         await client.query('COMMIT');
-        res.json({
-            success: true,
-            amount,
-            newBalance,
-            nextClaimTime: now.getTime() + 60000
-        });
+        res.json({ success: true, amount, newBalance, nextClaimTime: now.getTime() + 60000 });
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('API /claim error:', err);
@@ -253,47 +192,21 @@ app.post('/api/claim', async (req, res) => {
     }
 });
 
-// 3. Создание заявки на вывод
 app.post('/api/withdraw', async (req, res) => {
     const client = await pool.connect();
     try {
         const { user_id, amount, wallet_address } = req.body;
-        if (!user_id || !amount || !wallet_address) {
-            return res.status(400).json({ success: false, error: 'Missing required fields' });
-        }
-        if (amount < 1) {
-            return res.status(400).json({ success: false, error: 'Amount must be positive' });
-        }
+        if (!user_id || !amount || !wallet_address) return res.status(400).json({ success: false, error: 'Missing required fields' });
+        if (amount < 1) return res.status(400).json({ success: false, error: 'Amount must be positive' });
 
         await client.query('BEGIN');
-
-        // Проверяем баланс с блокировкой строки
-        const userRes = await client.query(
-            `SELECT balance FROM users WHERE user_id = $1 FOR UPDATE`,
-            [user_id]
-        );
-        if (userRes.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ success: false, error: 'User not found' });
-        }
+        const userRes = await client.query(`SELECT balance FROM users WHERE user_id = $1 FOR UPDATE`, [user_id]);
+        if (userRes.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ success: false, error: 'User not found' }); }
         const currentBalance = userRes.rows[0].balance;
-        if (currentBalance < amount) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ success: false, error: 'Insufficient balance' });
-        }
+        if (currentBalance < amount) { await client.query('ROLLBACK'); return res.status(400).json({ success: false, error: 'Insufficient balance' }); }
 
-        // Списание монет
-        await client.query(
-            `UPDATE users SET balance = balance - $1 WHERE user_id = $2`,
-            [amount, user_id]
-        );
-
-        // Создание заявки
-        const insertRes = await client.query(
-            `INSERT INTO withdraw_requests (user_id, amount, wallet_address)
-             VALUES ($1, $2, $3) RETURNING id`,
-            [user_id, amount, wallet_address]
-        );
+        await client.query(`UPDATE users SET balance = balance - $1 WHERE user_id = $2`, [amount, user_id]);
+        const insertRes = await client.query(`INSERT INTO withdraw_requests (user_id, amount, wallet_address) VALUES ($1, $2, $3) RETURNING id`, [user_id, amount, wallet_address]);
         const requestId = insertRes.rows[0].id;
 
         await client.query('COMMIT');
@@ -307,29 +220,16 @@ app.post('/api/withdraw', async (req, res) => {
     }
 });
 
-// 4. Админ-логин
 app.post('/api/admin/login', (req, res) => {
     const { password } = req.body;
-    if (password === ADMIN_PASSWORD) {
-        res.json({ success: true, token: ADMIN_TOKEN });
-    } else {
-        res.status(401).json({ success: false, error: 'Invalid password' });
-    }
+    if (password === ADMIN_PASSWORD) res.json({ success: true, token: ADMIN_TOKEN });
+    else res.status(401).json({ success: false, error: 'Invalid password' });
 });
 
-// 5. Получение списка активных заявок (pending)
 app.get('/api/admin/requests', async (req, res) => {
-    if (!isAdmin(req)) {
-        return res.status(401).json({ success: false, error: 'Unauthorized' });
-    }
+    if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
     try {
-        const result = await pool.query(
-            `SELECT r.id, r.user_id, u.username, r.amount, r.wallet_address, r.created_at
-             FROM withdraw_requests r
-             LEFT JOIN users u ON r.user_id = u.user_id
-             WHERE r.status = 'pending'
-             ORDER BY r.created_at ASC`
-        );
+        const result = await pool.query(`SELECT r.id, r.user_id, u.username, r.amount, r.wallet_address, r.created_at FROM withdraw_requests r LEFT JOIN users u ON r.user_id = u.user_id WHERE r.status = 'pending' ORDER BY r.created_at ASC`);
         res.json({ success: true, requests: result.rows });
     } catch (err) {
         console.error('API /admin/requests error:', err);
@@ -337,40 +237,17 @@ app.get('/api/admin/requests', async (req, res) => {
     }
 });
 
-// 6. Одобрение заявки
 app.post('/api/admin/approve', async (req, res) => {
-    if (!isAdmin(req)) {
-        return res.status(401).json({ success: false, error: 'Unauthorized' });
-    }
+    if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const client = await pool.connect();
     try {
         const { requestId } = req.body;
-        if (!requestId) {
-            return res.status(400).json({ success: false, error: 'requestId is required' });
-        }
-
+        if (!requestId) return res.status(400).json({ success: false, error: 'requestId is required' });
         await client.query('BEGIN');
-
-        const check = await client.query(
-            `SELECT status FROM withdraw_requests WHERE id = $1 FOR UPDATE`,
-            [requestId]
-        );
-        if (check.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ success: false, error: 'Request not found' });
-        }
-        if (check.rows[0].status !== 'pending') {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ success: false, error: 'Request already processed' });
-        }
-
-        await client.query(
-            `UPDATE withdraw_requests
-             SET status = 'approved', approved_at = CURRENT_TIMESTAMP
-             WHERE id = $1`,
-            [requestId]
-        );
-
+        const check = await client.query(`SELECT status FROM withdraw_requests WHERE id = $1 FOR UPDATE`, [requestId]);
+        if (check.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ success: false, error: 'Request not found' }); }
+        if (check.rows[0].status !== 'pending') { await client.query('ROLLBACK'); return res.status(400).json({ success: false, error: 'Request already processed' }); }
+        await client.query(`UPDATE withdraw_requests SET status = 'approved', approved_at = CURRENT_TIMESTAMP WHERE id = $1`, [requestId]);
         await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
@@ -382,47 +259,19 @@ app.post('/api/admin/approve', async (req, res) => {
     }
 });
 
-// 7. Отклонение заявки (возврат монет)
 app.post('/api/admin/reject', async (req, res) => {
-    if (!isAdmin(req)) {
-        return res.status(401).json({ success: false, error: 'Unauthorized' });
-    }
+    if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const client = await pool.connect();
     try {
         const { requestId } = req.body;
-        if (!requestId) {
-            return res.status(400).json({ success: false, error: 'requestId is required' });
-        }
-
+        if (!requestId) return res.status(400).json({ success: false, error: 'requestId is required' });
         await client.query('BEGIN');
-
-        const reqData = await client.query(
-            `SELECT user_id, amount, status FROM withdraw_requests WHERE id = $1 FOR UPDATE`,
-            [requestId]
-        );
-        if (reqData.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ success: false, error: 'Request not found' });
-        }
-        if (reqData.rows[0].status !== 'pending') {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ success: false, error: 'Request already processed' });
-        }
-
+        const reqData = await client.query(`SELECT user_id, amount, status FROM withdraw_requests WHERE id = $1 FOR UPDATE`, [requestId]);
+        if (reqData.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ success: false, error: 'Request not found' }); }
+        if (reqData.rows[0].status !== 'pending') { await client.query('ROLLBACK'); return res.status(400).json({ success: false, error: 'Request already processed' }); }
         const { user_id, amount } = reqData.rows[0];
-
-        // Возвращаем монеты пользователю
-        await client.query(
-            `UPDATE users SET balance = balance + $1 WHERE user_id = $2`,
-            [amount, user_id]
-        );
-
-        // Меняем статус
-        await client.query(
-            `UPDATE withdraw_requests SET status = 'rejected' WHERE id = $1`,
-            [requestId]
-        );
-
+        await client.query(`UPDATE users SET balance = balance + $1 WHERE user_id = $2`, [amount, user_id]);
+        await client.query(`UPDATE withdraw_requests SET status = 'rejected' WHERE id = $1`, [requestId]);
         await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
@@ -439,7 +288,6 @@ const startServer = async () => {
     try {
         await createTables();
         await launchBot();
-
         app.listen(PORT, () => {
             console.log(`🚀 Express сервер запущен на порту ${PORT}`);
         });
@@ -454,9 +302,7 @@ startServer();
 // ==================== GRACEFUL SHUTDOWN ====================
 const shutdown = async (signal) => {
     console.log(`🛑 ${signal} получен, закрываем соединения...`);
-    if (botLaunched) {
-        bot.stop(signal);
-    }
+    if (botLaunched) bot.stop(signal);
     await pool.end();
     process.exit(0);
 };
