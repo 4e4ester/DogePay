@@ -1009,3 +1009,106 @@ body::-webkit-scrollbar-thumb {
         font-size: 24px;
     }
 }
+
+/* ===== 🎨 APP.JS UI STYLES ===== */
+
+/* Тост сообщения */
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(243, 198, 35, 0.3);
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10000;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    max-width: 90%;
+}
+
+.toast.toast-show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast-icon {
+    font-size: 18px;
+}
+
+.toast-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.toast-success {
+    border-color: var(--text-success);
+}
+
+.toast-error {
+    border-color: var(--text-error);
+}
+
+/* Пульсация для баланса */
+.pulse-once {
+    animation: pulseOnce 0.3s ease;
+}
+
+@keyframes pulseOnce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); color: var(--gold-light); }
+    100% { transform: scale(1); }
+}
+
+/* Состояние загрузки кнопки */
+.btn.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-left: 8px;
+}
+
+/* Аудио переключатель */
+.audio-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.audio-toggle input {
+    cursor: pointer;
+}
+
+/* Адаптив для тостов */
+@media (max-width: 480px) {
+    .toast {
+        top: 12px;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+}
