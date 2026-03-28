@@ -1,13 +1,15 @@
 {
   "name": "dogepay",
   "version": "1.0.0",
-  "description": "DogePay - Telegram Mini App",
+  "description": "DogePay - Telegram Mini App криптовалютного крана",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
-  "engines": { "node": ">=18.0.0" },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
@@ -17,7 +19,13 @@
   "devDependencies": {
     "nodemon": "^3.1.9"
   },
-  "keywords": ["telegram", "miniapp", "crypto", "faucet"],
-  "author": "You",
+  "keywords": [
+    "telegram",
+    "miniapp",
+    "crypto",
+    "faucet",
+    "dogecoin"
+  ],
+  "author": "Your Name",
   "license": "MIT"
 }
