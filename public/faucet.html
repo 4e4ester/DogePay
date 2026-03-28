@@ -53,7 +53,6 @@
         const claimBtn = document.getElementById('claimBtn');
         const rewardPopup = document.getElementById('rewardPopup');
 
-        // ПРОВЕРКА ТАЙМЕРА ПРИ ЗАГРУЗКЕ
         function checkTimer() {
             const lastClaim = localStorage.getItem('lastClaim');
             if (lastClaim) {
@@ -86,7 +85,6 @@
         }
 
         claimBtn.addEventListener('click', () => {
-            // ЗВУК + ВИБРАЦИЯ
             if (typeof playClaim === 'function') playClaim();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
@@ -96,7 +94,6 @@
             localStorage.setItem('balance', (currentBalance + reward).toString());
             localStorage.setItem('lastClaim', Date.now().toString());
 
-            // Показать награду
             rewardPopup.innerText = '🎉 +' + reward + ' 🪙';
             rewardPopup.classList.remove('hidden');
             
@@ -104,7 +101,6 @@
             claimBtn.innerText = '⏰ Следующий сбор через 3ч';
             timerEl.innerText = '⏰ Таймер запущен';
 
-            // Обновить баланс
             if (typeof updateBalance === 'function') updateBalance();
 
             setTimeout(() => { 
@@ -130,9 +126,7 @@
             }, 1000);
         }
 
-        // Инициализация
         window.addEventListener('load', () => {
-            // Скрыть загрузку
             setTimeout(() => {
                 const loadingScreen = document.getElementById('loadingScreen');
                 const mainContent = document.getElementById('mainContent');
@@ -140,7 +134,6 @@
                 if (mainContent) mainContent.style.display = 'block';
             }, 1000);
             
-            // Проверить таймер
             checkTimer();
         });
     </script>
