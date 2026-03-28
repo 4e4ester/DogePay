@@ -1,254 +1,465 @@
-require('dns').setDefaultResultOrder('ipv4first');
+// index.js — DogePay Telegram Mini App Server
+// Node.js + Express + Telegraf + PostgreSQL (Neon)
 
+require('dotenv').config();
 const express = require('express');
-const { Telegraf, Markup } = require('telegraf');
+const { Telegraf } = require('telegraf');
 const { Pool } = require('pg');
 const cors = require('cors');
+const path = require('path');
+const crypto = require('crypto');
 
-const app = express();
+// ==================== КОНФИГУРАЦИЯ ====================
 const PORT = process.env.PORT || 3000;
+const ADMIN_PASSWORD = 'admin123';
+// Генерируем случайный админский токен при старте (для безопасности)
+const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex');
 
-// 🔷 ОДИН БОТ
-let bot = null;
+// ==================== ИНИЦИАЛИЗАЦИЯ EXPRESS ====================
+const app = express();
 
-// 🔷 БАЗА ДАННЫХ
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-});
-
-// 🔷 ПРОВЕРКА БД
-async function testDB() {
-    try {
-        await pool.query('SELECT 1');
-        console.log('✅ База подключена!');
-        return true;
-    } catch (e) {
-        console.error('❌ Ошибка БД:', e.message);
-        return false;
-    }
-}
-
-// 🔷 СОЗДАНИЕ/ОБНОВЛЕНИЕ ТАБЛИЦ
-async function initDB() {
-    try {
-        // Таблица пользователей
-        await pool.query(`CREATE TABLE IF NOT EXISTS users (
-            user_id BIGINT PRIMARY KEY,
-            username TEXT,
-            balance BIGINT DEFAULT 0,
-            last_claim TIMESTAMP DEFAULT NOW(),
-            wallet_address TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
-        )`);
-        
-        // 🔷 ДОБАВИТЬ last_ads ЕСЛИ НЕТ
-        await pool.query(`
-            ALTER TABLE users 
-            ADD COLUMN IF NOT EXISTS last_ads TIMESTAMP DEFAULT NOW() - INTERVAL '1 hour'
-        `);
-        console.log('✅ Колонка last_ads добавлена');
-        
-        // Таблица заявок на вывод
-        await pool.query(`CREATE TABLE IF NOT EXISTS withdraw_requests (
-            id SERIAL PRIMARY KEY,
-            user_id BIGINT NOT NULL,
-            amount BIGINT NOT NULL,
-            wallet_address TEXT NOT NULL,
-            status TEXT DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT NOW(),
-            approved_at TIMESTAMP
-        )`);
-        
-        console.log('✅ Таблицы готовы');
-    } catch (e) {
-        console.error('❌ Ошибка таблиц:', e.message);
-    }
-}
-
-// 🔷 НАСТРОЙКА EXPRESS
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// 🔷 БОТ
-function initBot() {
-    if (bot) {
-        console.log('⚠️ Бот уже инициализирован');
-        return;
+// Логирование запросов (для отладки)
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+// ==================== ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ ====================
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }, // Требуется для Neon
+});
+
+// Проверка подключения
+pool.on('error', (err) => {
+    console.error('❌ Неожиданная ошибка PostgreSQL:', err);
+    process.exit(1);
+});
+
+// ==================== СОЗДАНИЕ ТАБЛИЦ ====================
+const createTables = async () => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Таблица users
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                user_id BIGINT PRIMARY KEY,
+                username VARCHAR(255),
+                balance BIGINT DEFAULT 0,
+                last_claim TIMESTAMP DEFAULT NULL,
+                wallet_address TEXT DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Таблица withdraw_requests
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS withdraw_requests (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                amount BIGINT NOT NULL,
+                wallet_address TEXT NOT NULL,
+                status VARCHAR(20) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                approved_at TIMESTAMP DEFAULT NULL
+            )
+        `);
+
+        // Индексы для ускорения запросов
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_withdraw_requests_status 
+            ON withdraw_requests(status)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_withdraw_requests_user_id 
+            ON withdraw_requests(user_id)
+        `);
+
+        await client.query('COMMIT');
+        console.log('✅ Таблицы созданы / проверены');
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('❌ Ошибка создания таблиц:', err);
+        throw err;
+    } finally {
+        client.release();
     }
-    
-    bot = new Telegraf(process.env.BOT_TOKEN);
-    
-    bot.start(async (ctx) => {
-        const uid = ctx.from.id;
-        const un = ctx.from.username || 'User';
-        try {
-            await pool.query(
-                `INSERT INTO users (user_id, username, balance, last_claim, last_ads) 
-                 VALUES ($1, $2, 0, NOW() - INTERVAL '3 hours', NOW() - INTERVAL '1 hour') 
-                 ON CONFLICT (user_id) DO NOTHING`,
-                [uid, un]
-            );
-            ctx.reply(
-                `🐕 DogePay\n\n🪙 Баланс: 0\n💱 1000 🪙 = 1 DOGE`,
-                Markup.keyboard([[Markup.button.webApp('🚀 Открыть', process.env.WEB_APP_URL)]]).resize()
-            );
-        } catch (e) {
-            ctx.reply('❌ Ошибка: ' + e.message);
-        }
-    });
+};
 
-    bot.command('balance', async (ctx) => {
-        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
-        if (!r.rows[0]) return ctx.reply('❌ Нажми /start');
-        const b = r.rows[0].balance;
-        ctx.reply(`🪙 ${b} коинов\n🐕 ~${(b/1000).toFixed(4)} DOGE`);
-    });
+// ==================== TELEGRAM БОТ ====================
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-    bot.launch()
-        .then(() => console.log('🤖 Бот запущен'))
-        .catch(e => console.error('❌ Ошибка бота:', e.message));
+// Обработчик команды /start
+bot.start(async (ctx) => {
+    const userId = ctx.from.id;
+    const username = ctx.from.username || '';
 
-    process.once('SIGINT', () => {
-        console.log('🛑 SIGINT received, stopping bot...');
-        bot.stop('SIGINT');
-    });
-    
-    process.once('SIGTERM', () => {
-        console.log('🛑 SIGTERM received, stopping bot...');
-        bot.stop('SIGTERM');
-    });
-}
+    try {
+        // Регистрируем пользователя (upsert)
+        await pool.query(
+            `INSERT INTO users (user_id, username) 
+             VALUES ($1, $2) 
+             ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
+            [userId, username]
+        );
 
-// 🔷 API: БАЛАНС
+        const webAppUrl = process.env.WEB_APP_URL;
+        await ctx.reply(
+            `🐕 Добро пожаловать в DogePay!\n\n` +
+            `Здесь вы можете получать криптовалюту в кране и выводить её.\n\n` +
+            `Нажмите кнопку ниже, чтобы открыть Mini App.`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🚀 Открыть Mini App', web_app: { url: webAppUrl } }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('Ошибка в /start:', err);
+        await ctx.reply('❌ Произошла ошибка. Попробуйте позже.');
+    }
+});
+
+// Обработчик команды /balance
+bot.command('balance', async (ctx) => {
+    const userId = ctx.from.id;
+    try {
+        const result = await pool.query(
+            `SELECT balance FROM users WHERE user_id = $1`,
+            [userId]
+        );
+        const balance = result.rows[0]?.balance ?? 0;
+        await ctx.reply(`💰 Ваш баланс: ${balance} 🪙`);
+    } catch (err) {
+        console.error('Ошибка в /balance:', err);
+        await ctx.reply('❌ Не удалось получить баланс. Попробуйте позже.');
+    }
+});
+
+// Запускаем бота с защитой от двойного запуска
+let botLaunched = false;
+const launchBot = async () => {
+    if (botLaunched) return;
+    try {
+        await bot.launch();
+        botLaunched = true;
+        console.log('🤖 Telegram бот запущен');
+    } catch (err) {
+        console.error('❌ Ошибка запуска бота:', err);
+        throw err;
+    }
+};
+
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+// Проверка админского токена (простая, для демонстрации)
+const isAdmin = (req) => {
+    const authHeader = req.headers.authorization;
+    return authHeader === `Bearer ${ADMIN_TOKEN}`;
+};
+
+// ==================== API ENDPOINTS ====================
+
+// 1. Получение баланса пользователя
 app.get('/api/balance', async (req, res) => {
     try {
-        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [req.query.user_id]);
-        res.json({ balance: r.rows[0]?.balance || 0 });
-    } catch (e) { 
-        console.error('API Balance Error:', e);
-        res.json({ error: e.message }); 
+        const { user_id } = req.query;
+        if (!user_id) {
+            return res.status(400).json({ success: false, error: 'user_id is required' });
+        }
+
+        const result = await pool.query(
+            `SELECT balance FROM users WHERE user_id = $1`,
+            [user_id]
+        );
+        const balance = result.rows[0]?.balance ?? 0;
+        res.json({ success: true, balance });
+    } catch (err) {
+        console.error('API /balance error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
-// 🔷 API: КРАН
+// 2. Начисление монет (кран)
 app.post('/api/claim', async (req, res) => {
-    console.log('🚰 CLAIM:', req.body);
+    const client = await pool.connect();
     try {
-        const uid = req.body.user_id;
-        if (!uid) return res.json({ error: 'Нет ID' });
-        
-        const r = await pool.query('SELECT * FROM users WHERE user_id = $1', [uid]);
-        if (!r.rows[0]) return res.json({ error: 'Не найден' });
-        
-        const hours = (new Date() - new Date(r.rows[0].last_claim)) / 36e5;
-        if (hours < 3) {
-            const w = Math.ceil(3 - hours);
-            return res.json({ success: false, message: 'Жди ещё ' + w + ' ч.', waitTime: w * 36e5 });
+        const { user_id, username } = req.body;
+        if (!user_id) {
+            return res.status(400).json({ success: false, error: 'user_id is required' });
         }
-        
-        const reward = Math.floor(Math.random() * 41) + 10;
-        await pool.query('UPDATE users SET balance = balance + $1, last_claim = NOW() WHERE user_id = $2', [reward, uid]);
-        res.json({ success: true, reward: reward, message: '+' + reward + ' 🪙' });
-    } catch (e) { 
-        console.error('CLAIM ERROR:', e);
-        res.json({ error: e.message }); 
+
+        // Регистрируем пользователя, если его нет
+        await client.query(
+            `INSERT INTO users (user_id, username) 
+             VALUES ($1, $2) 
+             ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
+            [user_id, username || null]
+        );
+
+        // Проверяем время последнего клейма
+        const claimCheck = await client.query(
+            `SELECT last_claim, balance FROM users WHERE user_id = $1 FOR UPDATE`,
+            [user_id]
+        );
+        const lastClaim = claimCheck.rows[0]?.last_claim;
+        const currentBalance = claimCheck.rows[0]?.balance ?? 0;
+
+        if (lastClaim) {
+            const now = new Date();
+            const lastClaimDate = new Date(lastClaim);
+            const diffSeconds = (now - lastClaimDate) / 1000;
+            if (diffSeconds < 60) {
+                const waitSeconds = Math.ceil(60 - diffSeconds);
+                return res.status(429).json({
+                    success: false,
+                    error: `Подождите ${waitSeconds} секунд`,
+                    nextClaimIn: waitSeconds
+                });
+            }
+        }
+
+        // Генерируем случайную сумму от 10 до 30
+        const amount = Math.floor(Math.random() * (30 - 10 + 1) + 10);
+        const newBalance = currentBalance + amount;
+        const now = new Date();
+
+        await client.query(
+            `UPDATE users SET balance = $1, last_claim = $2 WHERE user_id = $3`,
+            [newBalance, now, user_id]
+        );
+
+        await client.query('COMMIT');
+        res.json({
+            success: true,
+            amount,
+            newBalance,
+            nextClaimTime: now.getTime() + 60000
+        });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('API /claim error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    } finally {
+        client.release();
     }
 });
 
-// 🔷 API: РЕКЛАМА
-app.post('/api/ads-reward', async (req, res) => {
-    console.log('📢 ADS:', req.body);
-    try {
-        const uid = req.body.user_id;
-        if (!uid) return res.json({ error: 'Нет ID' });
-        
-        const r = await pool.query('SELECT * FROM users WHERE user_id = $1', [uid]);
-        if (!r.rows[0]) return res.json({ error: 'Не найден' });
-        
-        const hours = (new Date() - new Date(r.rows[0].last_ads)) / 36e5;
-        if (hours < 1) {
-            const w = Math.ceil(1 - hours);
-            return res.json({ success: false, message: 'Жди ещё ' + w + ' ч.', waitTime: w * 36e5 });
-        }
-        
-        const reward = Math.floor(Math.random() * 16) + 5;
-        await pool.query('UPDATE users SET balance = balance + $1, last_ads = NOW() WHERE user_id = $2', [reward, uid]);
-        res.json({ success: true, reward: reward, message: '+' + reward + ' 🪙' });
-    } catch (e) { 
-        console.error('ADS ERROR:', e);
-        res.json({ error: e.message }); 
-    }
-});
-
-// 🔷 API: ВЫВОД
+// 3. Создание заявки на вывод
 app.post('/api/withdraw', async (req, res) => {
+    const client = await pool.connect();
     try {
-        const { user_id, amount, wallet } = req.body;
-        if (!user_id || !amount || !wallet) return res.json({ error: 'Заполни все поля' });
-        if (amount < 10000) return res.json({ error: 'Мин. 10000 🪙' });
-        
-        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [user_id]);
-        if (r.rows[0].balance < amount) return res.json({ error: 'Мало средств' });
-        
-        await pool.query('UPDATE users SET balance = balance - $1 WHERE user_id = $2', [amount, user_id]);
-        await pool.query('INSERT INTO withdraw_requests (user_id, amount, wallet_address) VALUES ($1, $2, $3)', [user_id, amount, wallet]);
-        
-        res.json({ success: true, message: '✅ Заявка создана!' });
-    } catch (e) { res.json({ error: e.message }); }
-});
-
-// 🔷 API: АДМИН
-app.post('/api/admin/login', async (req, res) => {
-    const { password } = req.body;
-    if (password === 'admin123') res.json({ success: true });
-    else res.json({ success: false, error: 'Неверный пароль' });
-});
-
-app.get('/api/admin/requests', async (req, res) => {
-    try {
-        const pending = await pool.query("SELECT * FROM withdraw_requests WHERE status = 'pending' ORDER BY created_at DESC");
-        const approved = await pool.query("SELECT * FROM withdraw_requests WHERE status = 'approved' ORDER BY approved_at DESC LIMIT 10");
-        const stats = await pool.query(`
-            SELECT 
-                (SELECT COUNT(*) FROM users) as total_users,
-                (SELECT COUNT(*) FROM withdraw_requests WHERE status = 'pending') as pending,
-                (SELECT COUNT(*) FROM withdraw_requests WHERE status = 'approved') as total_withdraws
-        `);
-        res.json({ pending: pending.rows, approved: approved.rows, stats: stats.rows[0] });
-    } catch (e) { res.json({ error: e.message }); }
-});
-
-app.post('/api/admin/approve', async (req, res) => {
-    try {
-        const { request_id } = req.body;
-        await pool.query("UPDATE withdraw_requests SET status = 'approved', approved_at = NOW() WHERE id = $1", [request_id]);
-        res.json({ success: true });
-    } catch (e) { res.json({ error: e.message }); }
-});
-
-app.post('/api/admin/reject', async (req, res) => {
-    try {
-        const { request_id } = req.body;
-        const reqData = await pool.query('SELECT * FROM withdraw_requests WHERE id = $1', [request_id]);
-        if (reqData.rows.length > 0) {
-            const withdraw = reqData.rows[0];
-            await pool.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [withdraw.amount, withdraw.user_id]);
+        const { user_id, amount, wallet_address } = req.body;
+        if (!user_id || !amount || !wallet_address) {
+            return res.status(400).json({ success: false, error: 'Missing required fields' });
         }
-        await pool.query("UPDATE withdraw_requests SET status = 'rejected' WHERE id = $1", [request_id]);
-        res.json({ success: true });
-    } catch (e) { res.json({ error: e.message }); }
+        if (amount < 1) {
+            return res.status(400).json({ success: false, error: 'Amount must be positive' });
+        }
+
+        await client.query('BEGIN');
+
+        // Проверяем баланс с блокировкой строки
+        const userRes = await client.query(
+            `SELECT balance FROM users WHERE user_id = $1 FOR UPDATE`,
+            [user_id]
+        );
+        if (userRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        const currentBalance = userRes.rows[0].balance;
+        if (currentBalance < amount) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ success: false, error: 'Insufficient balance' });
+        }
+
+        // Списание монет
+        await client.query(
+            `UPDATE users SET balance = balance - $1 WHERE user_id = $2`,
+            [amount, user_id]
+        );
+
+        // Создание заявки
+        const insertRes = await client.query(
+            `INSERT INTO withdraw_requests (user_id, amount, wallet_address)
+             VALUES ($1, $2, $3) RETURNING id`,
+            [user_id, amount, wallet_address]
+        );
+        const requestId = insertRes.rows[0].id;
+
+        await client.query('COMMIT');
+        res.json({ success: true, requestId });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('API /withdraw error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    } finally {
+        client.release();
+    }
 });
 
-// 🔷 ЗАПУСК
-(async () => {
-    const ok = await testDB();
-    if (ok) await initDB();
-    
-    app.listen(PORT, () => {
-        console.log('🌐 Порт ' + PORT + ' | ' + process.env.WEB_APP_URL);
-    });
-    
-    initBot();
-})();
+// 4. Админ-логин
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        res.json({ success: true, token: ADMIN_TOKEN });
+    } else {
+        res.status(401).json({ success: false, error: 'Invalid password' });
+    }
+});
+
+// 5. Получение списка активных заявок (pending)
+app.get('/api/admin/requests', async (req, res) => {
+    if (!isAdmin(req)) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    try {
+        const result = await pool.query(
+            `SELECT r.id, r.user_id, u.username, r.amount, r.wallet_address, r.created_at
+             FROM withdraw_requests r
+             LEFT JOIN users u ON r.user_id = u.user_id
+             WHERE r.status = 'pending'
+             ORDER BY r.created_at ASC`
+        );
+        res.json({ success: true, requests: result.rows });
+    } catch (err) {
+        console.error('API /admin/requests error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// 6. Одобрение заявки
+app.post('/api/admin/approve', async (req, res) => {
+    if (!isAdmin(req)) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const client = await pool.connect();
+    try {
+        const { requestId } = req.body;
+        if (!requestId) {
+            return res.status(400).json({ success: false, error: 'requestId is required' });
+        }
+
+        await client.query('BEGIN');
+
+        const check = await client.query(
+            `SELECT status FROM withdraw_requests WHERE id = $1 FOR UPDATE`,
+            [requestId]
+        );
+        if (check.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, error: 'Request not found' });
+        }
+        if (check.rows[0].status !== 'pending') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ success: false, error: 'Request already processed' });
+        }
+
+        await client.query(
+            `UPDATE withdraw_requests
+             SET status = 'approved', approved_at = CURRENT_TIMESTAMP
+             WHERE id = $1`,
+            [requestId]
+        );
+
+        await client.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('API /admin/approve error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    } finally {
+        client.release();
+    }
+});
+
+// 7. Отклонение заявки (возврат монет)
+app.post('/api/admin/reject', async (req, res) => {
+    if (!isAdmin(req)) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const client = await pool.connect();
+    try {
+        const { requestId } = req.body;
+        if (!requestId) {
+            return res.status(400).json({ success: false, error: 'requestId is required' });
+        }
+
+        await client.query('BEGIN');
+
+        const reqData = await client.query(
+            `SELECT user_id, amount, status FROM withdraw_requests WHERE id = $1 FOR UPDATE`,
+            [requestId]
+        );
+        if (reqData.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, error: 'Request not found' });
+        }
+        if (reqData.rows[0].status !== 'pending') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ success: false, error: 'Request already processed' });
+        }
+
+        const { user_id, amount } = reqData.rows[0];
+
+        // Возвращаем монеты пользователю
+        await client.query(
+            `UPDATE users SET balance = balance + $1 WHERE user_id = $2`,
+            [amount, user_id]
+        );
+
+        // Меняем статус
+        await client.query(
+            `UPDATE withdraw_requests SET status = 'rejected' WHERE id = $1`,
+            [requestId]
+        );
+
+        await client.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('API /admin/reject error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    } finally {
+        client.release();
+    }
+});
+
+// ==================== ЗАПУСК СЕРВЕРА ====================
+const startServer = async () => {
+    try {
+        await createTables();
+        await launchBot();
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Express сервер запущен на порту ${PORT}`);
+        });
+    } catch (err) {
+        console.error('❌ Критическая ошибка при запуске:', err);
+        process.exit(1);
+    }
+};
+
+startServer();
+
+// ==================== GRACEFUL SHUTDOWN ====================
+const shutdown = async (signal) => {
+    console.log(`🛑 ${signal} получен, закрываем соединения...`);
+    if (botLaunched) {
+        bot.stop(signal);
+    }
+    await pool.end();
+    process.exit(0);
+};
+
+process.once('SIGINT', () => shutdown('SIGINT'));
+process.once('SIGTERM', () => shutdown('SIGTERM'));
