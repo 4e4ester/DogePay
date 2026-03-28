@@ -40,37 +40,38 @@
                 <span id="balance" class="balance-number">0</span>
             </div>
             <p class="balance-doge">
-                <span data-t="balance_doge_prefix">🐕 ~</span>
+                <span id="balance-doge-prefix">🐕 ~</span>
                 <span id="balance-doge">0.0000</span>
-                <span data-t="balance_doge_suffix">DOGE</span>
+                <span id="balance-doge-suffix">DOGE</span>
             </p>
         </div>
 
-        <!-- КНОПКИ (БЕЗ ДУБЛЕЙ!) -->
+        <!-- КНОПКИ (ИСПРАВЛЕНО - БЕЗ ДУБЛЕЙ!) -->
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">🚰</span>
-                <span data-t="btn_faucet">Кран</span>
+                <span>Faucet</span>
             </a>
             <a href="ads.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">📢</span>
-                <span data-t="btn_ads">Реклама</span>
+                <span>Ads</span>
             </a>
             <a href="withdraw.html" class="btn btn-secondary" onclick="playClick()">
                 <span class="btn-icon">💸</span>
-                <span data-t="btn_withdraw">Вывод</span>
+                <span>Withdraw</span>
             </a>
         </div>
 
         <!-- ФУТЕР -->
         <div class="footer">
-            <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+            <p>🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
         </div>
     </div>
 
     <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
+        // Инициализация после загрузки
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
