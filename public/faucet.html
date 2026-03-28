@@ -8,7 +8,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <!-- ЭКРАН ЗАГРУЗКИ -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">🚰</div>
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Загрузка...</p>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
         <div class="header">
             <div class="logo">🚰</div>
             <h1 class="gradient-text">Кран</h1>
@@ -44,26 +53,28 @@
         const claimBtn = document.getElementById('claimBtn');
         const rewardPopup = document.getElementById('rewardPopup');
 
-        // Проверка таймера при загрузке
-        const lastClaim = localStorage.getItem('lastClaim');
-        if (lastClaim) {
-            const elapsed = Date.now() - parseInt(lastClaim);
-            const threeHours = 3 * 60 * 60 * 1000;
-            if (elapsed < threeHours) {
-                const remaining = threeHours - elapsed;
-                startTimer(remaining);
-                claimBtn.disabled = true;
-                claimBtn.innerText = '⏳ Жди';
-                timerEl.innerText = '⏰ ' + formatTime(remaining);
+        // ПРОВЕРКА ТАЙМЕРА ПРИ ЗАГРУЗКЕ
+        function checkTimer() {
+            const lastClaim = localStorage.getItem('lastClaim');
+            if (lastClaim) {
+                const elapsed = Date.now() - parseInt(lastClaim);
+                const threeHours = 3 * 60 * 60 * 1000;
+                if (elapsed < threeHours) {
+                    const remaining = threeHours - elapsed;
+                    startTimer(remaining);
+                    claimBtn.disabled = true;
+                    claimBtn.innerText = '⏳ Жди';
+                    timerEl.innerText = '⏰ ' + formatTime(remaining);
+                } else {
+                    timerEl.innerText = '✅ Можно забирать!';
+                    claimBtn.disabled = false;
+                    claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
+                }
             } else {
                 timerEl.innerText = '✅ Можно забирать!';
                 claimBtn.disabled = false;
                 claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
             }
-        } else {
-            timerEl.innerText = '✅ Можно забирать!';
-            claimBtn.disabled = false;
-            claimBtn.innerText = 'ЗАБРАТЬ (10-50 🪙)';
         }
 
         function formatTime(ms) {
@@ -93,7 +104,7 @@
             claimBtn.innerText = '⏰ Следующий сбор через 3ч';
             timerEl.innerText = '⏰ Таймер запущен';
 
-            // Обновить баланс на главной
+            // Обновить баланс
             if (typeof updateBalance === 'function') updateBalance();
 
             setTimeout(() => { 
@@ -118,6 +129,20 @@
                 timerEl.innerText = '⏰ ' + formatTime(remaining);
             }, 1000);
         }
+
+        // Инициализация
+        window.addEventListener('load', () => {
+            // Скрыть загрузку
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                const mainContent = document.getElementById('mainContent');
+                if (loadingScreen) loadingScreen.classList.add('hidden');
+                if (mainContent) mainContent.style.display = 'block';
+            }, 1000);
+            
+            // Проверить таймер
+            checkTimer();
+        });
     </script>
 </body>
 </html>
