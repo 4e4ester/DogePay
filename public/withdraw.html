@@ -2,113 +2,399 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💸 Вывод - DogePay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DogePay - Вывод</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <!-- 🎨 ЭКРАН ЗАГРУЗКИ -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-content">
+            <div class="logo-bounce">💸</div>
+            <div class="spinner"></div>
+            <p class="loading-text">Загрузка...</p>
+        </div>
+    </div>
+
+    <!-- 🎨 ОСНОВНОЙ КОНТЕНТ -->
+    <div class="container" id="main-content">
+        
+        <!-- 🇷🇺🇬🇧 ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
+        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
+        
+        <!-- 🎨 ШАПКА -->
         <div class="header">
-            <div class="logo">💸</div>
-            <h1 class="gradient-text" data-t="withdraw_title">Вывод DOGE</h1>
+            <div class="logo-float">💸</div>
+            <h1 class="gradient-title" data-t="withdraw_title">Вывод DOGE</h1>
             <p class="subtitle" data-t="withdraw_subtitle">Выведи на свой кошелёк</p>
         </div>
 
-        <div class="form-card">
-            <div class="form-group">
-                <label class="form-label" data-t="withdraw_wallet_label">Твой DOGE кошелёк</label>
-                <input type="text" id="wallet" class="form-input" data-t-placeholder="withdraw_wallet_placeholder" placeholder="Адрес кошелька">
+        <!-- 🎨 КАРТОЧКА БАЛАНСА -->
+        <div class="balance-card">
+            <p class="balance-label" data-t="balance_label">Твой баланс</p>
+            <div class="balance-main">
+                <span class="coin-icon">🪙</span>
+                <span id="balance" class="balance-number">0</span>
             </div>
-            <div class="form-group">
-                <label class="form-label" data-t="withdraw_amount_label">Сумма в 🪙</label>
-                <input type="number" id="amount" class="form-input" data-t-placeholder="withdraw_amount_placeholder" placeholder="Минимум 10000 🪙 (10 DOGE)" step="100" min="10000">
-                <p class="conversion" id="conversion">10000 🪙 = 10 DOGE</p>
-            </div>
-            <div class="wallet-display">
-                <span data-t="withdraw_balance">Твой баланс:</span> <strong id="currentBalance" style="color: var(--gold);">0</strong> 🪙
-            </div>
-            <p style="color: var(--error); font-size: 13px; text-align: center; margin: 15px 0;" data-t="withdraw_warning">⚠️ Проверяй адрес! Транзакции необратимы.</p>
-            <button id="withdrawBtn" class="btn btn-primary" style="width: 100%;" data-t="withdraw_btn">Запросить вывод</button>
-            <div class="info-box">
-                <p data-t="withdraw_info">Мин. вывод: 10000 🪙
-Обработка: до 24 часов</p>
-            </div>
+            <p class="balance-doge">
+                <span data-t="balance_doge">🐕 ~</span>
+                <span id="balance-doge">0.0000</span>
+                <span data-t="balance_doge_suffix">DOGE</span>
+            </p>
         </div>
 
-        <a href="index.html" class="btn btn-secondary" style="width: 100%;" data-t="btn_back">← На главную</a>
+        <!-- 🎨 ФОРМА ВЫВОДА -->
+        <div class="form-card">
+            
+            <!-- Адрес кошелька -->
+            <div class="form-group">
+                <label class="form-label" for="walletInput" data-t="wallet_label">Твой DOGE кошелёк</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🐕</span>
+                    <input type="text" id="walletInput" class="form-input" 
+                           data-t-placeholder="wallet_placeholder" 
+                           placeholder="D... или адрес кошелька"
+                           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                </div>
+                <p class="form-hint" id="walletHint" data-t="wallet_hint">Введи корректный DOGE адрес</p>
+                <p class="form-error hidden" id="walletError" data-t="wallet_error">❌ Неверный формат адреса</p>
+            </div>
 
+            <!-- Сумма -->
+            <div class="form-group">
+                <label class="form-label" for="amountInput" data-t="amount_label">Сумма в 🪙</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🪙</span>
+                    <input type="number" id="amountInput" class="form-input" 
+                           data-t-placeholder="amount_placeholder" 
+                           placeholder="Минимум 10000"
+                           min="10000" step="100" inputmode="numeric">
+                    <button type="button" class="input-max" onclick="setMaxAmount()" data-t="btn_max">MAX</button>
+                </div>
+                
+                <!-- Конвертация -->
+                <div class="conversion-box">
+                    <span class="conversion-label" data-t="conversion_label">Это примерно:</span>
+                    <span class="conversion-value" id="conversion">0.0000 DOGE</span>
+                </div>
+                
+                <p class="form-hint" id="amountHint" data-t="amount_hint">1000 🪙 = 1 DOGE</p>
+                <p class="form-error hidden" id="amountError" data-t="amount_error">❌ Сумма меньше минимума</p>
+            </div>
+
+            <!-- Предупреждение -->
+            <div class="warning-box">
+                <span class="warning-icon">⚠️</span>
+                <span class="warning-text" data-t="wallet_warning">Проверяй адрес! Транзакции необратимы.</span>
+            </div>
+
+            <!-- Кнопка вывода -->
+            <button id="withdrawBtn" class="btn btn-primary btn-large" onclick="playClick(); processWithdraw()">
+                <span class="btn-icon">🚀</span>
+                <span class="btn-text" data-t="withdraw_btn">Запросить вывод</span>
+                <span class="btn-loader hidden"></span>
+            </button>
+        </div>
+
+        <!-- 🎨 ИНФО БЛОК -->
+        <div class="info-box">
+            <p data-t="withdraw_info_1">💡 Мин. вывод: <strong>10000 🪙</strong> (10 DOGE)</p>
+            <p data-t="withdraw_info_2">⏱ Обработка: <strong>до 24 часов</strong></p>
+            <p data-t="withdraw_info_3">🔐 Только на <strong>DOGE-кошельки</strong></p>
+        </div>
+
+        <!-- 🎨 КНОПКА НАЗАД -->
+        <a href="index.html" class="btn btn-secondary" onclick="playClick()">
+            <span class="btn-icon">←</span>
+            <span data-t="back_home">На главную</span>
+        </a>
+
+        <!-- 🎨 ФУТЕР -->
         <div class="footer">
-            <p>🐕 DogePay • Вывод</p>
+            <p data-t="footer">🐕 DogePay • Вывод</p>
         </div>
     </div>
 
     <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        const userId = tg.initDataUnsafe?.user?.id;
+        // ===== ЛОГИКА ВЫВОДА (от DeepSeek + улучшения) =====
+        let currentUser = null;
+        let isProcessing = false;
 
-        const walletInput = document.getElementById('wallet');
-        const amountInput = document.getElementById('amount');
-        const withdrawBtn = document.getElementById('withdrawBtn');
-        const conversionEl = document.getElementById('conversion');
-        const currentBalanceEl = document.getElementById('currentBalance');
-
-        async function loadCurrentBalance() {
-            if (!userId) return;
-            try {
-                const res = await fetch(`/api/balance?user_id=${userId}`);
-                const data = await res.json();
-                if (currentBalanceEl) currentBalanceEl.innerText = (data.balance || 0).toLocaleString('ru-RU');
-            } catch (err) { console.error(err); }
+        // Получение user_id
+        function getUserId() {
+            if (currentUser) return currentUser;
+            const tg = window.Telegram?.WebApp;
+            if (tg?.initDataUnsafe?.user?.id) {
+                currentUser = tg.initDataUnsafe.user.id;
+                return currentUser;
+            }
+            return 123456; // fallback для тестов
         }
 
-        amountInput.addEventListener('input', () => {
-            const coins = parseFloat(amountInput.value) || 0;
-            const doge = (coins / 1000).toFixed(2);
-            conversionEl.innerText = `${coins.toLocaleString('ru-RU')} 🪙 = ${doge} DOGE`;
-        });
-
-        withdrawBtn.addEventListener('click', async () => {
-            if (!userId) { showMessage(t('error_user'), 'error'); return; }
-            const wallet = walletInput.value.trim();
-            const amount = parseFloat(amountInput.value);
-            if (!wallet || wallet.length < 10) { showMessage('❌ Введи корректный адрес', 'error'); return; }
-            if (!amount || amount < 10000) { showMessage('❌ Минимум 10000 🪙', 'error'); return; }
-            withdrawBtn.disabled = true;
-            withdrawBtn.innerText = '⏳ Обработка...';
+        // Обновление баланса
+        async function refreshBalance() {
             try {
+                const res = await fetch(`/api/balance?user_id=${getUserId()}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (data.success && typeof data.balance === 'number') {
+                    // Анимированное обновление
+                    if (window.BalanceMgr?.render) {
+                        window.BalanceMgr.render(data.balance);
+                    } else {
+                        document.getElementById('balance').textContent = data.balance.toLocaleString('ru-RU');
+                        document.getElementById('balance-doge').textContent = (data.balance / 1000).toFixed(4);
+                    }
+                }
+            } catch (err) {
+                console.error('Balance error:', err);
+            }
+        }
+
+        // Конвертация 🪙 → DOGE
+        function updateConversion() {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            const conversionEl = document.getElementById('conversion');
+            
+            if (!amount || amount < 0) {
+                conversionEl.textContent = '0.0000 DOGE';
+                conversionEl.classList.remove('active');
+                return;
+            }
+            
+            const doge = amount / 1000;
+            conversionEl.textContent = `${doge.toFixed(4)} DOGE`;
+            conversionEl.classList.add('active');
+            
+            // Анимация изменения
+            conversionEl.style.animation = 'none';
+            conversionEl.offsetHeight;
+            conversionEl.style.animation = 'conversionPulse 0.3s ease';
+        }
+
+        // Установить максимальную сумму
+        function setMaxAmount() {
+            playClick();
+            const balanceText = document.getElementById('balance').textContent;
+            const balance = parseInt(balanceText.replace(/\s/g, ''), 10) || 0;
+            if (balance >= 10000) {
+                document.getElementById('amountInput').value = balance;
+                updateConversion();
+                validateAmount();
+            }
+        }
+
+        // Валидация адреса кошелька
+        function validateWallet() {
+            const wallet = document.getElementById('walletInput').value.trim();
+            const hint = document.getElementById('walletHint');
+            const error = document.getElementById('walletError');
+            const input = document.getElementById('walletInput');
+            
+            if (!wallet) {
+                hint.classList.remove('hidden');
+                error.classList.add('hidden');
+                input.classList.remove('valid', 'invalid');
+                return false;
+            }
+            
+            // Простая валидация: мин. длина и не только пробелы
+            if (wallet.length < 10 || !/^[a-zA-Z0-9]/.test(wallet)) {
+                hint.classList.add('hidden');
+                error.classList.remove('hidden');
+                input.classList.remove('valid');
+                input.classList.add('invalid');
+                return false;
+            }
+            
+            hint.classList.add('hidden');
+            error.classList.add('hidden');
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+            return true;
+        }
+
+        // Валидация суммы
+        function validateAmount() {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            const balanceText = document.getElementById('balance').textContent;
+            const balance = parseInt(balanceText.replace(/\s/g, ''), 10) || 0;
+            const hint = document.getElementById('amountHint');
+            const error = document.getElementById('amountError');
+            const input = document.getElementById('amountInput');
+            
+            if (!amount || amount < 10000) {
+                hint.classList.remove('hidden');
+                error.classList.add('hidden');
+                input.classList.remove('valid', 'invalid');
+                return false;
+            }
+            
+            if (amount > balance) {
+                hint.classList.add('hidden');
+                error.textContent = window.t?.('withdraw_error_balance') || '❌ Недостаточно средств';
+                error.classList.remove('hidden');
+                input.classList.remove('valid');
+                input.classList.add('invalid');
+                return false;
+            }
+            
+            hint.classList.add('hidden');
+            error.classList.add('hidden');
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+            return true;
+        }
+
+        // Показать тост-уведомление
+        function showToast(message, type = 'info', duration = 3000) {
+            if (window.showToast) {
+                window.showToast(message, type, duration);
+                return;
+            }
+            
+            // Fallback если нет глобальной функции
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                <span class="toast-text">${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.add('toast-show'));
+            
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // Обработка вывода
+        async function processWithdraw() {
+            if (isProcessing) return;
+            
+            // Валидация
+            const walletValid = validateWallet();
+            const amountValid = validateAmount();
+            
+            if (!walletValid || !amountValid) {
+                showToast(window.t?.('withdraw_error_validation') || '❌ Исправь ошибки в форме', 'error');
+                if (window.playError) window.playError();
+                return;
+            }
+            
+            isProcessing = true;
+            const btn = document.getElementById('withdrawBtn');
+            const btnText = btn.querySelector('.btn-text');
+            const btnLoader = btn.querySelector('.btn-loader');
+            
+            // Состояние загрузки
+            btn.disabled = true;
+            btnText.textContent = window.t?.('withdraw_processing') || '⏳ Отправка...';
+            btnLoader.classList.remove('hidden');
+            
+            try {
+                const wallet = document.getElementById('walletInput').value.trim();
+                const amount = parseInt(document.getElementById('amountInput').value, 10);
+                
                 const res = await fetch('/api/withdraw', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, amount, wallet })
+                    body: JSON.stringify({
+                        user_id: getUserId(),
+                        amount: amount,
+                        wallet_address: wallet
+                    })
                 });
+                
                 const data = await res.json();
+                
                 if (data.success) {
-                    showMessage('✅ ' + data.message, 'success');
-                    playClaim();
-                    walletInput.value = '';
-                    amountInput.value = '';
-                    loadCurrentBalance();
-                    if (window.updateBalance) window.updateBalance();
-                    setTimeout(() => window.location.href = 'index.html', 2500);
+                    // Успех
+                    showToast(window.t?.('withdraw_success') || '✅ Заявка создана!', 'success');
+                    if (window.playClaim) window.playClaim();
+                    
+                    // Обновить баланс
+                    await refreshBalance();
+                    
+                    // Очистить форму
+                    document.getElementById('walletInput').value = '';
+                    document.getElementById('amountInput').value = '';
+                    updateConversion();
+                    validateWallet();
+                    validateAmount();
+                    
                 } else {
-                    showMessage('❌ ' + data.error, 'error');
-                    withdrawBtn.disabled = false;
-                    withdrawBtn.innerText = t('withdraw_btn');
+                    // Ошибка от сервера
+                    const errorMsg = data.error || window.t?.('withdraw_error') || 'Ошибка';
+                    showToast(`❌ ${errorMsg}`, 'error');
+                    if (window.playError) window.playError();
                 }
+                
             } catch (err) {
-                showMessage(t('error_network'), 'error');
-                withdrawBtn.disabled = false;
-                withdrawBtn.innerText = t('withdraw_btn');
+                console.error('Withdraw error:', err);
+                showToast(window.t?.('error_network') || '🌐 Ошибка сети', 'error');
+                if (window.playError) window.playError();
+            } finally {
+                // Восстановить кнопку
+                isProcessing = false;
+                btn.disabled = false;
+                btnText.textContent = window.t?.('withdraw_btn') || 'Запросить вывод';
+                btnLoader.classList.add('hidden');
             }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            // Скрыть загрузку
+            setTimeout(() => {
+                const loading = document.getElementById('loading-screen');
+                const main = document.getElementById('main-content');
+                if (loading) loading.classList.add('hidden');
+                if (main) {
+                    main.style.display = 'block';
+                    main.classList.add('fade-in');
+                }
+                if (window.initApp) window.initApp();
+                
+                // Обновить баланс
+                refreshBalance();
+            }, 1500);
+
+            // Обработчики ввода
+            const walletInput = document.getElementById('walletInput');
+            const amountInput = document.getElementById('amountInput');
+            
+            walletInput.addEventListener('input', validateWallet);
+            walletInput.addEventListener('blur', validateWallet);
+            
+            amountInput.addEventListener('input', () => {
+                updateConversion();
+                validateAmount();
+            });
+            amountInput.addEventListener('blur', validateAmount);
+            
+            // Enter в поле суммы
+            amountInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !isProcessing) {
+                    e.preventDefault();
+                    processWithdraw();
+                }
+            });
+            
+            // Инициализация конвертации
+            updateConversion();
         });
 
-        loadCurrentBalance();
+        // Очистка при уходе со страницы
+        window.addEventListener('beforeunload', () => {
+            isProcessing = false;
+        });
     </script>
 </body>
 </html>
