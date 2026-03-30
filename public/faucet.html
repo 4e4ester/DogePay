@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500:600:700:800&display=swap" rel="stylesheet">
+    <!-- ИСПРАВЛЕНО: синтаксис wght -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- LOADING SCREEN -->
@@ -36,10 +37,10 @@
             <div id="timer-status" class="timer-status status-ready">✅ Ready to claim!</div>
         </div>
 
-        <!-- CLAIM BUTTON -->
+        <!-- CLAIM BUTTON - добавлен класс btn-text для текста -->
         <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); handleClaim()">
             <span class="btn-icon">🎁</span>
-            <span>CLAIM (10-30 🪙)</span>
+            <span class="btn-text">CLAIM (10-30 🪙)</span>
         </button>
 
         <!-- CAPTCHA BLOCK -->
@@ -275,10 +276,9 @@
             console.log('🚰 Claim request - User ID:', userId);
             
             const btn = document.getElementById('claimBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.querySelector('.btn-text').textContent = 'Processing...';
-            }
+            const btnTextSpan = btn?.querySelector('.btn-text');
+            if (btnTextSpan) btnTextSpan.textContent = 'Processing...';
+            if (btn) btn.disabled = true;
             
             try {
                 const res = await fetch('/api/claim', {
@@ -344,10 +344,9 @@
                 claimLock = false;
                 hideCaptcha();
                 const btn = document.getElementById('claimBtn');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.querySelector('.btn-text').textContent = 'CLAIM (10-30 🪙)';
-                }
+                const btnTextSpan = btn?.querySelector('.btn-text');
+                if (btnTextSpan) btnTextSpan.textContent = 'CLAIM (10-30 🪙)';
+                if (btn) btn.disabled = false;
             }
         }
 
