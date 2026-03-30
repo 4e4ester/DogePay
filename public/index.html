@@ -186,3 +186,39 @@
     </script>
 </body>
 </html>
+
+<!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА КАЖДЫЕ 5 СЕК 🔥 -->
+<script>
+    async function fetchBalance() {
+        try {
+            const tg = window.Telegram?.WebApp;
+            const userId = tg?.initDataUnsafe?.user?.id || 123456;
+            
+            const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            const data = await res.json();
+            if (data.success && typeof data.balance === 'number') {
+                const balanceEl = document.getElementById('balance');
+                const dogeEl = document.getElementById('balance-doge');
+                
+                if (balanceEl) {
+                    balanceEl.textContent = data.balance.toLocaleString('en-US');
+                    balanceEl.classList.add('pulse-once');
+                    setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
+                }
+                if (dogeEl) {
+                    dogeEl.textContent = (data.balance / 1000).toFixed(4);
+                }
+            }
+        } catch (e) {
+            console.error('❌ Balance fetch error:', e);
+        }
+    }
+    
+    // Обновляем при загрузке
+    fetchBalance();
+    
+    // Обновляем каждые 5 секунд
+    setInterval(fetchBalance, 5000);
+</script>
