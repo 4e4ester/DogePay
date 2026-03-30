@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- 🔥 CSP META TAG — ПЕРВЫМ! 🔥 -->
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; 
+                   script-src * 'unsafe-inline' 'unsafe-eval'; 
+                   style-src * 'unsafe-inline'; 
+                   img-src * data: blob:; 
+                   font-src * data:; 
+                   connect-src *;">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DogePay - Реклама</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400:500:600:700:800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- ЭКРАН ЗАГРУЗКИ -->
@@ -61,7 +71,7 @@
         <!-- 💡 ИНФО -->
         <div class="info-box">
             <p><strong>💰 Награда:</strong> 5-10 🪙 за клик</p>
-            <p><strong>⏰ Лимит:</strong> 1 раз в 60 минут</p>
+            <p><strong>⏰ Лимит:</strong> 1 раз в 10 минут</p>
             <p><strong>🔐 Безопасно:</strong> Никаких личных данных</p>
         </div>
 
@@ -101,7 +111,7 @@
         // ===== CONFIG =====
         const AD_REWARD_MIN = 5;
         const AD_REWARD_MAX = 10;
-        const AD_COOLDOWN = 60 * 60 * 1000; // 1 час в мс
+        const AD_COOLDOWN = 10 * 60 * 1000; // 🔥 10 минут в мс
         const AD_WATCH_TIME = 12000; // 12 сек "просмотра"
         
         let isProcessing = false;
@@ -145,7 +155,6 @@
             const check = canClaimAdReward();
             
             if (check.can) {
-                // Можно забирать
                 btn.disabled = false;
                 btn.querySelector('.btn-text').textContent = 'Смотреть за 5-10 🪙';
                 btn.querySelector('.btn-loader').classList.add('hidden');
@@ -153,13 +162,10 @@
                 status.className = 'ad-status status-ready';
                 cooldown.classList.add('hidden');
             } else {
-                // Ждём
                 btn.disabled = true;
                 status.textContent = '⏳ Подожди перед следующей наградой';
                 status.className = 'ad-status status-waiting';
                 cooldown.classList.remove('hidden');
-                
-                // Запускаем таймер
                 startCooldownTimer(check.remaining, timerText);
             }
         }
@@ -183,6 +189,8 @@
 
         // ===== ОБРАБОТКА КЛИКА ПО КНОПКЕ =====
         async function handleAdReward() {
+            console.log('🎬 handleAdReward() started');
+            
             if (isProcessing) return;
             
             const check = canClaimAdReward();
@@ -197,65 +205,67 @@
             const btnLoader = btn.querySelector('.btn-loader');
             const status = document.getElementById('adStatus');
             
-            // Состояние загрузки
             btn.disabled = true;
             btnText.textContent = 'Загрузка...';
             btnLoader.classList.remove('hidden');
             status.textContent = '🔄 Открываем предложение...';
             
             try {
-                // 1. Показываем Popunder (Adsterra делает это автоматически при загрузке скрипта)
-                // Но мы эмулируем "просмотр" таймером
                 console.log('🪟 Triggering Popunder...');
                 
-                // 2. Ждём "просмотр" (12 сек)
+                // Ждём "просмотр" (12 сек)
                 await new Promise(resolve => setTimeout(resolve, AD_WATCH_TIME));
                 
-                // 3. Генерируем награду 5-10 🪙
+                // Генерируем награду 5-10 🪙
                 const reward = Math.floor(Math.random() * (AD_REWARD_MAX - AD_REWARD_MIN + 1)) + AD_REWARD_MIN;
                 console.log(`✅ Awarding ${reward} 🪙`);
                 
-                // 4. Отправляем на сервер
-                const success = await sendAdReward(reward);
+                // Отправляем на сервер
+                const userId = getUserId();
+                console.log('👤 User ID:', userId);
                 
-                if (success) {
-                    // Успех!
+                const res = await fetch('/api/ad-reward', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        reward: reward,
+                        type: 'popunder_click'
+                    })
+                });
+                
+                console.log('📦 Response status:', res.status);
+                const data = await res.json();
+                console.log('📦 Response data:', data);
+                
+                if (data.success) {
                     if (window.playClaim) playClaim();
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
                     }
                     
-                    // Показываем награду
                     showRewardPopup(reward);
-                    
-                    // Обновляем баланс
                     await updateBalanceWithReward(reward);
                     
-                    // Сохраняем время
                     localStorage.setItem('lastAdReward', Date.now().toString());
-                    
-                    // Обновляем статистику
                     updateLocalStats(reward);
                     
-                    // UI
                     status.textContent = `✅ Получено ${reward} 🪙!`;
                     status.className = 'ad-status status-success';
-                    
                     showToast(`🎉 +${reward} 🪙 зачислено!`, 'success');
                     
-                    // Перезапускаем таймер
                     setTimeout(updateAdUI, 2000);
                     
                 } else {
-                    throw new Error('Сервер не подтвердил награду');
+                    throw new Error(data.error || 'Сервер не подтвердил награду');
                 }
                 
             } catch (err) {
                 console.error('❌ Ad reward error:', err);
-                status.textContent = '❌ Ошибка. Попробуй позже.';
+                status.textContent = '❌ Ошибка: ' + (err.message || 'Попробуй позже');
                 status.className = 'ad-status status-error';
                 showToast('🌐 Ошибка получения награды', 'error');
-                if (window.playError) playError();
+                if (window.playError) window.playError();
             } finally {
                 isProcessing = false;
                 btn.disabled = false;
@@ -264,29 +274,8 @@
             }
         }
 
-        // ===== ОТПРАВКА НА СЕРВЕР =====
-        async function sendAdReward(reward) {
-            try {
-                const res = await fetch('/api/ad-reward', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: getUserId(),
-                        reward: reward,
-                        type: 'popunder_click'
-                    })
-                });
-                const data = await res.json();
-                return data.success === true;
-            } catch (err) {
-                console.error('❌ API error:', err);
-                return false;
-            }
-        }
-
         // ===== ОБНОВЛЕНИЕ БАЛАНСА =====
         async function updateBalanceWithReward(reward) {
-            // Локальное обновление (мгновенный отклик)
             const balanceEl = document.getElementById('balance');
             const dogeEl = document.getElementById('balance-doge');
             
@@ -301,10 +290,7 @@
                 dogeEl.textContent = (currentDoge + reward/1000).toFixed(4);
             }
             
-            // Глобальное обновление
-            if (window.updateBalance) {
-                await window.updateBalance();
-            }
+            if (window.updateBalance) await window.updateBalance();
         }
 
         // ===== ПОПАП НАГРАДЫ =====
@@ -316,9 +302,7 @@
                 <span class="reward-text">+${amount} 🪙</span>
             `;
             document.body.appendChild(popup);
-            
             requestAnimationFrame(() => popup.classList.add('reward-show'));
-            
             setTimeout(() => {
                 popup.classList.remove('reward-show');
                 setTimeout(() => popup.remove(), 300);
@@ -363,17 +347,13 @@
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
                 if (window.initApp) window.initApp();
                 
-                // Загружаем статистику
                 document.getElementById('adsWatched').textContent = localStorage.getItem('adsWatched') || '0';
                 document.getElementById('adsEarned').textContent = (parseInt(localStorage.getItem('adsEarned') || '0')).toLocaleString('ru-RU');
                 
-                // Обновляем UI
                 updateAdUI();
-                
             }, 1500);
         });
 
-        // Очистка
         window.addEventListener('beforeunload', () => {
             if (countdownInterval) clearInterval(countdownInterval);
         });
@@ -381,82 +361,21 @@
     
     <!-- СТИЛИ -->
     <style>
-        .reward-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .reward-icon {
-            font-size: 32px;
-            animation: bounce 2s ease-in-out infinite;
-        }
-        .reward-header h3 {
-            margin: 0;
-            font-size: 20px;
-            color: var(--text-primary);
-        }
-        .reward-desc {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin: 0 0 20px;
-            line-height: 1.4;
-        }
-        .btn-large {
-            padding: 18px 24px;
-            font-size: 16px;
-            margin-bottom: 16px;
-        }
-        .ad-status {
-            font-size: 14px;
-            text-align: center;
-            margin: 8px 0;
-            min-height: 20px;
-        }
+        .reward-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .reward-icon { font-size: 32px; animation: bounce 2s ease-in-out infinite; }
+        .reward-header h3 { margin: 0; font-size: 20px; color: var(--text-primary); }
+        .reward-desc { font-size: 14px; color: var(--text-secondary); margin: 0 0 20px; line-height: 1.4; }
+        .btn-large { padding: 18px 24px; font-size: 16px; margin-bottom: 16px; }
+        .ad-status { font-size: 14px; text-align: center; margin: 8px 0; min-height: 20px; }
         .ad-status.status-ready { color: var(--text-success); }
         .ad-status.status-waiting { color: var(--text-secondary); }
         .ad-status.status-success { color: var(--gold); font-weight: 600; }
         .ad-status.status-error { color: var(--text-error); }
-        .cooldown-timer {
-            background: rgba(243, 198, 35, 0.08);
-            border: 1px solid rgba(243, 198, 35, 0.2);
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
+        .cooldown-timer { background: rgba(243, 198, 35, 0.08); border: 1px solid rgba(243, 198, 35, 0.2); border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
         .timer-icon { font-size: 16px; }
-        .reward-toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
-            color: var(--bg-primary);
-            padding: 14px 28px;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 16px;
-            z-index: 10000;
-            box-shadow: 0 10px 40px rgba(243, 198, 35, 0.5);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-        .reward-toast.reward-show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
+        .reward-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark)); color: var(--bg-primary); padding: 14px 28px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; z-index: 10000; box-shadow: 0 10px 40px rgba(243, 198, 35, 0.5); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .reward-toast.reward-show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
     </style>
 </body>
 </html>
