@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DogePay - Реклама</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- 1️⃣ Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- 2️⃣ AdsGram SDK ← ВАЖНО! -->
     <script src="https://adsgram.ai/adsgram.min.js"></script>
+    
+    <!-- 3️⃣ Шрифты -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- 4️⃣ Стили -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- ЭКРАН ЗАГРУЗКИ -->
+    <!-- 🎨 ЭКРАН ЗАГРУЗКИ -->
     <div id="loading-screen" class="loading-screen">
         <div class="loader-content">
             <div class="logo-bounce">📢</div>
@@ -20,20 +29,20 @@
         </div>
     </div>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <!-- 🎨 ОСНОВНОЙ КОНТЕНТ -->
     <div class="container" id="main-content">
         
-        <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
+        <!-- 🇷🇺🇬🇧 ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
-        <!-- ШАПКА -->
+        <!-- 🎨 ШАПКА -->
         <div class="header">
             <div class="logo-float">📢</div>
             <h1 class="gradient-title">Реклама</h1>
             <p class="subtitle">Зарабатывай просмотром</p>
         </div>
 
-        <!-- КАРТОЧКА РЕКЛАМЫ -->
+        <!-- 🎨 КАРТОЧКА РЕКЛАМЫ -->
         <div class="ads-card">
             
             <!-- Статус -->
@@ -58,7 +67,7 @@
 
             <!-- Кнопка просмотра -->
             <div id="watch-wrapper" class="watch-wrapper hidden">
-                <button id="watch-btn" class="btn btn-primary btn-large watch-btn" onclick="playClick(); showAd()">
+                <button id="watch-btn" class="btn btn-primary btn-large watch-btn">
                     <span class="btn-icon">▶️</span>
                     <span class="btn-text">Смотреть рекламу</span>
                     <span class="btn-loader hidden"></span>
@@ -67,14 +76,14 @@
             </div>
         </div>
 
-        <!-- ИНФО БЛОК -->
+        <!-- 🎨 ИНФО БЛОК -->
         <div class="info-box">
             <p>💎 Награда: <strong>5-20 🪙</strong> за просмотр</p>
             <p>⏰ Лимит: <strong>каждые 60 минут</strong></p>
             <p>🎯 Поддержи проект и получай монеты!</p>
         </div>
 
-        <!-- СТАТИСТИКА -->
+        <!-- 🎨 СТАТИСТИКА -->
         <div class="stats-mini">
             <div class="stat-item">
                 <span class="stat-value" id="total-watched">0</span>
@@ -86,23 +95,25 @@
             </div>
         </div>
 
-        <!-- КНОПКА НАЗАД -->
+        <!-- 🎨 КНОПКА НАЗАД -->
         <a href="index.html" class="btn btn-secondary" onclick="playClick()">
             <span class="btn-icon">←</span>
             <span>На главную</span>
         </a>
 
-        <!-- ФУТЕР -->
+        <!-- 🎨 ФУТЕР -->
         <div class="footer">
             <p>🐕 DogePay • Реклама</p>
         </div>
     </div>
 
+    <!-- 🎨 СКРИПТЫ -->
     <script src="translations.js"></script>
     <script src="app.js"></script>
+    
+    <!-- 🎨 ADSGRAM ЛОГИКА -->
     <script>
-        // ===== 📢 ADSGRAM INTEGRATION (BLOCK ID: 26294) =====
-        
+        // ===== 📢 ADSGRAM CONFIG =====
         const ADSGRAM_BLOCK_ID = '26294'; // ✅ ТВОЙ BLOCK ID
         
         let adsgram = null;
@@ -110,47 +121,58 @@
         let isWatching = false;
         let countdownTimer = null;
 
-        // Получение user_id
+        // ===== ПОЛУЧЕНИЕ USER_ID =====
         function getUserId() {
             const tg = window.Telegram?.WebApp;
-            return tg?.initDataUnsafe?.user?.id || 123456;
+            if (tg?.initDataUnsafe?.user?.id) {
+                return tg.initDataUnsafe.user.id;
+            }
+            return 123456; // fallback для тестов
         }
 
-        // Инициализация AdsGram
+        // ===== ИНИЦИАЛИЗАЦИЯ ADSGRAM =====
         function initAdsGram() {
+            console.log('🔍 AdsGram SDK check...');
+            console.log('typeof AdsGram:', typeof AdsGram);
+            console.log('Block ID:', ADSGRAM_BLOCK_ID);
+            
             if (typeof AdsGram === 'undefined') {
-                console.error('❌ AdsGram SDK не загружен');
+                console.error('❌ AdsGram SDK НЕ ЗАГРУЖЕН!');
                 showAdUnavailable('SDK не загружен');
                 return;
             }
             
             try {
+                console.log('✅ Создаём экземпляр AdsGram...');
                 adsgram = new AdsGram(ADSGRAM_BLOCK_ID);
-                console.log('✅ AdsGram инициализирован:', ADSGRAM_BLOCK_ID);
+                console.log('✅ AdsGram инициализирован:', adsgram);
                 
-                // Проверяем доступность рекламы
-                checkAdAvailability();
-                
+                console.log('🔍 Проверяем доступность рекламы...');
+                adsgram.isAdReady()
+                    .then(ready => {
+                        console.log('📢 isAdReady result:', ready);
+                        isAdReady = ready;
+                        updateAdUI();
+                        
+                        if (!ready) {
+                            console.warn('⚠️ Реклама не готова. Возможные причины:');
+                            console.warn('- Нет рекламодателей для твоего GEO');
+                            console.warn('- Блок на модерации');
+                            console.warn('- Лимит показов исчерпан');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('❌ isAdReady error:', err);
+                        showAdUnavailable('Ошибка: ' + err.message);
+                    });
+                    
             } catch (err) {
                 console.error('❌ AdsGram init error:', err);
-                showAdUnavailable('Ошибка инициализации');
+                showAdUnavailable('Ошибка инициализации: ' + err.message);
             }
         }
 
-        // Проверка доступности
-        async function checkAdAvailability() {
-            try {
-                const ready = await adsgram.isAdReady();
-                isAdReady = ready;
-                console.log('📢 AdsGram ready:', ready);
-                updateAdUI();
-            } catch (err) {
-                console.error('❌ AdsGram check error:', err);
-                showAdUnavailable('Ошибка проверки');
-            }
-        }
-
-        // Обновление UI
+        // ===== ОБНОВЛЕНИЕ UI =====
         function updateAdUI() {
             const statusIcon = document.getElementById('status-icon');
             const statusText = document.getElementById('status-text');
@@ -171,7 +193,7 @@
             }
         }
 
-        // Показать "недоступно"
+        // ===== ПОКАЗАТЬ "НЕДОСТУПНО" =====
         function showAdUnavailable(message) {
             const statusIcon = document.getElementById('status-icon');
             const statusText = document.getElementById('status-text');
@@ -185,7 +207,7 @@
             timerWrapper.classList.remove('hidden');
         }
 
-        // Показать рекламу
+        // ===== ПОКАЗАТЬ РЕКЛАМУ =====
         async function showAd() {
             if (isWatching) return;
             if (!adsgram || !isAdReady) {
@@ -258,7 +280,7 @@
             }
         }
 
-        // Обновление баланса
+        // ===== ОБНОВЛЕНИЕ БАЛАНСА =====
         async function updateBalanceWithReward(reward) {
             const userId = getUserId();
             
@@ -270,6 +292,7 @@
                 });
                 
                 const data = await res.json();
+                console.log('📦 API response:', data);
                 
                 if (data.success) {
                     const balanceEl = document.getElementById('balance');
@@ -288,9 +311,20 @@
                     localStorage.setItem('currentBalance', (data.newBalance || 0).toString());
                     
                     if (window.updateBalance) await window.updateBalance();
+                    
+                    console.log('✅ Balance updated:', data.newBalance);
+                } else {
+                    console.error('❌ API error:', data.error);
+                    // Локальное обновление на всякий случай
+                    const balanceEl = document.getElementById('balance');
+                    if (balanceEl) {
+                        const current = parseInt(balanceEl.textContent) || 0;
+                        balanceEl.textContent = (current + reward).toLocaleString('ru-RU');
+                    }
                 }
             } catch (err) {
                 console.error('❌ Balance update error:', err);
+                // Локальное обновление
                 const balanceEl = document.getElementById('balance');
                 if (balanceEl) {
                     const current = parseInt(balanceEl.textContent) || 0;
@@ -299,7 +333,7 @@
             }
         }
 
-        // Показать награду
+        // ===== ПОКАЗАТЬ НАГРАДУ =====
         function showReward(amount) {
             const popup = document.createElement('div');
             popup.className = 'reward-toast reward-success';
@@ -317,7 +351,7 @@
             }, 2500);
         }
 
-        // Показать тост
+        // ===== ПОКАЗАТЬ ТОСТ =====
         function showToast(message, type = 'info') {
             if (window.showToast) {
                 window.showToast(message, type);
@@ -337,7 +371,7 @@
             }, 3000);
         }
 
-        // Запуск таймера
+        // ===== ЗАПУСК ТАЙМЕРА =====
         function showWaiting(remainingMs) {
             const statusIcon = document.getElementById('status-icon');
             const statusText = document.getElementById('status-text');
@@ -394,7 +428,7 @@
             countdownTimer = setInterval(update, 1000);
         }
 
-        // Обновление статистики
+        // ===== ОБНОВЛЕНИЕ СТАТИСТИКИ =====
         function updateStats(reward) {
             let watched = parseInt(localStorage.getItem('adsWatched') || '0');
             let earned = parseInt(localStorage.getItem('adsEarned') || '0');
@@ -417,7 +451,7 @@
             document.getElementById('total-earned').textContent = parseInt(earned).toLocaleString('ru-RU');
         }
 
-        // Инициализация
+        // ===== ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ =====
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
@@ -428,7 +462,14 @@
                     main.style.display = 'block';
                     main.classList.add('fade-in');
                 }
-                if (window.initApp) window.initApp();
+                
+                if (window.initApp) {
+                    try {
+                        window.initApp();
+                    } catch (err) {
+                        console.error('❌ initApp error:', err);
+                    }
+                }
                 
                 initStats();
                 initAdsGram();
@@ -443,10 +484,15 @@
             }, 1500);
         });
 
-        // Очистка
+        // ===== КНОПКА ПРОСМОТРА =====
+        document.getElementById('watch-btn')?.addEventListener('click', () => {
+            playClick();
+            showAd();
+        });
+
+        // ===== ОЧИСТКА =====
         window.addEventListener('beforeunload', () => {
             if (countdownTimer) clearInterval(countdownTimer);
-            if (adsgram?.destroy) adsgram.destroy();
         });
     </script>
 </body>
