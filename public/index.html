@@ -181,7 +181,7 @@
         });
     </script>
     
-    <!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА С ЛОГАМИ 🔥 -->
+    <!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА С ИСПРАВЛЕНИЕМ СТРОКИ 🔥 -->
     <script>
         async function fetchBalance() {
             try {
@@ -196,13 +196,17 @@
                 const data = await res.json();
                 console.log('📦 Ответ API:', data);
                 
-                if (data.success && typeof data.balance === 'number') {
+                if (data.success && data.balance !== undefined) {
+                    // Преобразуем в число, если пришло строкой (как в твоих логах)
+                    const balanceNum = typeof data.balance === 'number' ? data.balance : parseInt(data.balance, 10);
+                    if (isNaN(balanceNum)) throw new Error('Balance is not a number');
+                    
                     const balanceEl = document.getElementById('balance');
                     const dogeEl = document.getElementById('balance-doge');
                     
                     if (balanceEl) {
-                        balanceEl.textContent = data.balance.toLocaleString('ru-RU');
-                        console.log('✅ Баланс обновлён на странице:', data.balance);
+                        balanceEl.textContent = balanceNum.toLocaleString('ru-RU');
+                        console.log('✅ Баланс обновлён на странице:', balanceNum);
                         balanceEl.classList.add('pulse-once');
                         setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
                     } else {
@@ -210,7 +214,7 @@
                     }
                     
                     if (dogeEl) {
-                        dogeEl.textContent = (data.balance / 1000).toFixed(4);
+                        dogeEl.textContent = (balanceNum / 1000).toFixed(4);
                     }
                 } else {
                     console.warn('⚠️ Ответ не содержит balance или success:false');
