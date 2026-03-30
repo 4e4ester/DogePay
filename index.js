@@ -174,7 +174,7 @@ app.get('/api/balance', async (req, res) => {
     }
 });
 
-// ==================== API: КРАН (10-30 🪙, 60 сек) ====================
+// ==================== 🔥 API: КРАН (10-30 🪙, 30 МИНУТ) 🔥 ====================
 app.post('/api/claim', async (req, res) => {
     const client = await pool.connect();
     try {
@@ -190,14 +190,20 @@ app.post('/api/claim', async (req, res) => {
         const lastClaim = check.rows[0]?.last_claim;
         const balance = check.rows[0]?.balance ?? 0;
 
+        // 🔥 ПРОВЕРКА КУЛДАУНА (30 МИНУТ = 1800 СЕК) 🔥
         if (lastClaim) {
             const diff = (new Date() - new Date(lastClaim)) / 1000;
-            if (diff < 60) {
-                const wait = Math.ceil(60 - diff);
-                return res.status(429).json({ success: false, error: `Жди ${wait} сек`, waitTime: wait * 1000 });
+            if (diff < 1800) {  // 🔥 30 минут
+                const wait = Math.ceil(1800 - diff);
+                return res.status(429).json({ 
+                    success: false, 
+                    error: `Жди ${wait} сек`, 
+                    waitTime: wait * 1000 
+                });
             }
         }
 
+        // Начисление 10-30 🪙
         const reward = Math.floor(Math.random() * 21) + 10;
         await client.query('UPDATE users SET balance = $1, last_claim = NOW() WHERE user_id = $2', [balance + reward, user_id]);
         await client.query('COMMIT');
