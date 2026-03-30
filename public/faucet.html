@@ -1,63 +1,63 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title data-t="faucet_title">Кран</title>
+    <title>DogePay - Faucet</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500:600:700:800&display=swap" rel="stylesheet">
+    <!-- ИСПРАВЛЕНО: синтаксис wght -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- ЭКРАН ЗАГРУЗКИ -->
+    <!-- LOADING SCREEN -->
     <div id="loading-screen" class="loading-screen">
         <div class="loader-content">
             <div class="logo-bounce">🚰</div>
             <div class="spinner"></div>
-            <p class="loading-text" data-t="loading">Загрузка...</p>
+            <p>Loading...</p>
         </div>
     </div>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <!-- MAIN CONTENT -->
     <div class="container" id="main-content">
         
-        <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
+        <!-- 🔥 NO LANGUAGE BUTTON - ENGLISH ONLY 🔥 -->
         
-        <!-- ШАПКА -->
+        <!-- HEADER -->
         <div class="header">
             <div class="logo-float">🚰</div>
-            <h1 class="gradient-title" data-t="faucet_title">Кран</h1>
-            <p class="subtitle" data-t="faucet_subtitle">Забери бесплатные монеты</p>
+            <h1 class="gradient-title">Faucet</h1>
+            <p class="subtitle">Claim free coins</p>
         </div>
 
-        <!-- ТАЙМЕР -->
+        <!-- TIMER -->
         <div class="timer-card">
-            <p class="timer-label" data-t="next_claim">До следующего сбора:</p>
+            <p class="timer-label">Next claim in:</p>
             <div id="timer" class="timer-display">00:00</div>
-            <div id="timer-status" class="timer-status status-ready" data-t="claim_ready">✅ Можно забирать!</div>
+            <div id="timer-status" class="timer-status status-ready">✅ Ready to claim!</div>
         </div>
 
-        <!-- КНОПКА ЗАБРАТЬ -->
+        <!-- CLAIM BUTTON -->
         <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); showCaptcha()">
             <span class="btn-icon">🎁</span>
-            <span data-t="claim_btn">ЗАБРАТЬ (10-30 🪙)</span>
+            <span>CLAIM (10-30 🪙)</span>
         </button>
 
-        <!-- CAPTCHA БЛОК -->
+        <!-- CAPTCHA BLOCK -->
         <div id="captchaContainer" class="captcha-container hidden">
             <div class="captcha-card">
-                <p class="captcha-title" data-t="captcha_title">🔐 Проверка</p>
-                <p class="captcha-question" id="captchaQuestion" data-t="captcha_question">Сколько будет 5 + 3?</p>
-                <input type="number" id="captchaInput" class="captcha-input" data-t-placeholder="captcha_answer" placeholder="?" inputmode="numeric">
-                <button id="verifyCaptchaBtn" class="btn btn-primary" onclick="onVerifyCaptcha()" data-t="captcha_verify">Проверить</button>
-                <button id="cancelCaptchaBtn" class="btn btn-secondary" onclick="hideCaptcha()" style="margin-top: 10px;" data-t="btn_cancel">Отмена</button>
-                <p id="captchaError" class="captcha-error hidden" data-t="captcha_error">❌ Неверно! Попробуй ещё раз.</p>
+                <p class="captcha-title">🔐 Verification</p>
+                <p class="captcha-question" id="captchaQuestion">Solve: 5 + 3 = ?</p>
+                <input type="number" id="captchaInput" class="captcha-input" placeholder="?" inputmode="numeric">
+                <button id="verifyCaptchaBtn" class="btn btn-primary" onclick="onVerifyCaptcha()">Verify</button>
+                <button id="cancelCaptchaBtn" class="btn btn-secondary" onclick="hideCaptcha()" style="margin-top: 10px;">Cancel</button>
+                <p id="captchaError" class="captcha-error hidden">❌ Wrong! Try again.</p>
             </div>
         </div>
 
-        <!-- ПОПАП НАГРАДЫ -->
+        <!-- REWARD POPUP -->
         <div id="rewardPopup" class="reward-popup hidden">
             <div class="reward-content">
                 <span class="reward-icon">🎉</span>
@@ -65,26 +65,26 @@
             </div>
         </div>
 
-        <!-- ИНФО БЛОК -->
+        <!-- INFO BLOCK -->
         <div class="info-box">
-            <p data-t="faucet_info_1">💎 Награда: <strong>10-30 🪙</strong></p>
-            <p data-t="faucet_info_2">⏰ Интервал: <strong>30 минут</strong></p>
-            <p data-t="faucet_info_3">🔐 CAPTCHA: защита от ботов</p>
+            <p>💎 Reward: <strong>10-30 🪙</strong></p>
+            <p>⏰ Interval: <strong>30 minutes</strong></p>
+            <p>🔐 CAPTCHA: bot protection</p>
         </div>
 
-        <!-- КНОПКА НАЗАД -->
+        <!-- BACK BUTTON -->
         <a href="index.html" class="btn btn-secondary" onclick="playClick()">
             <span class="btn-icon">←</span>
-            <span data-t="back_home">На главную</span>
+            <span>Home</span>
         </a>
 
-        <!-- ФУТЕР -->
+        <!-- FOOTER -->
         <div class="footer">
-            <p>🐕 DogePay • <span data-t="faucet_title">Кран</span></p>
+            <p>🐕 DogePay • Faucet</p>
         </div>
     </div>
 
-    <!-- ЗАГЛУШКИ ДЛЯ ФУНКЦИЙ -->
+    <!-- STUBS FOR FUNCTIONS -->
     <script>
         window.playClick = window.playClick || function() {
             if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -102,17 +102,14 @@
             }
         };
         window.updateBalance = window.updateBalance || function() {
-            console.log("updateBalance заглушка");
+            console.log("updateBalance stub");
             return Promise.resolve();
         };
         window.addBalance = window.addBalance || function(amount) {
-            console.log("addBalance заглушка, +", amount);
+            console.log("addBalance stub, +", amount);
         };
         window.initApp = window.initApp || function() {
-            console.log("initApp заглушка");
-        };
-        window.toggleLanguage = window.toggleLanguage || function() {
-            console.log("toggleLanguage заглушка");
+            console.log("initApp stub");
         };
         window.showToast = window.showToast || function(message, type) {
             const toast = document.createElement('div');
@@ -127,30 +124,10 @@
         };
     </script>
     
-    <!-- СКРИПТЫ -->
-    <script src="translations.js"></script>
+    <!-- SCRIPTS -->
     <script src="app.js"></script>
     
-    <!-- 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ 🔥 -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                const loading = document.getElementById('loading-screen');
-                const main = document.getElementById('main-content');
-                if (loading) loading.classList.add('hidden');
-                if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
-                if (window.initApp) window.initApp();
-                
-                // 🔥 ПРИМЕНЯЕМ ПЕРЕВОДЫ 🔥
-                if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
-                if (typeof updatePageLanguage === 'function') {
-                    setTimeout(() => updatePageLanguage(), 100);
-                }
-            }, 1500);
-        });
-    </script>
-    
-    <!-- ЛОГИКА КРАНА -->
+    <!-- FAUCET LOGIC -->
     <script>
         const FAUCET_COOLDOWN_MS = 30 * 60 * 1000;
         let currentCaptcha = { answer: 0 };
@@ -181,7 +158,7 @@
                 const diff = endTimestamp - now;
                 if (diff <= 0) {
                     timerEl.textContent = '00:00';
-                    statusEl.textContent = window.t?.('claim_ready') || '✅ Можно забирать!';
+                    statusEl.textContent = '✅ Ready to claim!';
                     statusEl.className = 'timer-status status-ready';
                     claimBtn.disabled = false;
                     claimBtn.classList.remove('disabled');
@@ -189,7 +166,7 @@
                 } else {
                     const secondsLeft = Math.ceil(diff / 1000);
                     timerEl.textContent = formatTime(secondsLeft);
-                    statusEl.textContent = window.t?.('claim_waiting') || '⏳ Жди...';
+                    statusEl.textContent = '⏳ Wait...';
                     statusEl.className = 'timer-status status-waiting';
                     claimBtn.disabled = true;
                     claimBtn.classList.add('disabled');
@@ -213,9 +190,9 @@
             currentCaptcha.answer = answer;
             currentCaptcha.question = `${a} ${op} ${b}`;
             const qEl = document.getElementById('captchaQuestion');
-            if (qEl) qEl.innerHTML = `<strong>${window.t?.('captcha_question') || 'Решите пример:'}</strong> ${currentCaptcha.question} = ?`;
+            if (qEl) qEl.innerHTML = `<strong>Solve:</strong> ${currentCaptcha.question} = ?`;
             const inputEl = document.getElementById('captchaInput');
-            if (inputEl) { inputEl.value = ''; inputEl.placeholder = window.t?.('captcha_answer') || '?'; }
+            if (inputEl) { inputEl.value = ''; inputEl.placeholder = '?'; }
             const errEl = document.getElementById('captchaError');
             if (errEl) errEl.classList.add('hidden');
         }
@@ -277,24 +254,24 @@
                     if (typeof localStorage !== 'undefined') localStorage.setItem('lastClaim', nextClaim.toString());
                     startTimer(nextClaim);
                     window.showToast(`✅ +${reward} 🪙`, 'success');
-                } else if (data.error?.includes('Подождите') || data.error?.includes('Wait') || data.waitTime) {
+                } else if (data.error?.includes('Wait') || data.waitTime) {
                     const waitTime = data.waitTime || FAUCET_COOLDOWN_MS;
                     const nextClaim = Date.now() + waitTime;
                     if (typeof localStorage !== 'undefined') localStorage.setItem('lastClaim', nextClaim.toString());
                     startTimer(nextClaim);
-                    window.showToast('⏳ ' + (data.error || window.t?.('wait') || 'Подождите'), 'info');
+                    window.showToast('⏳ ' + (data.error || 'Please wait'), 'info');
                 } else {
-                    const errorMsg = data.error || window.t?.('error') || 'Неизвестная ошибка';
+                    const errorMsg = data.error || 'Unknown error';
                     console.error('❌ API error:', errorMsg);
                     window.showToast('❌ ' + errorMsg, 'error');
                     if (window.playError) window.playError();
                 }
             } catch (err) {
                 console.error('🌐 Network error:', err);
-                let errorMsg = window.t?.('error_network') || '🌐 Ошибка сети';
-                if (err.message.includes('Failed to fetch')) errorMsg = '❌ Не удалось подключиться к серверу';
-                else if (err.message.includes('404')) errorMsg = '❌ API endpoint не найден';
-                else if (err.message.includes('500')) errorMsg = '❌ Ошибка сервера';
+                let errorMsg = '🌐 Network error';
+                if (err.message.includes('Failed to fetch')) errorMsg = '❌ Could not connect to server';
+                else if (err.message.includes('404')) errorMsg = '❌ API endpoint not found';
+                else if (err.message.includes('500')) errorMsg = '❌ Server error';
                 window.showToast(errorMsg, 'error');
                 if (window.playError) window.playError();
             } finally {
@@ -310,7 +287,7 @@
             if (isNaN(userAnswer)) {
                 const errorEl = document.getElementById('captchaError');
                 if (errorEl) {
-                    errorEl.textContent = window.t?.('captcha_error') || '❌ Введите число';
+                    errorEl.textContent = '❌ Enter a number';
                     errorEl.classList.remove('hidden');
                 }
                 return;
@@ -318,7 +295,7 @@
             if (userAnswer !== currentCaptcha.answer) {
                 const errorEl = document.getElementById('captchaError');
                 if (errorEl) {
-                    errorEl.textContent = window.t?.('captcha_error') || '❌ Неверно! Попробуй ещё раз.';
+                    errorEl.textContent = '❌ Wrong! Try again.';
                     errorEl.classList.remove('hidden');
                     errorEl.style.animation = 'shake 0.3s ease';
                     setTimeout(() => errorEl.style.animation = '', 300);
@@ -341,6 +318,7 @@
                 if (loading) loading.classList.add('hidden');
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
                 if (window.initApp) window.initApp();
+                
                 let lastClaim = null;
                 if (typeof localStorage !== 'undefined') lastClaim = localStorage.getItem('lastClaim');
                 console.log('🕐 Last claim:', lastClaim);
