@@ -1,6 +1,6 @@
-// ===== 🌐 DOGEPAY — translations.js (ULTRA EDITION v2.1) =====
+// ===== 🌐 DOGEPAY — translations.js (ULTRA EDITION v2.2) =====
 // Мультиязычность: RU ↔ EN с авто-определением и плавным переключением
-// ✅ ИСПРАВЛЕНО: перенос строк в ads_info теперь через <br>
+// ✅ ДОБАВЛЕНО: все ключи для withdraw.html + фикс <br> рендеринга
 
 (function() {
     'use strict';
@@ -53,7 +53,6 @@
             ads_subtitle: 'Получай 🪙 за просмотр',
             ads_watch: '🎬 Смотреть за 5-10 🪙',
             ads_reward: '🪙 Награда: <strong>5-10 🪙</strong>',
-            // 🔥 ИСПРАВЛЕНО: \n заменён на <br> для корректного отображения в HTML
             ads_info: '📺 Просмотри предложение и получи монеты<br>⏱ Лимит: <strong>каждые 10 минут</strong>',
             ads_coming_soon: '🚧 Раздел в разработке...<br>Скоро здесь будет реклама!',
             ads_available: '✅ Нажми чтобы получить награду!',
@@ -62,22 +61,33 @@
             ads_btn_ready: '✅ Нажми чтобы получить награду!',
             ads_btn_waiting: '⏳ Подожди перед следующей наградой',
 
-            // === ВЫВОД ===
+            // === ВЫВОД — 🔥 ПОЛНЫЙ НАБОР КЛЮЧЕЙ 🔥 ===
             withdraw_title: '💸 Вывод DOGE',
             withdraw_subtitle: 'Выведи на свой кошелёк',
             wallet_label: 'Твой DOGE кошелёк',
             wallet_placeholder: 'Адрес кошелька',
+            wallet_hint: 'Введи корректный DOGE адрес',  // ✅ ДОБАВЛЕНО
+            wallet_error: '❌ Неверный формат адреса',  // ✅ ДОБАВЛЕНО
             amount_label: 'Сумма в 🪙',
             amount_placeholder: 'Минимум 10000 🪙 (10 DOGE)',
+            amount_hint: '1000 🪙 = 1 DOGE',  // ✅ ДОБАВЛЕНО
+            amount_error: '❌ Сумма меньше минимума',  // ✅ ДОБАВЛЕНО
+            btn_max: 'MAX',  // ✅ ДОБАВЛЕНО
+            conversion_label: 'Это примерно:',  // ✅ ДОБАВЛЕНО
             min_withdraw: '💡 Мин. вывод: 10000 🪙',
             withdraw_btn: 'Запросить вывод',
             withdraw_processing: '⏳ Отправка...',
             wallet_warning: '⚠️ Проверяй адрес! Транзакции необратимы.',
             withdraw_info: '⏱ Обработка: до 24 часов',
+            withdraw_info_1: '💡 Мин. вывод: <strong>10000 🪙</strong> (10 DOGE)',  // ✅ ДОБАВЛЕНО
+            withdraw_info_2: '⏱ Обработка: <strong>до 24 часов</strong>',  // ✅ ДОБАВЛЕНО
+            withdraw_info_3: '🔐 Только на <strong>DOGE-кошельки</strong>',  // ✅ ДОБАВЛЕНО
             withdraw_success: '✅ Заявка создана!',
             withdraw_error_balance: '❌ Недостаточно средств',
             withdraw_error_min: '❌ Минимум 10000 🪙',
             withdraw_error_wallet: '❌ Введи корректный адрес',
+            withdraw_error_validation: '❌ Исправь ошибки в форме',  // ✅ ДОБАВЛЕНО
+            withdraw_error: 'Ошибка при создании заявки',  // ✅ ДОБАВЛЕНО
             your_balance: 'Твой баланс: {balance} 🪙',
 
             // === АДМИН ===
@@ -161,7 +171,6 @@
             ads_subtitle: 'Earn 🪙 for viewing',
             ads_watch: '🎬 Watch for 5-10 🪙',
             ads_reward: '🪙 Reward: <strong>5-10 🪙</strong>',
-            // 🔥 FIXED: replaced \n with <br> for HTML rendering
             ads_info: '📺 Watch offer and get coins<br>⏱ Limit: <strong>every 10 minutes</strong>',
             ads_coming_soon: '🚧 Coming soon...<br>Ads will be available shortly!',
             ads_available: '✅ Click to get reward!',
@@ -170,22 +179,33 @@
             ads_btn_ready: '✅ Click to get reward!',
             ads_btn_waiting: '⏳ Wait before next reward',
 
-            // === WITHDRAW ===
+            // === WITHDRAW — 🔥 FULL KEY SET 🔥 ===
             withdraw_title: '💸 Withdraw DOGE',
             withdraw_subtitle: 'Withdraw to your wallet',
             wallet_label: 'Your DOGE wallet',
             wallet_placeholder: 'Wallet address',
+            wallet_hint: 'Enter valid DOGE address',  // ✅ ADDED
+            wallet_error: '❌ Invalid address format',  // ✅ ADDED
             amount_label: 'Amount in 🪙',
             amount_placeholder: 'Minimum 10000 🪙 (10 DOGE)',
+            amount_hint: '1000 🪙 = 1 DOGE',  // ✅ ADDED
+            amount_error: '❌ Amount below minimum',  // ✅ ADDED
+            btn_max: 'MAX',  // ✅ ADDED
+            conversion_label: 'Approximately:',  // ✅ ADDED
             min_withdraw: '💡 Min. withdrawal: 10000 🪙',
             withdraw_btn: 'Request withdrawal',
             withdraw_processing: '⏳ Sending...',
             wallet_warning: '⚠️ Check address! Transactions are irreversible.',
             withdraw_info: '⏱ Processing: up to 24 hours',
+            withdraw_info_1: '💡 Min. withdrawal: <strong>10000 🪙</strong> (10 DOGE)',  // ✅ ADDED
+            withdraw_info_2: '⏱ Processing: <strong>up to 24 hours</strong>',  // ✅ ADDED
+            withdraw_info_3: '🔐 <strong>DOGE wallets only</strong>',  // ✅ ADDED
             withdraw_success: '✅ Request created!',
             withdraw_error_balance: '❌ Insufficient balance',
             withdraw_error_min: '❌ Minimum 10000 🪙',
             withdraw_error_wallet: '❌ Enter valid address',
+            withdraw_error_validation: '❌ Fix form errors',  // ✅ ADDED
+            withdraw_error: 'Withdrawal request failed',  // ✅ ADDED
             your_balance: 'Your balance: {balance} 🪙',
 
             // === ADMIN ===
@@ -232,7 +252,6 @@
         // Инициализация
         init() {
             try {
-                // 1. Пробуем загрузить из localStorage
                 const saved = localStorage.getItem('dogepay_lang');
                 if (saved && translations[saved]) {
                     this.current = saved;
@@ -242,7 +261,6 @@
                 console.warn('⚠️ localStorage not available');
             }
 
-            // 2. Пробуем определить из Telegram
             const tg = window.Telegram?.WebApp;
             const tgLang = tg?.initDataUnsafe?.user?.language_code;
             if (tgLang && translations[tgLang]) {
@@ -251,7 +269,6 @@
                 return;
             }
 
-            // 3. Пробуем определить из браузера
             const browserLang = navigator.language?.split('-')[0];
             if (browserLang && translations[browserLang]) {
                 this.current = browserLang;
@@ -259,7 +276,6 @@
                 return;
             }
 
-            // 4. Дефолт: русский
             this.current = 'ru';
             try { localStorage.setItem('dogepay_lang', 'ru'); } catch(e) {}
         },
@@ -268,12 +284,10 @@
         t(key, params = {}) {
             let text = translations[this.current]?.[key];
             
-            // Fallback на английский
             if (!text && this.current !== this.fallback) {
                 text = translations[this.fallback]?.[key];
             }
             
-            // Если всё ещё нет — возвращаем ключ
             if (!text) {
                 console.warn(`⚠️ Missing translation: "${key}"`);
                 return key;
@@ -296,7 +310,6 @@
                 console.warn(`⚠️ Language "${newLang}" not supported`);
                 return false;
             }
-            
             this.current = newLang;
             try { localStorage.setItem('dogepay_lang', newLang); } catch(e) {}
             return true;
@@ -304,13 +317,11 @@
 
         // Обновить все элементы на странице
         updatePage() {
-            // Тексты с data-t
             document.querySelectorAll('[data-t]').forEach(el => {
                 const key = el.getAttribute('data-t');
                 if (!key) return;
 
                 const params = {};
-                // Собираем параметры из data-t-* атрибутов
                 for (const attr of el.attributes) {
                     if (attr.name.startsWith('data-t-') && attr.name !== 'data-t') {
                         const param = attr.name.replace('data-t-', '');
@@ -325,16 +336,15 @@
                 } else if (el.tagName === 'IMG') {
                     el.alt = text;
                 } else {
-                    // Сохраняем HTML если есть
-                    if (el.innerHTML.includes('<')) {
-                        el.innerHTML = text;
+                    // 🔥 ПРОВЕРКА: содержит ли ПЕРЕВОД HTML-теги? 🔥
+                    if (/<[a-z][\s\S]*>/i.test(text)) {
+                        el.innerHTML = text;  // Отрендерит <br>, <strong> и т.д.
                     } else {
-                        el.textContent = text;
+                        el.textContent = text;  // Безопасный текст
                     }
                 }
             });
 
-            // Плейсхолдеры с data-t-placeholder
             document.querySelectorAll('[data-t-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-t-placeholder');
                 if (key) {
@@ -342,29 +352,20 @@
                 }
             });
 
-            // Обновляем кнопку флагов
             const flagBtn = document.getElementById('langSwitch');
             if (flagBtn) {
                 flagBtn.innerHTML = this.current === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
                 flagBtn.title = this.current === 'ru' ? 'Switch to English' : 'Переключить на русский';
             }
 
-            // Обновляем активную кнопку языка
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 const lang = btn.dataset.lang;
                 btn.classList.toggle('active', lang === this.current);
             });
         },
 
-        // Получить текущий язык
-        get() {
-            return this.current;
-        },
-
-        // Получить список доступных языков
-        getAvailable() {
-            return Object.keys(translations);
-        }
+        get() { return this.current; },
+        getAvailable() { return Object.keys(translations); }
     };
 
     // ===== 🚀 ЭКСПОРТ В GLOBAL SCOPE =====
@@ -375,6 +376,7 @@
     window.updatePageLanguage = () => LangMgr.updatePage();
     window.loadSavedLanguage = () => LangMgr.init();
     window.getAvailableLanguages = () => LangMgr.getAvailable();
+    
     window.toggleLanguage = () => {
         const newLang = LangMgr.current === 'ru' ? 'en' : 'ru';
         LangMgr.toggle(newLang);
@@ -387,7 +389,6 @@
     // ===== 🏁 АВТО-ИНИЦИАЛИЗАЦИЯ =====
     function autoInit() {
         LangMgr.init();
-        
         if (document.readyState !== 'loading') {
             LangMgr.updatePage();
         }
