@@ -1,7 +1,7 @@
 // index.js — DogePay Telegram Mini App Server
 // Node.js + Express + Telegraf + PostgreSQL (Neon)
 // ✅ БЕЗ dotenv — переменные из Render Environment Variables
-// ✅ ИСПРАВЛЕНО: user_id теперь TEXT для поддержки больших Telegram ID
+// ✅ ИСПРАВЛЕНО: user_id TEXT, добавлена миграция username, атомарные транзакции
 
 const express = require('express');
 const { Telegraf } = require('telegraf');
@@ -58,7 +58,7 @@ const createTables = async () => {
     try {
         await client.query('BEGIN');
 
-        // 🔥 ИСПРАВЛЕНО: user_id TEXT вместо BIGINT 🔥
+        // Таблица users
         await client.query(`
             CREATE TABLE IF NOT EXISTS users (
                 user_id TEXT PRIMARY KEY,
@@ -71,7 +71,15 @@ const createTables = async () => {
             )
         `);
 
-        // 🔥 ИСПРАВЛЕНО: user_id TEXT вместо BIGINT 🔥
+        // 🔥 МИГРАЦИЯ: добавить колонку username, если её нет
+        try {
+            await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(255)`);
+            console.log('✅ Колонка username добавлена (если отсутствовала)');
+        } catch (err) {
+            console.log('⚠️ Колонка username уже существует или ошибка:', err.message);
+        }
+
+        // Таблица withdraw_requests
         await client.query(`
             CREATE TABLE IF NOT EXISTS withdraw_requests (
                 id SERIAL PRIMARY KEY,
@@ -103,7 +111,6 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // Команда /start
 bot.start(async (ctx) => {
-    // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
     const userId = String(ctx.from.id);
     const username = ctx.from.username || '';
     try {
@@ -128,7 +135,6 @@ bot.start(async (ctx) => {
 // Команда /balance
 bot.command('balance', async (ctx) => {
     try {
-        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
         const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [String(ctx.from.id)]);
         const b = r.rows[0]?.balance ?? 0;
         ctx.reply(`🪙 ${b} коинов`);
@@ -169,7 +175,6 @@ const isAdmin = (req) => req.headers.authorization === `Bearer ${ADMIN_TOKEN}`;
 // ==================== API: БАЛАНС ====================
 app.get('/api/balance', async (req, res) => {
     try {
-        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
         const userId = String(req.query.user_id);
         const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [userId]);
         res.json({ success: true, balance: r.rows[0]?.balance ?? 0 });
@@ -183,11 +188,12 @@ app.get('/api/balance', async (req, res) => {
 app.post('/api/claim', async (req, res) => {
     const client = await pool.connect();
     try {
-        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
         const user_id = String(req.body.user_id);
         const username = req.body.username;
         
         if (!user_id) return res.status(400).json({ success: false, error: 'Нет user_id' });
+
+        await client.query('BEGIN'); // 🔥 Атомарность
 
         await client.query(
             `INSERT INTO users (user_id, username) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
@@ -198,11 +204,11 @@ app.post('/api/claim', async (req, res) => {
         const lastClaim = check.rows[0]?.last_claim;
         const balance = check.rows[0]?.balance ?? 0;
 
-        // 🔥 ПРОВЕРКА КУЛДАУНА (30 МИНУТ = 1800 СЕК) 🔥
         if (lastClaim) {
             const diff = (new Date() - new Date(lastClaim)) / 1000;
             if (diff < 1800) {
                 const wait = Math.ceil(1800 - diff);
+                await client.query('ROLLBACK');
                 return res.status(429).json({ 
                     success: false, 
                     error: `Жди ${wait} сек`, 
@@ -211,7 +217,6 @@ app.post('/api/claim', async (req, res) => {
             }
         }
 
-        // Начисление 10-30 🪙
         const reward = Math.floor(Math.random() * 21) + 10;
         await client.query('UPDATE users SET balance = $1, last_claim = NOW() WHERE user_id = $2', [balance + reward, user_id]);
         await client.query('COMMIT');
@@ -226,27 +231,25 @@ app.post('/api/claim', async (req, res) => {
     }
 });
 
-// 🔥 НОВЫЙ ЭНДПОИНТ: НАГРАДА ЗА РЕКЛАМУ (5-10 🪙, 10 МИНУТ) 🔥
+// 🔥 API: НАГРАДА ЗА РЕКЛАМУ (5-10 🪙, 10 МИНУТ) 🔥
 app.post('/api/ad-reward', async (req, res) => {
     const client = await pool.connect();
     try {
-        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
         const user_id = String(req.body.user_id);
         const reward = req.body.reward;
         const type = req.body.type;
         
         console.log('📢 Ad reward request:', { user_id, reward, type });
         
-        // Валидация
         if (!user_id || !reward) {
             return res.status(400).json({ success: false, error: 'Неверные данные' });
         }
-        
         if (reward < 5 || reward > 10) {
             return res.status(400).json({ success: false, error: 'Неверная сумма награды' });
         }
-        
-        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
+
+        await client.query('BEGIN'); // 🔥 Атомарность
+
         const userCheck = await client.query(
             'SELECT user_id, balance, last_ad_reward FROM users WHERE user_id = $1',
             [user_id]
@@ -259,7 +262,6 @@ app.post('/api/ad-reward', async (req, res) => {
             );
         }
         
-        // Проверка кулдауна (10 минут = 600 сек)
         const check = await client.query(
             'SELECT balance, last_ad_reward FROM users WHERE user_id = $1 FOR UPDATE',
             [user_id]
@@ -273,6 +275,7 @@ app.post('/api/ad-reward', async (req, res) => {
             const diff = (new Date() - new Date(lastAdReward)) / 1000;
             if (diff < 600) {
                 const wait = Math.ceil(600 - diff);
+                await client.query('ROLLBACK');
                 return res.status(429).json({ 
                     success: false, 
                     error: `Подождите ${wait} сек`,
@@ -281,9 +284,7 @@ app.post('/api/ad-reward', async (req, res) => {
             }
         }
         
-        // Начисление
         const newBalance = balance + reward;
-        
         await client.query(
             'UPDATE users SET balance = $1, last_ad_reward = NOW() WHERE user_id = $2',
             [newBalance, user_id]
@@ -313,7 +314,6 @@ app.post('/api/ad-reward', async (req, res) => {
 app.post('/api/withdraw', async (req, res) => {
     const client = await pool.connect();
     try {
-        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
         const user_id = String(req.body.user_id);
         const amount = req.body.amount;
         const wallet_address = req.body.wallet_address;
@@ -352,8 +352,6 @@ app.post('/api/withdraw', async (req, res) => {
 });
 
 // ==================== API: АДМИН ====================
-
-// Логин
 app.post('/api/admin/login', (req, res) => {
     if (req.body.password === ADMIN_PASSWORD) {
         res.json({ success: true, token: ADMIN_TOKEN });
@@ -362,7 +360,6 @@ app.post('/api/admin/login', (req, res) => {
     }
 });
 
-// Список заявок
 app.get('/api/admin/requests', async (req, res) => {
     if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Нет доступа' });
     try {
@@ -380,7 +377,6 @@ app.get('/api/admin/requests', async (req, res) => {
     }
 });
 
-// Одобрить
 app.post('/api/admin/approve', async (req, res) => {
     if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Нет доступа' });
     try {
@@ -392,7 +388,6 @@ app.post('/api/admin/approve', async (req, res) => {
     }
 });
 
-// Отклонить (возврат монет)
 app.post('/api/admin/reject', async (req, res) => {
     if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Нет доступа' });
     const client = await pool.connect();
@@ -437,7 +432,6 @@ const startServer = async () => {
 
 startServer();
 
-// ==================== ОСТАНОВКА ====================
 process.once('SIGINT', async () => { 
     console.log('🛑 SIGINT received'); 
     if (botLaunched) bot.stop('SIGINT'); 
