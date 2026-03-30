@@ -887,6 +887,12 @@ body::-webkit-scrollbar-thumb {
     opacity: 0.5;
 }
 
+/* FIX: добавлены стили для кнопки отмены капчи */
+#cancelCaptchaBtn {
+    margin-top: 12px;
+    width: 100%;
+}
+
 .captcha-error {
     color: var(--text-error);
     font-size: 14px;
@@ -896,12 +902,6 @@ body::-webkit-scrollbar-thumb {
 
 .captcha-error.hidden {
     display: none;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
 }
 
 /* Попап награды */
@@ -1129,7 +1129,7 @@ body::-webkit-scrollbar-thumb {
     font-size: 20px;
     cursor: pointer;
     transition: var(--transition);
-    box-shadow: var(--shadow-sm), var(--shadow-gold-soft);
+    box-shadow: var(--shadow-sm), var(--shadow-glow-soft);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -1139,7 +1139,7 @@ body::-webkit-scrollbar-thumb {
 
 #langSwitch:hover {
     border-color: var(--gold);
-    box-shadow: var(--shadow-md), var(--shadow-gold);
+    box-shadow: var(--shadow-md), var(--shadow-glow);
     transform: scale(1.05);
 }
 
@@ -1206,7 +1206,7 @@ body::-webkit-scrollbar-thumb {
     border-radius: var(--border-radius-lg);
     padding: 28px 24px;
     margin-bottom: 24px;
-    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+    box-shadow: var(--shadow-md), var(--shadow-glow-soft);
 }
 
 /* Группы полей */
@@ -1458,13 +1458,6 @@ body::-webkit-scrollbar-thumb {
     }
 }
 
-/* Анимация шейка для ошибок */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
-}
-
 /* ===== 🔐 ADMIN PAGE STYLES ===== */
 
 /* Auth карточка */
@@ -1476,7 +1469,7 @@ body::-webkit-scrollbar-thumb {
     border: var(--border-gold);
     border-radius: var(--border-radius-lg);
     padding: 32px 28px;
-    box-shadow: var(--shadow-lg), var(--shadow-gold-soft);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-soft);
     text-align: center;
     animation: slideUp 0.4s ease;
 }
@@ -1612,7 +1605,7 @@ body::-webkit-scrollbar-thumb {
 .stat-card:hover {
     transform: translateY(-4px);
     border-color: var(--gold);
-    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+    box-shadow: var(--shadow-md), var(--shadow-glow-soft);
 }
 
 .stat-icon {
@@ -1710,7 +1703,7 @@ body::-webkit-scrollbar-thumb {
 
 .request-card:hover {
     border-color: var(--gold);
-    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+    box-shadow: var(--shadow-md), var(--shadow-glow-soft);
     transform: translateY(-2px) !important;
 }
 
@@ -1912,7 +1905,7 @@ body::-webkit-scrollbar-thumb {
     padding: 24px;
     max-width: 340px;
     width: 100%;
-    box-shadow: var(--shadow-lg), var(--shadow-gold);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
     transform: scale(0.95);
     opacity: 0;
     transition: transform 0.2s ease, opacity 0.2s ease;
@@ -2006,13 +1999,6 @@ body::-webkit-scrollbar-thumb {
     }
 }
 
-/* Анимация шейка для ошибок */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
-}
-
 /* ===== 📢 ADS PAGE STYLES ===== */
 
 /* Карточка рекламы */
@@ -2024,7 +2010,7 @@ body::-webkit-scrollbar-thumb {
     padding: 28px 24px;
     margin-bottom: 24px;
     text-align: center;
-    box-shadow: var(--shadow-md), var(--shadow-gold-soft);
+    box-shadow: var(--shadow-md), var(--shadow-glow-soft);
     position: relative;
     overflow: hidden;
 }
@@ -2333,31 +2319,9 @@ body::-webkit-scrollbar-thumb {
     100% { transform: scale(1); }
 }
 
-/* Адаптив */
-@media (max-width: 480px) {
-    .ads-card {
-        padding: 24px 20px;
-    }
-    
-    .timer-display {
-        font-size: 36px;
-    }
-    
-    .watch-btn {
-        padding: 18px 28px;
-        font-size: 16px;
-    }
-    
-    .stats-mini {
-        grid-template-columns: 1fr;
-    }
-    
-    .watching-progress {
-        width: 160px;
-    }
-}
-
-/* Скрытие элементов */
-.hidden {
-    display: none !important;
+/* FIX: единый ключевой кадр shake (был дубль) */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
 }
