@@ -116,6 +116,20 @@
     
     <!-- FAUCET LOGIC -->
     <script>
+        // 🔥 Очистка устаревших строковых данных в localStorage
+        (function cleanupStorage() {
+            try {
+                const oldBalance = localStorage.getItem('balance_update');
+                if (oldBalance) {
+                    const parsed = JSON.parse(oldBalance);
+                    if (typeof parsed.balance === 'string') {
+                        localStorage.removeItem('balance_update');
+                        console.log('🧹 Очищен старый строковый баланс из localStorage');
+                    }
+                }
+            } catch(e) {}
+        })();
+
         const FAUCET_COOLDOWN_MS = 30 * 60 * 1000;
         let currentCaptcha = { answer: 0 };
         let claimLock = false;
@@ -215,7 +229,7 @@
             }
         }
 
-        // 🔥 ОБНОВЛЕНИЕ БАЛАНСА НА ВСЕХ СТРАНИЦАХ 🔥
+        // 🔥 ОБНОВЛЕНИЕ БАЛАНСА НА ВСЕХ СТРАНИЦАХ (с принудительным числом) 🔥
         async function refreshBalanceEverywhere() {
             try {
                 const userId = getUserId();
@@ -223,9 +237,9 @@
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success && data.balance !== undefined) {
-                        // Преобразуем в число, если пришло строкой
-                        let balanceNum = typeof data.balance === 'number' ? data.balance : parseInt(data.balance, 10);
-                        if (isNaN(balanceNum)) balanceNum = 0;
+                        // Гарантируем число
+                        const balanceNum = Number(data.balance);
+                        if (isNaN(balanceNum)) throw new Error('Balance is not a number');
                         
                         // Обновляем на текущей странице если есть элементы
                         const balanceEl = document.getElementById('balance');
@@ -233,7 +247,7 @@
                         if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US');
                         if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4);
                         
-                        // Отправляем сообщение другим вкладкам (главная и др.)
+                        // Сохраняем в localStorage для синхронизации между вкладками
                         if (window.localStorage) {
                             localStorage.setItem('balance_update', JSON.stringify({
                                 balance: balanceNum,
@@ -385,18 +399,20 @@
             captchaInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') onVerifyCaptcha(); });
         }
 
-        // Слушаем обновления баланса из других вкладок
+        // Слушаем обновления баланса из других вкладок (например, после рекламы)
         if (window.addEventListener) {
             window.addEventListener('storage', (e) => {
                 if (e.key === 'balance_update') {
                     try {
                         const data = JSON.parse(e.newValue);
-                        const balanceNum = typeof data.balance === 'number' ? data.balance : parseInt(data.balance, 10);
-                        const balanceEl = document.getElementById('balance');
-                        const dogeEl = document.getElementById('balance-doge');
-                        if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US');
-                        if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4);
-                        console.log('🔄 Balance updated from storage:', balanceNum);
+                        const balanceNum = Number(data.balance);
+                        if (!isNaN(balanceNum)) {
+                            const balanceEl = document.getElementById('balance');
+                            const dogeEl = document.getElementById('balance-doge');
+                            if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US');
+                            if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4);
+                            console.log('🔄 Balance updated from storage:', balanceNum);
+                        }
                     } catch(err) { console.warn('Storage parse error:', err); }
                 }
             });
