@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex');
 
-// ==================== ОТЛАДКА (удали после настройки) ====================
+// ==================== ОТЛАДКА ====================
 console.log('🔍 DEBUG: Переменные окружения');
 console.log('BOT_TOKEN:', process.env.BOT_TOKEN ? '✅ Есть' : '❌ Нет');
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? '✅ Есть' : '❌ Нет');
@@ -64,6 +64,7 @@ const createTables = async () => {
                 username VARCHAR(255),
                 balance BIGINT DEFAULT 0,
                 last_claim TIMESTAMP DEFAULT NULL,
+                last_ad_reward TIMESTAMP DEFAULT NULL,
                 wallet_address TEXT DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -143,10 +144,9 @@ const launchBot = async () => {
         return;
     }
     
-    // Проверка токена
     if (!process.env.BOT_TOKEN || process.env.BOT_TOKEN.includes('123456')) {
         console.error('❌ BOT_TOKEN не настроен! Проверь Render Environment Variables');
-        return; // Не падаем, сервер работает без бота
+        return;
     }
     
     try {
@@ -157,7 +157,6 @@ const launchBot = async () => {
     } catch (err) {
         console.error('❌ Ошибка запуска бота:', err.message);
         console.error('💡 Проверь: 1) BOT_TOKEN 2) Бот активен 3) Сеть Render');
-        // Не падаем — сервер продолжает работать
     }
 };
 
@@ -182,13 +181,11 @@ app.post('/api/claim', async (req, res) => {
         const { user_id, username } = req.body;
         if (!user_id) return res.status(400).json({ success: false, error: 'Нет user_id' });
 
-        // Регистрация пользователя
         await client.query(
             `INSERT INTO users (user_id, username) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
             [user_id, username || null]
         );
 
-        // Проверка таймера
         const check = await client.query('SELECT last_claim, balance FROM users WHERE user_id = $1 FOR UPDATE', [user_id]);
         const lastClaim = check.rows[0]?.last_claim;
         const balance = check.rows[0]?.balance ?? 0;
@@ -201,7 +198,6 @@ app.post('/api/claim', async (req, res) => {
             }
         }
 
-        // Начисление 10-30 🪙
         const reward = Math.floor(Math.random() * 21) + 10;
         await client.query('UPDATE users SET balance = $1, last_claim = NOW() WHERE user_id = $2', [balance + reward, user_id]);
         await client.query('COMMIT');
@@ -213,6 +209,88 @@ app.post('/api/claim', async (req, res) => {
         res.status(500).json({ success: false, error: e.message });
     } finally { 
         client.release(); 
+    }
+});
+
+// 🔥 НОВЫЙ ЭНДПОИНТ: НАГРАДА ЗА РЕКЛАМУ (5-10 🪙, 1 час) 🔥
+app.post('/api/ad-reward', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { user_id, reward, type } = req.body;
+        
+        console.log('📢 Ad reward request:', { user_id, reward, type });
+        
+        // Валидация входных данных
+        if (!user_id || !reward) {
+            return res.status(400).json({ success: false, error: 'Неверные данные' });
+        }
+        
+        // Проверка диапазона награды (защита от накрутки)
+        if (reward < 5 || reward > 10) {
+            return res.status(400).json({ success: false, error: 'Неверная сумма награды' });
+        }
+        
+        // Проверка существования пользователя
+        const userCheck = await client.query(
+            'SELECT id, balance, last_ad_reward FROM users WHERE user_id = $1',
+            [user_id]
+        );
+        
+        if (userCheck.rows.length === 0) {
+            // Создаём пользователя если нет
+            await client.query(
+                `INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
+                [user_id]
+            );
+        }
+        
+        // Проверка кулдауна (1 час = 3600 сек)
+        const check = await client.query(
+            'SELECT balance, last_ad_reward FROM users WHERE user_id = $1 FOR UPDATE',
+            [user_id]
+        );
+        
+        const user = check.rows[0];
+        const balance = user?.balance ?? 0;
+        const lastAdReward = user?.last_ad_reward;
+        
+        if (lastAdReward) {
+            const diff = (new Date() - new Date(lastAdReward)) / 1000;
+            if (diff < 3600) {
+                const wait = Math.ceil(3600 - diff);
+                return res.status(429).json({ 
+                    success: false, 
+                    error: `Подождите ${wait} сек`,
+                    waitTime: wait * 1000 
+                });
+            }
+        }
+        
+        // Начисляем награду
+        const newBalance = balance + reward;
+        
+        await client.query(
+            'UPDATE users SET balance = $1, last_ad_reward = NOW() WHERE user_id = $2',
+            [newBalance, user_id]
+        );
+        
+        await client.query('COMMIT');
+        
+        console.log(`✅ Ad reward: user ${user_id} +${reward} 🪙 | new balance: ${newBalance}`);
+        
+        res.json({ 
+            success: true, 
+            reward, 
+            newBalance,
+            message: `+${reward} 🪙 зачислено!`
+        });
+        
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('❌ API /api/ad-reward error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    } finally {
+        client.release();
     }
 });
 
@@ -236,10 +314,8 @@ app.post('/api/withdraw', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Недостаточно средств' }); 
         }
 
-        // Списание
         await client.query('UPDATE users SET balance = balance - $1 WHERE user_id = $2', [amount, user_id]);
         
-        // Заявка
         const reqRes = await client.query(
             'INSERT INTO withdraw_requests (user_id, amount, wallet_address) VALUES ($1, $2, $3) RETURNING id', 
             [user_id, amount, wallet_address]
@@ -310,7 +386,6 @@ app.post('/api/admin/reject', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Не найдено или обработано' }); 
         }
         
-        // Возврат монет
         await client.query('UPDATE users SET balance = balance + $1 WHERE user_id = $2', [r.rows[0].amount, r.rows[0].user_id]);
         await client.query("UPDATE withdraw_requests SET status = 'rejected' WHERE id = $1", [req.body.requestId]);
         
@@ -329,8 +404,6 @@ app.post('/api/admin/reject', async (req, res) => {
 const startServer = async () => {
     try {
         await createTables();
-        
-        // Запускаем бот асинхронно (не блокируем сервер)
         launchBot().catch(err => console.error('❌ launchBot error:', err));
         
         app.listen(PORT, () => {
@@ -345,7 +418,7 @@ const startServer = async () => {
 
 startServer();
 
-// ==================== ОСТАНОВКА (Graceful Shutdown) ====================
+// ==================== ОСТАНОВКА ====================
 process.once('SIGINT', async () => { 
     console.log('🛑 SIGINT received'); 
     if (botLaunched) bot.stop('SIGINT'); 
