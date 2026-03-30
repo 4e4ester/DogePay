@@ -5,108 +5,39 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DogePay</title>
+    <title data-t="app_name">DogePay</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- ✨ ЯРКИЕ СТИЛИ ДЛЯ ТЕКСТА ✨ -->
+    <!-- ✨ ЯРКИЕ СТИЛИ ✨ -->
     <style>
-        /* 🔥 ГЛАВНЫЙ СЛОГАН — ГРАДИЕНТ + СВЕЧЕНИЕ + АНИМАЦИЯ 🔥 */
         .subtitle {
-            font-size: 18px;
-            font-weight: 700;
-            text-align: center;
-            margin: 8px 0 20px;
-            
-            /* Градиентный текст */
+            font-size: 18px; font-weight: 700; text-align: center; margin: 8px 0 20px;
             background: linear-gradient(135deg, #f3c635 0%, #ff6b6b 30%, #f3c635 60%, #4ecdc4 100%);
-            background-size: 300% 300%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            
-            /* Свечение */
-            filter: drop-shadow(0 0 10px rgba(243, 198, 53, 0.5)) 
-                    drop-shadow(0 0 20px rgba(255, 107, 107, 0.3));
-            
-            /* Анимация переливания */
+            background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            filter: drop-shadow(0 0 10px rgba(243, 198, 53, 0.5)) drop-shadow(0 0 20px rgba(255, 107, 107, 0.3));
             animation: gradientFlow 4s ease infinite, glowPulse 2s ease-in-out infinite;
         }
-        
-        @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes glowPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.85; }
-        }
-        
-        /* ✨ ЭМОДЗИ В СЛОГАНЕ — ПРЫГАЮТ ✨ */
-        .subtitle .emoji {
-            display: inline-block;
-            animation: bounce 1.5s ease-in-out infinite;
-        }
+        @keyframes gradientFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes glowPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+        .subtitle .emoji { display: inline-block; animation: bounce 1.5s ease-in-out infinite; }
         .subtitle .emoji:nth-child(2) { animation-delay: 0.2s; }
         .subtitle .emoji:nth-child(3) { animation-delay: 0.4s; }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-        
-        /* 🌟 ИНФО-БЛОК — ЯРКИЙ 🌟 */
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         .info-box {
             background: linear-gradient(135deg, rgba(243,198,53,0.15), rgba(78,205,196,0.15));
-            border: 2px solid rgba(243, 198, 53, 0.4);
-            border-radius: 16px;
-            padding: 16px;
-            margin: 20px 0;
-            text-align: center;
+            border: 2px solid rgba(243, 198, 53, 0.4); border-radius: 16px; padding: 16px; margin: 20px 0; text-align: center;
             box-shadow: 0 4px 20px rgba(243, 198, 53, 0.2);
         }
-        .info-box p {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        .info-box strong {
-            color: #f3c635;
-            text-shadow: 0 0 8px rgba(243, 198, 53, 0.6);
-        }
-        
-        /* 💎 ФУТЕР — СТИЛЬНЫЙ 💎 */
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(243, 198, 53, 0.3);
-        }
-        .footer p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-        .footer p strong {
-            color: #f3c635;
-            font-weight: 700;
-        }
-        
-        /* ✨ ДОП: ЭФФЕКТ ПРИ НАВЕДЕНИИ НА КНОПКИ ✨ */
-        .btn-primary:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(243, 198, 53, 0.4);
-            transition: all 0.2s ease;
-        }
-        .btn-secondary:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3);
-            transition: all 0.2s ease;
-        }
+        .info-box p { margin: 0; font-weight: 600; color: var(--text-primary); font-size: 14px; }
+        .info-box strong { color: #f3c635; text-shadow: 0 0 8px rgba(243, 198, 53, 0.6); }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(243, 198, 53, 0.3); }
+        .footer p { font-size: 13px; color: var(--text-secondary); text-align: center; }
+        .footer p strong { color: #f3c635; font-weight: 700; }
+        .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(243, 198, 53, 0.4); transition: all 0.2s ease; }
+        .btn-secondary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3); transition: all 0.2s ease; }
     </style>
 </head>
 <body>
@@ -115,7 +46,7 @@
         <div class="loader-content">
             <div class="logo-bounce">🐕</div>
             <div class="spinner"></div>
-            <p class="loading-text">Загрузка...</p>
+            <p class="loading-text" data-t="loading">Загрузка...</p>
         </div>
     </div>
 
@@ -128,30 +59,23 @@
         <!-- ШАПКА -->
         <div class="header">
             <div class="logo-float">🐕</div>
-            <h1 class="gradient-title">DogePay</h1>
-            
-            <!-- ✨ ЯРКИЙ СЛОГАН ✨ -->
-            <p class="subtitle">
-                <span class="emoji">✨</span>
-                Зарабатывай DOGE у нас
-                <span class="emoji">🪙</span>
-                <span class="emoji">🚀</span>
+            <h1 class="gradient-title" data-t="app_name">DogePay</h1>
+            <p class="subtitle" data-t="subtitle">
+                <span class="emoji">✨</span>Зарабатывай DOGE у нас<span class="emoji">🪙</span><span class="emoji">🚀</span>
             </p>
         </div>
 
-        <!-- 🔥 УБРАН ПУСТОЙ БЛОК РЕКЛАМЫ 🔥 -->
-
         <!-- КАРТОЧКА БАЛАНСА -->
         <div class="balance-card">
-            <p class="balance-label">💰 Твой баланс</p>
+            <p class="balance-label" data-t="balance_label">💰 Твой баланс</p>
             <div class="balance-main">
                 <span class="coin-icon">🪙</span>
                 <span id="balance" class="balance-number">0</span>
             </div>
             <p class="balance-doge">
-                <span>🐕 </span>
+                <span data-t="balance_doge">🐕</span>
                 <span id="balance-doge">0.0000</span>
-                <span style="color: #f3c635; font-weight: 700;">DOGE</span>
+                <span data-t="balance_doge_suffix" style="color: #f3c635; font-weight: 700;">DOGE</span>
             </p>
         </div>
 
@@ -159,29 +83,29 @@
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">🚰</span>
-                <span>Кран</span>
+                <span data-t="btn_faucet">Кран</span>
             </a>
             <a href="ads.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">📢</span>
-                <span>Реклама</span>
+                <span data-t="btn_ads">Реклама</span>
             </a>
             <a href="withdraw.html" class="btn btn-secondary" onclick="playClick()">
                 <span class="btn-icon">💸</span>
-                <span>Вывод</span>
+                <span data-t="btn_withdraw">Вывод</span>
             </a>
         </div>
 
-      <!-- ✨ ЯРКИЙ ИНФО-БЛОК ✨ -->
-<div class="info-box">
-    <p>
-        🔐 <strong>Безопасно</strong> • 
-        ⚡ <strong>Быстро</strong> • 
-        💎 <strong>Удобно</strong>
-    </p>
-    <p style="margin-top: 8px; font-size: 13px;">
-        🐕 <strong>Зарабатывай DOGE у нас!</strong> 🪙
-    </p>
-</div>
+        <!-- ИНФО-БЛОК -->
+        <div class="info-box">
+            <p data-t="footer_text">🔐 <strong>Безопасно</strong> • ⚡ <strong>Быстро</strong> • 💎 <strong>Удобно</strong></p>
+            <p style="margin-top: 8px; font-size: 13px;" data-t="footer_doge">🐕 <strong>Зарабатывай DOGE у нас!</strong> 🪙</p>
+        </div>
+
+        <!-- ФУТЕР -->
+        <div class="footer">
+            <p>🐕 <strong data-t="app_name">DogePay</strong> v1.0</p>
+        </div>
+    </div>
 
     <!-- СКРИПТЫ -->
     <script src="translations.js"></script>
@@ -210,7 +134,7 @@
         })();
     </script>
     
-    <!-- ИНИЦИАЛИЗАЦИЯ -->
+    <!-- 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ (ВНУТРИ BODY!) 🔥 -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
@@ -219,23 +143,14 @@
                 if (loading) loading.classList.add('hidden');
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
                 if (window.initApp) { try { window.initApp(); } catch(e) { console.error('initApp error:', e); } }
+                
+                // 🔥 ПРИМЕНЯЕМ ПЕРЕВОДЫ 🔥
+                if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
+                if (typeof updatePageLanguage === 'function') {
+                    setTimeout(() => updatePageLanguage(), 100);
+                }
             }, 1500);
         });
     </script>
 </body>
 </html>
-
-<script>
-    // 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ 🔥
-    document.addEventListener('DOMContentLoaded', () => {
-        // Загружаем сохранённый язык
-        if (typeof loadSavedLanguage === 'function') {
-            loadSavedLanguage();
-        }
-        
-        // Применяем переводы
-        if (typeof updatePageLanguage === 'function') {
-            setTimeout(() => updatePageLanguage(), 100);
-        }
-    });
-</script>
