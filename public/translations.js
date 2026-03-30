@@ -1,6 +1,7 @@
 // ===== 🌐 DOGEPAY — translations.js (ULTRA EDITION v2.2) =====
 // Мультиязычность: RU ↔ EN с авто-определением и плавным переключением
 // ✅ ДОБАВЛЕНО: все ключи для withdraw.html + фикс <br> рендеринга
+// ✅ ИСПРАВЛЕНО: убраны дубликаты эмодзи в btn_faucet/btn_ads/btn_withdraw
 
 (function() {
     'use strict';
@@ -24,9 +25,10 @@
             wait: '⏳ Подожди {seconds} сек',
 
             // === ГЛАВНАЯ ===
-            btn_faucet: '🚰 Кран',
-            btn_ads: '📢 Реклама',
-            btn_withdraw: '💸 Вывод',
+            // 🔥 ИСПРАВЛЕНО: убраны эмодзи (они уже в HTML) 🔥
+            btn_faucet: 'Кран',
+            btn_ads: 'Реклама',
+            btn_withdraw: 'Вывод',
 
             // === КРАН — 🔥 30 МИНУТ КУЛДАУН 🔥 ===
             faucet_title: '🚰 Кран',
@@ -66,28 +68,28 @@
             withdraw_subtitle: 'Выведи на свой кошелёк',
             wallet_label: 'Твой DOGE кошелёк',
             wallet_placeholder: 'Адрес кошелька',
-            wallet_hint: 'Введи корректный DOGE адрес',  // ✅ ДОБАВЛЕНО
-            wallet_error: '❌ Неверный формат адреса',  // ✅ ДОБАВЛЕНО
+            wallet_hint: 'Введи корректный DOGE адрес',
+            wallet_error: '❌ Неверный формат адреса',
             amount_label: 'Сумма в 🪙',
             amount_placeholder: 'Минимум 10000 🪙 (10 DOGE)',
-            amount_hint: '1000 🪙 = 1 DOGE',  // ✅ ДОБАВЛЕНО
-            amount_error: '❌ Сумма меньше минимума',  // ✅ ДОБАВЛЕНО
-            btn_max: 'MAX',  // ✅ ДОБАВЛЕНО
-            conversion_label: 'Это примерно:',  // ✅ ДОБАВЛЕНО
+            amount_hint: '1000 🪙 = 1 DOGE',
+            amount_error: '❌ Сумма меньше минимума',
+            btn_max: 'MAX',
+            conversion_label: 'Это примерно:',
             min_withdraw: '💡 Мин. вывод: 10000 🪙',
             withdraw_btn: 'Запросить вывод',
             withdraw_processing: '⏳ Отправка...',
             wallet_warning: '⚠️ Проверяй адрес! Транзакции необратимы.',
             withdraw_info: '⏱ Обработка: до 24 часов',
-            withdraw_info_1: '💡 Мин. вывод: <strong>10000 🪙</strong> (10 DOGE)',  // ✅ ДОБАВЛЕНО
-            withdraw_info_2: '⏱ Обработка: <strong>до 24 часов</strong>',  // ✅ ДОБАВЛЕНО
-            withdraw_info_3: '🔐 Только на <strong>DOGE-кошельки</strong>',  // ✅ ДОБАВЛЕНО
+            withdraw_info_1: '💡 Мин. вывод: <strong>10000 🪙</strong> (10 DOGE)',
+            withdraw_info_2: '⏱ Обработка: <strong>до 24 часов</strong>',
+            withdraw_info_3: '🔐 Только на <strong>DOGE-кошельки</strong>',
             withdraw_success: '✅ Заявка создана!',
             withdraw_error_balance: '❌ Недостаточно средств',
             withdraw_error_min: '❌ Минимум 10000 🪙',
             withdraw_error_wallet: '❌ Введи корректный адрес',
-            withdraw_error_validation: '❌ Исправь ошибки в форме',  // ✅ ДОБАВЛЕНО
-            withdraw_error: 'Ошибка при создании заявки',  // ✅ ДОБАВЛЕНО
+            withdraw_error_validation: '❌ Исправь ошибки в форме',
+            withdraw_error: 'Ошибка при создании заявки',
             your_balance: 'Твой баланс: {balance} 🪙',
 
             // === АДМИН ===
@@ -142,9 +144,10 @@
             wait: '⏳ Wait {seconds} sec',
 
             // === HOME ===
-            btn_faucet: '🚰 Faucet',
-            btn_ads: '📢 Ads',
-            btn_withdraw: '💸 Withdraw',
+            // 🔥 FIXED: removed duplicate emojis 🔥
+            btn_faucet: 'Faucet',
+            btn_ads: 'Ads',
+            btn_withdraw: 'Withdraw',
 
             // === FAUCET — 🔥 30 MIN COOLDOWN 🔥 ===
             faucet_title: '🚰 Faucet',
@@ -184,28 +187,28 @@
             withdraw_subtitle: 'Withdraw to your wallet',
             wallet_label: 'Your DOGE wallet',
             wallet_placeholder: 'Wallet address',
-            wallet_hint: 'Enter valid DOGE address',  // ✅ ADDED
-            wallet_error: '❌ Invalid address format',  // ✅ ADDED
+            wallet_hint: 'Enter valid DOGE address',
+            wallet_error: '❌ Invalid address format',
             amount_label: 'Amount in 🪙',
             amount_placeholder: 'Minimum 10000 🪙 (10 DOGE)',
-            amount_hint: '1000 🪙 = 1 DOGE',  // ✅ ADDED
-            amount_error: '❌ Amount below minimum',  // ✅ ADDED
-            btn_max: 'MAX',  // ✅ ADDED
-            conversion_label: 'Approximately:',  // ✅ ADDED
+            amount_hint: '1000 🪙 = 1 DOGE',
+            amount_error: '❌ Amount below minimum',
+            btn_max: 'MAX',
+            conversion_label: 'Approximately:',
             min_withdraw: '💡 Min. withdrawal: 10000 🪙',
             withdraw_btn: 'Request withdrawal',
             withdraw_processing: '⏳ Sending...',
             wallet_warning: '⚠️ Check address! Transactions are irreversible.',
             withdraw_info: '⏱ Processing: up to 24 hours',
-            withdraw_info_1: '💡 Min. withdrawal: <strong>10000 🪙</strong> (10 DOGE)',  // ✅ ADDED
-            withdraw_info_2: '⏱ Processing: <strong>up to 24 hours</strong>',  // ✅ ADDED
-            withdraw_info_3: '🔐 <strong>DOGE wallets only</strong>',  // ✅ ADDED
+            withdraw_info_1: '💡 Min. withdrawal: <strong>10000 🪙</strong> (10 DOGE)',
+            withdraw_info_2: '⏱ Processing: <strong>up to 24 hours</strong>',
+            withdraw_info_3: '🔐 <strong>DOGE wallets only</strong>',
             withdraw_success: '✅ Request created!',
             withdraw_error_balance: '❌ Insufficient balance',
             withdraw_error_min: '❌ Minimum 10000 🪙',
             withdraw_error_wallet: '❌ Enter valid address',
-            withdraw_error_validation: '❌ Fix form errors',  // ✅ ADDED
-            withdraw_error: 'Withdrawal request failed',  // ✅ ADDED
+            withdraw_error_validation: '❌ Fix form errors',
+            withdraw_error: 'Withdrawal request failed',
             your_balance: 'Your balance: {balance} 🪙',
 
             // === ADMIN ===
@@ -249,7 +252,6 @@
         current: 'ru',
         fallback: 'en',
 
-        // Инициализация
         init() {
             try {
                 const saved = localStorage.getItem('dogepay_lang');
@@ -280,7 +282,6 @@
             try { localStorage.setItem('dogepay_lang', 'ru'); } catch(e) {}
         },
 
-        // Получить перевод
         t(key, params = {}) {
             let text = translations[this.current]?.[key];
             
@@ -293,7 +294,6 @@
                 return key;
             }
 
-            // Безопасная замена параметров {param}
             for (const [param, value] of Object.entries(params)) {
                 if (value === null || value === undefined) continue;
                 const safeParam = param.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -304,7 +304,6 @@
             return text;
         },
 
-        // Переключить язык
         toggle(newLang) {
             if (!translations[newLang]) {
                 console.warn(`⚠️ Language "${newLang}" not supported`);
@@ -315,7 +314,6 @@
             return true;
         },
 
-        // Обновить все элементы на странице
         updatePage() {
             document.querySelectorAll('[data-t]').forEach(el => {
                 const key = el.getAttribute('data-t');
@@ -336,11 +334,10 @@
                 } else if (el.tagName === 'IMG') {
                     el.alt = text;
                 } else {
-                    // 🔥 ПРОВЕРКА: содержит ли ПЕРЕВОД HTML-теги? 🔥
                     if (/<[a-z][\s\S]*>/i.test(text)) {
-                        el.innerHTML = text;  // Отрендерит <br>, <strong> и т.д.
+                        el.innerHTML = text;
                     } else {
-                        el.textContent = text;  // Безопасный текст
+                        el.textContent = text;
                     }
                 }
             });
@@ -404,4 +401,4 @@
         LangMgr.updatePage();
     });
 
-})();
+})(); 
