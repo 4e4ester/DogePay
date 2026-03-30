@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500:600;700:800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- ✨ ЯРКИЕ СТИЛИ ✨ -->
     <style>
@@ -181,30 +181,50 @@
         });
     </script>
     
-    <!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА КАЖДЫЕ 5 СЕК 🔥 -->
+    <!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА С ЛОГАМИ 🔥 -->
     <script>
         async function fetchBalance() {
             try {
                 const tg = window.Telegram?.WebApp;
                 const userId = tg?.initDataUnsafe?.user?.id || 123456;
+                console.log('🔍 Запрос баланса для userId:', userId);
+                
                 const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
+                console.log('📡 Статус ответа:', res.status);
+                
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
+                console.log('📦 Ответ API:', data);
+                
                 if (data.success && typeof data.balance === 'number') {
                     const balanceEl = document.getElementById('balance');
                     const dogeEl = document.getElementById('balance-doge');
+                    
                     if (balanceEl) {
                         balanceEl.textContent = data.balance.toLocaleString('ru-RU');
+                        console.log('✅ Баланс обновлён на странице:', data.balance);
                         balanceEl.classList.add('pulse-once');
                         setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
+                    } else {
+                        console.error('❌ Элемент #balance не найден!');
                     }
-                    if (dogeEl) { dogeEl.textContent = (data.balance / 1000).toFixed(4); }
+                    
+                    if (dogeEl) {
+                        dogeEl.textContent = (data.balance / 1000).toFixed(4);
+                    }
+                } else {
+                    console.warn('⚠️ Ответ не содержит balance или success:false');
                 }
-            } catch (e) { console.error('❌ Balance fetch error:', e); }
+            } catch (e) {
+                console.error('❌ Balance fetch error:', e);
+            }
         }
-        // Запуск
-        fetchBalance();
-        setInterval(fetchBalance, 5000);
+        
+        // Запуск с задержкой, чтобы Telegram WebApp успел инициализироваться
+        setTimeout(() => {
+            fetchBalance();
+            setInterval(fetchBalance, 5000);
+        }, 1000);
     </script>
 </body>
 </html>
