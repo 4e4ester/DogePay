@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'  blob: filesystem: about:; script-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'  blob:; style-src * 'unsafe-inline' 'unsafe-hashes'  blob:; img-src *  blob: https:; font-src *  https:; connect-src * https: wss:; frame-src * https:; child-src * https:; worker-src * blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' blob: filesystem: about:; script-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' blob:; style-src * 'unsafe-inline' 'unsafe-hashes' blob:; img-src * blob: https:; font-src * https:; connect-src * https: wss:; frame-src * https:; child-src * https:; worker-src * blob:;">
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500:600:700:800&display=swap" rel="stylesheet">
     
     <!-- ✨ ЯРКИЕ СТИЛИ ✨ -->
     <style>
@@ -38,6 +38,20 @@
         .footer p strong { color: #f3c635; font-weight: 700; }
         .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(243, 198, 53, 0.4); transition: all 0.2s ease; }
         .btn-secondary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3); transition: all 0.2s ease; }
+        
+        /* 🔥 SOCIAL BAR CONTAINER 🔥 */
+        #adsterra-social-bar {
+            min-height: 90px;
+            margin: 16px 0;
+            text-align: center;
+            background: rgba(243,198,53,0.08);
+            border-radius: 12px;
+            padding: 8px;
+            border: 1px dashed rgba(243,198,53,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -63,6 +77,11 @@
             <p class="subtitle" data-t="subtitle">
                 <span class="emoji">✨</span>Зарабатывай DOGE у нас<span class="emoji">🪙</span><span class="emoji">🚀</span>
             </p>
+        </div>
+
+        <!-- 🔥 ADSTERRA SOCIAL BAR CONTAINER 🔥 -->
+        <div id="adsterra-social-bar">
+            <!-- SocialBar_1 загрузится сюда -->
         </div>
 
         <!-- КАРТОЧКА БАЛАНСА -->
@@ -111,6 +130,19 @@
     <script src="translations.js"></script>
     <script src="app.js"></script>
     
+    <!-- 🔥 ADSTERRA SOCIAL BAR (SocialBar_1) 🔥 -->
+    <script type="text/javascript">
+        // Загружаем SocialBar после загрузки страницы
+        window.addEventListener('load', function() {
+            const s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.async = true;
+            s.src = 'https://pl29015763.profitablecpmratenetwork.com/41/23/92/4123926d7a745b419b89677d56e2093a.js';
+            s.onerror = function() { console.warn('⚠️ Adsterra SocialBar failed to load'); };
+            document.body.appendChild(s);
+        });
+    </script>
+    
     <!-- ЗАЩИТНЫЕ ЗАГЛУШКИ -->
     <script>
         (function() {
@@ -134,7 +166,7 @@
         })();
     </script>
     
-    <!-- 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ (ВНУТРИ BODY!) 🔥 -->
+    <!-- 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ 🔥 -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
