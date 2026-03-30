@@ -1,6 +1,6 @@
-// ===== 🌐 DOGEPAY — translations.js (ULTRA EDITION v2) =====
+// ===== 🌐 DOGEPAY — translations.js (ULTRA EDITION v2.1) =====
 // Мультиязычность: RU ↔ EN с авто-определением и плавным переключением
-// ✅ ОБНОВЛЕНО: Кран 30 мин, Реклама 5-10 🪙 / 10 мин
+// ✅ ИСПРАВЛЕНО: перенос строк в ads_info теперь через <br>
 
 (function() {
     'use strict';
@@ -37,7 +37,7 @@
             claim_ready: '✅ Можно забирать!',
             claim_waiting: '⏳ Жди...',
             faucet_info_1: '💎 Награда: <strong>10-30 🪙</strong>',
-            faucet_info_2: '⏰ Интервал: <strong>30 минут</strong>',  // 🔥 ОБНОВЛЕНО
+            faucet_info_2: '⏰ Интервал: <strong>30 минут</strong>',
             faucet_info_3: '🔐 CAPTCHA: защита от ботов',
             captcha_title: '🔐 Проверка',
             captcha_question: 'Решите пример:',
@@ -51,12 +51,13 @@
             // === РЕКЛАМА — 🔥 5-10 🪙 / 10 МИН 🔥 ===
             ads_title: '📢 Реклама',
             ads_subtitle: 'Получай 🪙 за просмотр',
-            ads_watch: '🎬 Смотреть за 5-10 🪙',  // 🔥 ОБНОВЛЕНО
-            ads_reward: '🪙 Награда: <strong>5-10 🪙</strong>',  // 🔥 ОБНОВЛЕНО
-            ads_info: '📺 Просмотри предложение и получи монеты\n⏱ Лимит: <strong>каждые 10 минут</strong>',  // 🔥 ОБНОВЛЕНО
-            ads_coming_soon: '🚧 Раздел в разработке...\nСкоро здесь будет реклама!',
+            ads_watch: '🎬 Смотреть за 5-10 🪙',
+            ads_reward: '🪙 Награда: <strong>5-10 🪙</strong>',
+            // 🔥 ИСПРАВЛЕНО: \n заменён на <br> для корректного отображения в HTML
+            ads_info: '📺 Просмотри предложение и получи монеты<br>⏱ Лимит: <strong>каждые 10 минут</strong>',
+            ads_coming_soon: '🚧 Раздел в разработке...<br>Скоро здесь будет реклама!',
             ads_available: '✅ Нажми чтобы получить награду!',
-            ads_wait: '⏳ Следующая через {minutes} мин.',  // 🔥 ОБНОВЛЕНО
+            ads_wait: '⏳ Следующая через {minutes} мин.',
             ads_safe: '🔐 Безопасно: Никаких личных данных',
             ads_btn_ready: '✅ Нажми чтобы получить награду!',
             ads_btn_waiting: '⏳ Подожди перед следующей наградой',
@@ -144,7 +145,7 @@
             claim_ready: '✅ Ready to claim!',
             claim_waiting: '⏳ Wait...',
             faucet_info_1: '💎 Reward: <strong>10-30 🪙</strong>',
-            faucet_info_2: '⏰ Interval: <strong>30 minutes</strong>',  // 🔥 UPDATED
+            faucet_info_2: '⏰ Interval: <strong>30 minutes</strong>',
             faucet_info_3: '🔐 CAPTCHA: bot protection',
             captcha_title: '🔐 Verification',
             captcha_question: 'Solve:',
@@ -158,12 +159,13 @@
             // === ADS — 🔥 5-10 🪙 / 10 MIN 🔥 ===
             ads_title: '📢 Ads',
             ads_subtitle: 'Earn 🪙 for viewing',
-            ads_watch: '🎬 Watch for 5-10 🪙',  // 🔥 UPDATED
-            ads_reward: '🪙 Reward: <strong>5-10 🪙</strong>',  // 🔥 UPDATED
-            ads_info: '📺 Watch offer and get coins\n⏱ Limit: <strong>every 10 minutes</strong>',  // 🔥 UPDATED
-            ads_coming_soon: '🚧 Coming soon...\nAds will be available shortly!',
+            ads_watch: '🎬 Watch for 5-10 🪙',
+            ads_reward: '🪙 Reward: <strong>5-10 🪙</strong>',
+            // 🔥 FIXED: replaced \n with <br> for HTML rendering
+            ads_info: '📺 Watch offer and get coins<br>⏱ Limit: <strong>every 10 minutes</strong>',
+            ads_coming_soon: '🚧 Coming soon...<br>Ads will be available shortly!',
             ads_available: '✅ Click to get reward!',
-            ads_wait: '⏳ Next in {minutes}m',  // 🔥 UPDATED
+            ads_wait: '⏳ Next in {minutes}m',
             ads_safe: '🔐 Safe: No personal data',
             ads_btn_ready: '✅ Click to get reward!',
             ads_btn_waiting: '⏳ Wait before next reward',
@@ -277,7 +279,7 @@
                 return key;
             }
 
-            // 🔥 БЕЗОПАСНАЯ замена параметров {param} 🔥
+            // Безопасная замена параметров {param}
             for (const [param, value] of Object.entries(params)) {
                 if (value === null || value === undefined) continue;
                 const safeParam = param.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
