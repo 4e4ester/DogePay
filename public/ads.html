@@ -95,8 +95,38 @@
         window.addEventListener('load', loadAdsterra);
     </script>
     
-    <!-- LOGIC -->
+    <!-- LOGIC + FALLBACKS -->
     <script>
+        // ===== ГЛОБАЛЬНЫЕ ЗАГЛУШКИ (на случай отсутствия в app.js) =====
+        if (typeof window.playClick === 'undefined') {
+            window.playClick = function() {
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                }
+            };
+        }
+        if (typeof window.playClaim === 'undefined') {
+            window.playClaim = function() {
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                }
+            };
+        }
+        if (typeof window.playError === 'undefined') {
+            window.playError = function() {
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+                }
+            };
+        }
+        if (typeof window.updateBalance === 'undefined') {
+            window.updateBalance = function() {
+                console.log('updateBalance stub');
+                return Promise.resolve();
+            };
+        }
+
+        // ===== ОСНОВНАЯ ЛОГИКА =====
         const COOLDOWN_MS = 10 * 60 * 1000;
         const WATCH_MS = 12000;
         const REWARD_MIN = 5;
@@ -177,6 +207,7 @@
             if (status) status.textContent = '🔄 Opening offer...';
             
             try {
+                // Имитация просмотра (12 сек)
                 await new Promise(res => setTimeout(res, WATCH_MS));
                 
                 const reward = Math.floor(Math.random() * (REWARD_MAX - REWARD_MIN + 1)) + REWARD_MIN;
@@ -190,11 +221,12 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    if (window.playClaim) playClaim();
+                    if (window.playClaim) window.playClaim();
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
                     }
                     
+                    // Обновление отображения баланса (если элементы есть на странице)
                     const balanceEl = document.getElementById('balance');
                     if (balanceEl) {
                         const cur = parseInt(balanceEl.textContent.replace(/\s/g,'')) || 0;
@@ -206,7 +238,7 @@
                     const dogeEl = document.getElementById('balance-doge');
                     if (dogeEl) {
                         const curDoge = parseFloat(dogeEl.textContent) || 0;
-                        dogeEl.textContent = (curDoge + reward/1000).toFixed(4);
+                        dogeEl.textContent = (curDoge + reward / 1000).toFixed(4);
                     }
                     
                     if (window.updateBalance) await window.updateBalance();
@@ -215,19 +247,22 @@
                     
                     let w = parseInt(localStorage.getItem('adsWatched')||'0');
                     let e = parseInt(localStorage.getItem('adsEarned')||'0');
-                    w++; e+=reward;
+                    w++; e += reward;
                     localStorage.setItem('adsWatched', w.toString());
                     localStorage.setItem('adsEarned', e.toString());
+                    
                     const watchedEl = document.getElementById('adsWatched');
                     const earnedEl = document.getElementById('adsEarned');
                     if (watchedEl) watchedEl.textContent = w;
                     if (earnedEl) earnedEl.textContent = e.toLocaleString('en-US');
                     
-                    if (status) status.textContent = `✅ Received ${reward} 🪙!`;
-                    if (status) status.className = 'ad-status status-success';
+                    if (status) {
+                        status.textContent = `✅ Received ${reward} 🪙!`;
+                        status.className = 'ad-status status-success';
+                    }
                     
                     const popup = document.createElement('div');
-                    popup.className = 'reward-toast reward-success';
+                    popup.className = 'reward-toast';
                     popup.innerHTML = `<span>🎉 +${reward} 🪙</span>`;
                     document.body.appendChild(popup);
                     setTimeout(() => popup.remove(), 2500);
@@ -246,7 +281,7 @@
                     status.className = 'ad-status status-error';
                 }
                 alert('🌐 Error: ' + (err.message || 'Try again'));
-                if (window.playError) playError();
+                if (window.playError) window.playError();
             } finally {
                 isProcessing = false;
                 btn.disabled = false;
@@ -273,7 +308,7 @@
                 const claimBtn = document.getElementById('claimAdBtn');
                 if (claimBtn) {
                     claimBtn.addEventListener('click', () => {
-                        if (window.playClick) playClick();
+                        if (window.playClick) window.playClick();
                         handleAdReward();
                     });
                 }
