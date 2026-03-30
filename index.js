@@ -2,6 +2,7 @@
 // Node.js + Express + Telegraf + PostgreSQL (Neon)
 // ✅ БЕЗ dotenv — переменные из Render Environment Variables
 // ✅ ИСПРАВЛЕНО: user_id TEXT, добавлена миграция username, атомарные транзакции
+// ✅ ИСПРАВЛЕНО: баланс возвращается как Number, а не строка
 
 const express = require('express');
 const { Telegraf } = require('telegraf');
@@ -177,7 +178,9 @@ app.get('/api/balance', async (req, res) => {
     try {
         const userId = String(req.query.user_id);
         const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [userId]);
-        res.json({ success: true, balance: r.rows[0]?.balance ?? 0 });
+        const balance = r.rows[0]?.balance ?? 0;
+        // 🔥 Возвращаем число
+        res.json({ success: true, balance: Number(balance) });
     } catch (e) { 
         console.error('API /balance error:', e);
         res.status(500).json({ success: false, error: e.message }); 
@@ -193,7 +196,7 @@ app.post('/api/claim', async (req, res) => {
         
         if (!user_id) return res.status(400).json({ success: false, error: 'Нет user_id' });
 
-        await client.query('BEGIN'); // 🔥 Атомарность
+        await client.query('BEGIN');
 
         await client.query(
             `INSERT INTO users (user_id, username) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`,
@@ -218,10 +221,12 @@ app.post('/api/claim', async (req, res) => {
         }
 
         const reward = Math.floor(Math.random() * 21) + 10;
-        await client.query('UPDATE users SET balance = $1, last_claim = NOW() WHERE user_id = $2', [balance + reward, user_id]);
+        const newBalance = balance + reward;
+        await client.query('UPDATE users SET balance = $1, last_claim = NOW() WHERE user_id = $2', [newBalance, user_id]);
         await client.query('COMMIT');
         
-        res.json({ success: true, reward, newBalance: balance + reward });
+        // 🔥 Возвращаем числа
+        res.json({ success: true, reward, newBalance: Number(newBalance) });
     } catch (e) {
         await client.query('ROLLBACK');
         console.error('API /claim error:', e);
@@ -248,7 +253,7 @@ app.post('/api/ad-reward', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Неверная сумма награды' });
         }
 
-        await client.query('BEGIN'); // 🔥 Атомарность
+        await client.query('BEGIN');
 
         const userCheck = await client.query(
             'SELECT user_id, balance, last_ad_reward FROM users WHERE user_id = $1',
@@ -294,10 +299,11 @@ app.post('/api/ad-reward', async (req, res) => {
         
         console.log(`✅ Ad reward: user ${user_id} +${reward} 🪙 | new balance: ${newBalance}`);
         
+        // 🔥 Возвращаем числа
         res.json({ 
             success: true, 
             reward, 
-            newBalance,
+            newBalance: Number(newBalance),
             message: `+${reward} 🪙 зачислено!`
         });
         
