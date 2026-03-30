@@ -11,6 +11,104 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- ✨ ЯРКИЕ СТИЛИ ДЛЯ ТЕКСТА ✨ -->
+    <style>
+        /* 🔥 ГЛАВНЫЙ СЛОГАН — ГРАДИЕНТ + СВЕЧЕНИЕ + АНИМАЦИЯ 🔥 */
+        .subtitle {
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            margin: 8px 0 20px;
+            
+            /* Градиентный текст */
+            background: linear-gradient(135deg, #f3c635 0%, #ff6b6b 30%, #f3c635 60%, #4ecdc4 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            
+            /* Свечение */
+            filter: drop-shadow(0 0 10px rgba(243, 198, 53, 0.5)) 
+                    drop-shadow(0 0 20px rgba(255, 107, 107, 0.3));
+            
+            /* Анимация переливания */
+            animation: gradientFlow 4s ease infinite, glowPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+        
+        /* ✨ ЭМОДЗИ В СЛОГАНЕ — ПРЫГАЮТ ✨ */
+        .subtitle .emoji {
+            display: inline-block;
+            animation: bounce 1.5s ease-in-out infinite;
+        }
+        .subtitle .emoji:nth-child(2) { animation-delay: 0.2s; }
+        .subtitle .emoji:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        
+        /* 🌟 ИНФО-БЛОК — ЯРКИЙ 🌟 */
+        .info-box {
+            background: linear-gradient(135deg, rgba(243,198,53,0.15), rgba(78,205,196,0.15));
+            border: 2px solid rgba(243, 198, 53, 0.4);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(243, 198, 53, 0.2);
+        }
+        .info-box p {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .info-box strong {
+            color: #f3c635;
+            text-shadow: 0 0 8px rgba(243, 198, 53, 0.6);
+        }
+        
+        /* 💎 ФУТЕР — СТИЛЬНЫЙ 💎 */
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(243, 198, 53, 0.3);
+        }
+        .footer p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .footer p strong {
+            color: #f3c635;
+            font-weight: 700;
+        }
+        
+        /* ✨ ДОП: ЭФФЕКТ ПРИ НАВЕДЕНИИ НА КНОПКИ ✨ */
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(243, 198, 53, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3);
+            transition: all 0.2s ease;
+        }
+    </style>
 </head>
 <body>
     <!-- ЭКРАН ЗАГРУЗКИ -->
@@ -32,17 +130,24 @@
         <div class="header">
             <div class="logo-float">🐕</div>
             <h1 class="gradient-title">DogePay</h1>
-            <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
+            
+            <!-- ✨ ЯРКИЙ СЛОГАН ✨ -->
+            <p class="subtitle">
+                <span class="emoji">✨</span>
+                Зарабатывай DOGE у нас
+                <span class="emoji">🪙</span>
+                <span class="emoji">🚀</span>
+            </p>
         </div>
 
         <!-- 📢 ADSTERRA SOCIAL BAR CONTAINER -->
-        <div id="adsterra-social-bar" style="min-height: 90px; margin: 12px 0; text-align: center; background: rgba(243,198,35,0.05); border-radius: 12px; padding: 8px;">
+        <div id="adsterra-social-bar" style="min-height: 90px; margin: 12px 0; text-align: center; background: rgba(243,198,35,0.08); border-radius: 12px; padding: 8px; border: 1px dashed rgba(243,198,35,0.4);">
             <!-- Social Bar загрузится сюда -->
         </div>
 
         <!-- КАРТОЧКА БАЛАНСА -->
         <div class="balance-card">
-            <p class="balance-label" data-t="balance_label">Твой баланс</p>
+            <p class="balance-label">💰 Твой баланс</p>
             <div class="balance-main">
                 <span class="coin-icon">🪙</span>
                 <span id="balance" class="balance-number">0</span>
@@ -50,7 +155,7 @@
             <p class="balance-doge">
                 <span>🐕 ~</span>
                 <span id="balance-doge">0.0000</span>
-                <span>DOGE</span>
+                <span style="color: #f3c635; font-weight: 700;">DOGE</span>
             </p>
         </div>
 
@@ -58,26 +163,33 @@
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">🚰</span>
-                <span data-t="btn_faucet">Кран</span>
+                <span>Кран</span>
             </a>
             <a href="ads.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">📢</span>
-                <span data-t="btn_ads">Реклама</span>
+                <span>Реклама</span>
             </a>
             <a href="withdraw.html" class="btn btn-secondary" onclick="playClick()">
                 <span class="btn-icon">💸</span>
-                <span data-t="btn_withdraw">Вывод</span>
+                <span>Вывод</span>
             </a>
         </div>
 
-        <!-- ИНФО -->
+        <!-- ✨ ЯРКИЙ ИНФО-БЛОК ✨ -->
         <div class="info-box">
-            <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+            <p>
+                🔐 <strong>Безопасно</strong> • 
+                ⚡ <strong>Быстро</strong> • 
+                🐕 <strong>Зарабатывай DOGE у нас!</strong>
+            </p>
         </div>
 
-        <!-- ФУТЕР -->
+        <!-- 💎 СТИЛЬНЫЙ ФУТЕР 💎 -->
         <div class="footer">
-            <p>🐕 DogePay v1.0</p>
+            <p>
+                🐕 <strong>DogePay v1.0</strong> • 
+                <span style="color: #f3c635;">Зарабатывай с удовольствием</span> 💎
+            </p>
         </div>
     </div>
 
@@ -88,19 +200,16 @@
     <!-- 📢 ADSTERRA SOCIAL BAR (ID: 28915264) -->
     <script src="https://pl29015763.profitablecpmratenetwork.com/41/23/92/4123926d7a745b419b89677d56e2093a.js"></script>
     
-    <!-- ЗАЩИТНЫЕ ЗАГЛУШКИ (не меняют дизайн, предотвращают ошибки) -->
+    <!-- ЗАЩИТНЫЕ ЗАГЛУШКИ -->
     <script>
         (function() {
-            // Заглушка для toggleLanguage, если не определена
             if (typeof window.toggleLanguage === 'undefined') {
                 window.toggleLanguage = function() {
-                    console.log('toggleLanguage stub');
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                     }
                 };
             }
-            // Заглушка для playClick
             if (typeof window.playClick === 'undefined') {
                 window.playClick = function() {
                     if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -108,11 +217,8 @@
                     }
                 };
             }
-            // Заглушка для initApp (вызывается при загрузке)
             if (typeof window.initApp === 'undefined') {
-                window.initApp = function() {
-                    console.log('initApp stub');
-                };
+                window.initApp = function() { console.log('initApp stub'); };
             }
         })();
     </script>
@@ -123,16 +229,9 @@
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
                 const main = document.getElementById('main-content');
-                
                 if (loading) loading.classList.add('hidden');
-                if (main) {
-                    main.style.display = 'block';
-                    main.classList.add('fade-in');
-                }
-                
-                if (window.initApp) {
-                    try { window.initApp(); } catch(e) { console.error('initApp error:', e); }
-                }
+                if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
+                if (window.initApp) { try { window.initApp(); } catch(e) { console.error('initApp error:', e); } }
             }, 1500);
         });
     </script>
