@@ -36,8 +36,8 @@
             <div id="timer-status" class="timer-status status-ready">✅ Ready to claim!</div>
         </div>
 
-        <!-- CLAIM BUTTON -->
-        <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); handleClaim()">
+        <!-- 🔥 CLAIM BUTTON WITH AD SCRIPT 🔥 -->
+        <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); loadAdThenClaim()">
             <span class="btn-icon">🎁</span>
             <span>CLAIM (10-30 🪙)</span>
         </button>
@@ -124,15 +124,13 @@
     <!-- SCRIPTS -->
     <script src="app.js"></script>
     
-    <!-- 🔥 ADSTERRA POPUNDER SCRIPT (ТВОЙ КОД) 🔥 -->
-    <script src="https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js"></script>
-    
     <!-- FAUCET LOGIC -->
     <script>
         const FAUCET_COOLDOWN_MS = 30 * 60 * 1000;
         let currentCaptcha = { answer: 0 };
         let claimLock = false;
         let timerInterval = null;
+        let adScriptLoaded = false; // 🔥 Флаг: загружена ли реклама
 
         function getUserId() {
             const tg = window.Telegram?.WebApp;
@@ -227,26 +225,24 @@
             }
         }
 
-        // 🔥 ПРОСТОЙ ПОТОК: КЛИК → РЕКЛАМА → ПОТОМ ВСЁ КАК ОБЫЧНО 🔥
-        function handleClaim() {
+        // 🔥 ФУНКЦИЯ: ЗАГРУЗИТЬ РЕКЛАМУ + ПОКАЗАТЬ CAPTCHA 🔥
+        function loadAdThenClaim() {
             if (claimLock) return;
             
-            // 1. Просто открываем рекламу (скрипт уже загружен выше)
-            // Adsterra Popunder сработает автоматически при загрузке скрипта
-            // или можно вызвать клик по скрытой ссылке для надёжности:
-            try {
-                const fakeLink = document.createElement('a');
-                fakeLink.href = 'https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js';
-                fakeLink.target = '_blank';
-                fakeLink.style.display = 'none';
-                document.body.appendChild(fakeLink);
-                fakeLink.click();
-                fakeLink.remove();
-            } catch(e) {
-                console.warn('⚠️ Popunder trigger:', e);
+            // 🔥 ДОБАВЛЯЕМ СКРИПТ РЕКЛАМЫ ПРЯМО ЗДЕСЬ (в момент клика) 🔥
+            if (!adScriptLoaded) {
+                const adScript = document.createElement('script');
+                adScript.src = 'https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js';
+                adScript.async = true;
+                adScript.onload = () => { 
+                    console.log('✅ Adsterra script loaded');
+                    adScriptLoaded = true;
+                };
+                adScript.onerror = () => console.warn('⚠️ Adsterra script failed');
+                document.body.appendChild(adScript);
             }
             
-            // 2. Показываем CAPTCHA как обычно
+            // 🔥 СРАЗУ ПОКАЗЫВАЕМ CAPTCHA (реклама грузится в фоне) 🔥
             showCaptcha();
         }
 
