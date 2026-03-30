@@ -132,16 +132,34 @@
             };
         }
 
-        // ===== ФЕТЧ БАЛАНСА С СЕРВЕРА 🔥 =====
+        // 🔥 Очистка устаревших строковых данных в localStorage
+        (function cleanupStorage() {
+            try {
+                const oldBalance = localStorage.getItem('balance_update');
+                if (oldBalance) {
+                    const parsed = JSON.parse(oldBalance);
+                    if (typeof parsed.balance === 'string') {
+                        localStorage.removeItem('balance_update');
+                        console.log('🧹 Очищен старый строковый баланс из localStorage');
+                    }
+                }
+            } catch(e) {}
+        })();
+
+        // ===== ФЕТЧ БАЛАНСА С СЕРВЕРА (всегда число) 🔥 =====
         async function fetchBalance() {
             try {
                 const userId = getUserId();
                 const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                if (data.success && typeof data.balance === 'number') {
-                    updateBalanceDisplay(data.balance);
-                    return data.balance;
+                if (data.success && data.balance !== undefined) {
+                    const balanceNum = Number(data.balance);  // 🔥 гарантия числа
+                    if (isNaN(balanceNum)) throw new Error('Balance is not a number');
+                    updateBalanceDisplay(balanceNum);
+                    // Сохраняем в localStorage для синхронизации
+                    localStorage.setItem('balance_update', JSON.stringify({ balance: balanceNum, timestamp: Date.now() }));
+                    return balanceNum;
                 }
             } catch (e) {
                 console.error('❌ Balance fetch error:', e);
@@ -150,15 +168,16 @@
         }
 
         function updateBalanceDisplay(coins) {
+            const balanceNum = Number(coins);  // 🔥 гарантия числа
             const balanceEl = document.getElementById('balance');
             const dogeEl = document.getElementById('balance-doge');
             if (balanceEl) {
-                balanceEl.textContent = coins.toLocaleString('en-US');
+                balanceEl.textContent = balanceNum.toLocaleString('en-US');
                 balanceEl.classList.add('pulse-once');
                 setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
             }
             if (dogeEl) {
-                dogeEl.textContent = (coins / 1000).toFixed(4);
+                dogeEl.textContent = (balanceNum / 1000).toFixed(4);
             }
         }
 
@@ -242,7 +261,6 @@
             if (status) status.textContent = '🔄 Opening offer...';
             
             try {
-                // 12 сек "просмотр"
                 await new Promise(res => setTimeout(res, WATCH_MS));
                 
                 const reward = Math.floor(Math.random() * (REWARD_MAX - REWARD_MIN + 1)) + REWARD_MIN;
@@ -250,7 +268,6 @@
                 
                 console.log('📡 Sending to /api/ad-reward:', { user_id: userId, reward, type: 'popunder_click' });
                 
-                // 🔥 ОТПРАВКА НА СЕРВЕР 🔥
                 const res = await fetch('/api/ad-reward', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -262,19 +279,16 @@
                 console.log('📦 Response data:', data);
                 
                 if (data.success) {
-                    // ✅ УСПЕХ
                     if (window.playClaim) window.playClaim();
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
                     }
                     
-                    // 🔥 ОБНОВЛЯЕМ БАЛАНС С СЕРВЕРА 🔥
+                    // 🔥 Обновляем баланс с сервера
                     await fetchBalance();
                     
-                    // Сохраняем время
                     localStorage.setItem('lastAdReward', Date.now().toString());
                     
-                    // Статистика
                     let w = parseInt(localStorage.getItem('adsWatched')||'0');
                     let e = parseInt(localStorage.getItem('adsEarned')||'0');
                     w++; e += reward;
@@ -286,28 +300,23 @@
                     if (watchedEl) watchedEl.textContent = w;
                     if (earnedEl) earnedEl.textContent = e.toLocaleString('en-US');
                     
-                    // Статус
                     if (status) {
                         status.textContent = `✅ Received ${reward} 🪙!`;
                         status.className = 'ad-status status-success';
                     }
                     
-                    // Попап
                     const popup = document.createElement('div');
                     popup.className = 'reward-toast';
                     popup.innerHTML = `<span>🎉 +${reward} 🪙</span>`;
                     document.body.appendChild(popup);
                     setTimeout(() => popup.remove(), 2500);
                     
-                    // Обновляем UI через 2 сек
                     setTimeout(() => {
                         updateUI();
-                        // 🔥 Ещё раз фетчим баланс для гарантии 🔥
                         fetchBalance();
                     }, 2000);
                     
                 } else {
-                    // ❌ ОШИБКА ОТ СЕРВЕРА
                     console.error('❌ Server error:', data);
                     throw new Error(data.error || 'Server rejected reward');
                 }
@@ -330,6 +339,23 @@
             }
         }
 
+        // Слушаем обновления баланса из других вкладок (например, из крана)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'balance_update') {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    const balanceNum = Number(data.balance);
+                    if (!isNaN(balanceNum)) {
+                        const balanceEl = document.getElementById('balance');
+                        const dogeEl = document.getElementById('balance-doge');
+                        if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US');
+                        if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4);
+                        console.log('🔄 Balance updated from storage:', balanceNum);
+                    }
+                } catch(err) { console.warn('Storage parse error:', err); }
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
@@ -338,7 +364,6 @@
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
                 if (window.initApp) window.initApp();
                 
-                // 🔥 ЗАГРУЖАЕМ БАЛАНС ПРИ ОТКРЫТИИ СТРАНИЦЫ 🔥
                 fetchBalance();
                 
                 const watchedEl = document.getElementById('adsWatched');
