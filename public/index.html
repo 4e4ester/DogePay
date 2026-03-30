@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- 🔥 CSP FOR ADSTERRA 🔥 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'  blob: filesystem: about:; script-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'  blob:; style-src * 'unsafe-inline' 'unsafe-hashes'  blob:; img-src *  blob: https:; font-src *  https:; connect-src * https: wss:; frame-src * https:; child-src * https:; worker-src * blob:;">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DogePay</title>
@@ -30,6 +33,11 @@
             <div class="logo-float">🐕</div>
             <h1 class="gradient-title">DogePay</h1>
             <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
+        </div>
+
+        <!-- 📢 ADSTERRA SOCIAL BAR CONTAINER -->
+        <div id="adsterra-social-bar" style="min-height: 90px; margin: 12px 0; text-align: center; background: rgba(243,198,35,0.05); border-radius: 12px; padding: 8px;">
+            <!-- Social Bar загрузится сюда -->
         </div>
 
         <!-- КАРТОЧКА БАЛАНСА -->
@@ -62,15 +70,54 @@
             </a>
         </div>
 
+        <!-- ИНФО -->
+        <div class="info-box">
+            <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+        </div>
+
         <!-- ФУТЕР -->
         <div class="footer">
-            <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
+            <p>🐕 DogePay v1.0</p>
         </div>
     </div>
 
     <!-- СКРИПТЫ -->
     <script src="translations.js"></script>
     <script src="app.js"></script>
+    
+    <!-- 📢 ADSTERRA SOCIAL BAR (ID: 28915264) -->
+    <script src="https://pl29015763.profitablecpmratenetwork.com/41/23/92/4123926d7a745b419b89677d56e2093a.js"></script>
+    
+    <!-- ЗАЩИТНЫЕ ЗАГЛУШКИ (не меняют дизайн, предотвращают ошибки) -->
+    <script>
+        (function() {
+            // Заглушка для toggleLanguage, если не определена
+            if (typeof window.toggleLanguage === 'undefined') {
+                window.toggleLanguage = function() {
+                    console.log('toggleLanguage stub');
+                    if (window.Telegram?.WebApp?.HapticFeedback) {
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                    }
+                };
+            }
+            // Заглушка для playClick
+            if (typeof window.playClick === 'undefined') {
+                window.playClick = function() {
+                    if (window.Telegram?.WebApp?.HapticFeedback) {
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                    }
+                };
+            }
+            // Заглушка для initApp (вызывается при загрузке)
+            if (typeof window.initApp === 'undefined') {
+                window.initApp = function() {
+                    console.log('initApp stub');
+                };
+            }
+        })();
+    </script>
+    
+    <!-- ИНИЦИАЛИЗАЦИЯ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
@@ -84,11 +131,7 @@
                 }
                 
                 if (window.initApp) {
-                    try {
-                        window.initApp();
-                    } catch (err) {
-                        console.error('❌ initApp error:', err);
-                    }
+                    try { window.initApp(); } catch(e) { console.error('initApp error:', e); }
                 }
             }, 1500);
         });
