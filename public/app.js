@@ -1,5 +1,5 @@
-// ===== 🎨 DOGEPAY — app.js (ULTRA EDITION) =====
-// Инициализация, звуки, баланс, языки, UI-утилиты
+// ===== 🎨 DOGEPAY — app.js (FULL EDITION) =====
+// Инициализация, звуки, баланс, языки, UI-утилиты + Interstitial Ads
 
 (function() {
     'use strict';
@@ -22,18 +22,15 @@
             tg.ready();
             tg.enableClosingConfirmation?.();
             
-            // Цвета под тему Telegram (опционально)
             if (tg.colorScheme === 'dark') {
                 document.documentElement.classList.add('tg-dark');
             }
 
-            // Получаем user_id
             if (tg.initDataUnsafe?.user?.id) {
                 user_id = tg.initDataUnsafe.user.id;
                 console.log(`✅ Пользователь: ${user_id}`);
             }
 
-            // Язык из Telegram
             const tgLang = tg.initDataUnsafe?.user?.language_code;
             if (tgLang && ['ru', 'en'].includes(tgLang)) {
                 currentLang = tgLang;
@@ -48,10 +45,8 @@
     const AudioMgr = {
         click: null,
         claim: null,
-        error: null,
 
         init() {
-            // Пробуем загрузить звуки
             try {
                 this.click = new Audio('click.mp3');
                 this.click.volume = 0.4;
@@ -68,7 +63,6 @@
                 console.warn('⚠️ Не удалось загрузить claim.mp3');
             }
 
-            // Разблокировка аудио после первого взаимодействия
             document.addEventListener('click', () => {
                 if (this.click) {
                     this.click.play().then(() => this.click.pause()).catch(() => {});
@@ -82,16 +76,13 @@
         playClick() {
             if (!audioEnabled) return;
             
-            // Вибрация Telegram
             if (tg?.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('light');
             }
             
-            // Звук
             if (this.click) {
                 this.click.currentTime = 0;
                 this.click.play().catch(() => {
-                    // Если звук заблокирован — пробуем позже
                     setTimeout(() => {
                         this.click?.play().catch(() => {});
                     }, 100);
@@ -102,12 +93,10 @@
         playClaim() {
             if (!audioEnabled) return;
             
-            // Вибрация успеха
             if (tg?.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
             
-            // Звук победы
             if (this.claim) {
                 this.claim.currentTime = 0;
                 this.claim.play().catch(() => {
@@ -122,7 +111,6 @@
             if (tg?.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('error');
             }
-            // Можно добавить звук ошибки позже
         },
 
         toggle(enabled) {
@@ -153,22 +141,18 @@
                 }
             } catch (err) {
                 console.error('❌ Ошибка обновления баланса:', err);
-                // Не показываем ошибку пользователю — просто не обновляем
             }
             return null;
         },
 
         render(coins) {
-            // Обновляем монеты
             const balanceEl = document.getElementById('balance');
             if (balanceEl) {
                 balanceEl.textContent = coins.toLocaleString('ru-RU');
-                // Анимация изменения
                 balanceEl.classList.add('pulse-once');
                 setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
             }
 
-            // Обновляем DOGE эквивалент (1000 🪙 = 1 DOGE)
             const dogeEl = document.getElementById('balance-doge');
             if (dogeEl) {
                 const dogeValue = (coins / 1000).toFixed(4);
@@ -177,7 +161,6 @@
         },
 
         add(coins) {
-            // Локальное добавление (для мгновенного отклика)
             const current = parseInt(document.getElementById('balance')?.textContent || '0');
             this.render(current + coins);
         }
@@ -186,19 +169,16 @@
     // ===== 🌐 МЕНЕДЖЕР ЯЗЫКОВ =====
     const LangMgr = {
         init() {
-            // Загружаем сохранённый язык
             const saved = localStorage.getItem('dogepay_lang');
             if (saved && ['ru', 'en'].includes(saved)) {
                 currentLang = saved;
             }
-            // Применяем
             this.apply();
         },
 
         apply() {
             if (typeof window.t !== 'function') return;
 
-            // Обновляем тексты с data-t
             document.querySelectorAll('[data-t]').forEach(el => {
                 const key = el.getAttribute('data-t');
                 if (key) {
@@ -211,7 +191,6 @@
                 }
             });
 
-            // Обновляем плейсхолдеры
             document.querySelectorAll('[data-t-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-t-placeholder');
                 if (key) {
@@ -219,31 +198,22 @@
                 }
             });
 
-            // Обновляем кнопку флагов
             this.updateFlagButton();
         },
 
         updateFlagButton() {
             const btn = document.getElementById('langSwitch');
             if (btn) {
-                // 🔥 ВАЖНО: Не переводим текст кнопки — только меняем порядок флагов
                 btn.innerHTML = currentLang === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
                 btn.title = currentLang === 'ru' ? 'Switch to English' : 'Переключить на русский';
             }
         },
 
         toggle() {
-            // Звук клика
             AudioMgr.playClick();
-            
-            // Переключаем язык
             currentLang = currentLang === 'ru' ? 'en' : 'ru';
             localStorage.setItem('dogepay_lang', currentLang);
-            
-            // Применяем
             this.apply();
-            
-            // Плавная перезагрузка для полного обновления
             document.body.style.opacity = '0.7';
             setTimeout(() => {
                 location.reload();
@@ -253,9 +223,7 @@
 
     // ===== 🎨 UI УТИЛИТЫ =====
     const UI = {
-        // Показать сообщение (тост)
         showToast(message, type = 'info', duration = 3000) {
-            // Удаляем старые тосты
             document.querySelectorAll('.toast').forEach(t => t.remove());
 
             const toast = document.createElement('div');
@@ -267,12 +235,10 @@
             
             document.body.appendChild(toast);
             
-            // Анимация появления
             requestAnimationFrame(() => {
                 toast.classList.add('toast-show');
             });
 
-            // Авто-удаление
             setTimeout(() => {
                 toast.classList.remove('toast-show');
                 setTimeout(() => toast.remove(), 300);
@@ -281,7 +247,6 @@
             return toast;
         },
 
-        // Показать лоадер на элементе
         showLoader(element) {
             if (!element) return;
             element.dataset.originalText = element.textContent;
@@ -290,7 +255,6 @@
             element.classList.add('loading');
         },
 
-        // Скрыть лоадер
         hideLoader(element) {
             if (!element) return;
             element.textContent = element.dataset.originalText || '';
@@ -299,7 +263,6 @@
             delete element.dataset.originalText;
         },
 
-        // Анимация числа (плавное изменение)
         animateNumber(element, start, end, duration = 500) {
             if (!element) return;
             
@@ -308,7 +271,7 @@
             
             function step(now) {
                 const progress = Math.min((now - startTime) / duration, 1);
-                const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+                const ease = 1 - Math.pow(1 - progress, 3);
                 const current = Math.round(start + range * ease);
                 element.textContent = current.toLocaleString('ru-RU');
                 
@@ -322,7 +285,6 @@
 
     // ===== 🔗 ОБРАБОТЧИКИ СОБЫТИЙ =====
     function attachEventListeners() {
-        // Глобальный клик для звуков
         document.addEventListener('click', (e) => {
             const target = e.target;
             const isInteractive = target.closest('button, .btn, a, [role="button"]');
@@ -333,7 +295,6 @@
             }
         }, true);
 
-        // Переключение языка
         const langBtn = document.getElementById('langSwitch');
         if (langBtn) {
             langBtn.addEventListener('click', (e) => {
@@ -342,7 +303,6 @@
             });
         }
 
-        // Кнопки .lang-btn (альтернативный вариант)
         document.querySelectorAll('.lang-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -356,7 +316,6 @@
             });
         });
 
-        // Сохранение аудио-настройки (если есть переключатель)
         const audioToggle = document.getElementById('audioToggle');
         if (audioToggle) {
             const saved = localStorage.getItem('dogepay_audio');
@@ -375,25 +334,14 @@
     function initApp() {
         console.log('🎮 DogePay app.js инициализация...');
 
-        // 1. Telegram
         initTelegram();
-
-        // 2. Аудио
         AudioMgr.init();
-
-        // 3. Язык
         LangMgr.init();
-
-        // 4. Баланс
         BalanceMgr.update();
-
-        // 5. События
         attachEventListeners();
 
-        // 6. Готово
         console.log('✅ DogePay готов к работе');
         
-        // Событие для других скриптов
         document.dispatchEvent(new CustomEvent('dogepay:ready', { detail: { user_id, currentLang } }));
     }
 
@@ -413,94 +361,67 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initApp);
     } else {
-        // Небольшая задержка для гарантии загрузки translations.js
         setTimeout(initApp, 50);
     }
 
 })();
 
-// Прямое обновление текстов (если translations.js не работает)
-function updateTextsDirectly() {
-    const lang = window.currentLang || 'ru';
-    
-    const texts = {
-        ru: {
-            subtitle: 'Зарабатывай DOGE играя',
-            balance_label: 'Твой баланс',
-            balance_doge_prefix: '🐕 ~',
-            balance_doge_suffix: 'DOGE',
-            btn_faucet: 'Кран',
-            btn_ads: 'Реклама',
-            btn_withdraw: 'Вывод',
-            footer: '🔐 Безопасно • ⚡ Быстро • 🌍 Глобально'
-        },
-        en: {
-            subtitle: 'Earn DOGE while playing',
-            balance_label: 'Your balance',
-            balance_doge_prefix: '🐕 ~',
-            balance_doge_suffix: 'DOGE',
-            btn_faucet: 'Faucet',
-            btn_ads: 'Ads',
-            btn_withdraw: 'Withdraw',
-            footer: '🔐 Secure • ⚡ Fast • 🌍 Global'
+// ===== 📢 INTERSTITIAL ADS (AdsGram) =====
+// Показывать РЕДКО! (при переходе между страницами)
+
+let interstitialAdsgram = null;
+let lastInterstitialShow = 0;
+const INTERSTITIAL_COOLDOWN = 10 * 60 * 1000; // 10 минут между показами
+
+// Инициализация Interstitial
+function initInterstitial() {
+    if (typeof AdsGram !== 'undefined') {
+        try {
+            interstitialAdsgram = new AdsGram('int-26296');
+            console.log('✅ Interstitial AdsGram инициализирован');
+        } catch (err) {
+            console.warn('⚠️ Interstitial не доступен:', err);
         }
-    };
-    
-    const t = texts[lang];
-    
-    // Обновляем элементы
-    const updateEl = (selector, text) => {
-        const el = document.querySelector(selector);
-        if (el) el.textContent = text;
-    };
-    
-    updateEl('[data-t="subtitle"]', t.subtitle);
-    updateEl('[data-t="balance_label"]', t.balance_label);
-    document.getElementById('balance-doge-prefix').textContent = t.balance_doge_prefix;
-    document.getElementById('balance-doge-suffix').textContent = t.balance_doge_suffix;
-    updateEl('[data-t="footer"]', t.footer);
-    
-    // Обновляем кнопки
-    const buttons = document.querySelectorAll('.buttons-grid .btn span:last-child');
-    buttons[0].textContent = t.btn_faucet;
-    buttons[1].textContent = t.btn_ads;
-    buttons[2].textContent = t.btn_withdraw;
+    }
 }
 
-// Добавь вызов в initApp
-const originalInitApp = window.initApp;
-window.initApp = function() {
-    if (originalInitApp) originalInitApp();
-    updateTextsDirectly();
-};
-
-// Принудительное обновление баланса
-window.forceUpdateBalance = async function(userId) {
+// Показать Interstitial рекламу
+async function showInterstitial() {
+    const now = Date.now();
+    
+    // Проверка кулдауна
+    if (now - lastInterstitialShow < INTERSTITIAL_COOLDOWN) {
+        console.log('⏳ Interstitial cooldown active');
+        return;
+    }
+    
+    if (!interstitialAdsgram) {
+        console.warn('⚠️ Interstitial не инициализирован');
+        return;
+    }
+    
     try {
-        const uid = userId || getUserId();
-        const res = await fetch(`/api/balance?user_id=${uid}`);
-        const data = await res.json();
-        
-        if (data.success && typeof data.balance === 'number') {
-            // Обновляем на ВСЕХ страницах
-            const balanceEl = document.getElementById('balance');
-            const dogeEl = document.getElementById('balance-doge');
-            
-            if (balanceEl) {
-                balanceEl.textContent = data.balance.toLocaleString('ru-RU');
-            }
-            if (dogeEl) {
-                dogeEl.textContent = (data.balance / 1000).toFixed(4);
-            }
-            
-            // Сохраняем
-            localStorage.setItem('currentBalance', data.balance.toString());
-            
-            console.log('✅ Force balance update:', data.balance);
-            return data.balance;
+        const ready = await interstitialAdsgram.isAdReady();
+        if (ready) {
+            console.log('📢 Showing Interstitial...');
+            await interstitialAdsgram.showAd();
+            lastInterstitialShow = now;
+            console.log('✅ Interstitial shown');
+        } else {
+            console.log('⚠️ Interstitial not ready');
         }
     } catch (err) {
-        console.error('❌ Force update error:', err);
+        console.warn('❌ Interstitial error:', err);
     }
-    return null;
-};
+}
+
+// Вызываем инициализацию при загрузке
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initInterstitial);
+} else {
+    setTimeout(initInterstitial, 100);
+}
+
+// Экспорт для использования в других файлах
+window.showInterstitial = showInterstitial;
+window.initInterstitial = initInterstitial;
