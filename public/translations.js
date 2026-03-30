@@ -1,5 +1,6 @@
-// ===== 🌐 DOGEPAY — translations.js (ULTRA EDITION) =====
+// ===== 🌐 DOGEPAY — translations.js (ULTRA EDITION v2) =====
 // Мультиязычность: RU ↔ EN с авто-определением и плавным переключением
+// ✅ ОБНОВЛЕНО: Кран 30 мин, Реклама 5-10 🪙 / 10 мин
 
 (function() {
     'use strict';
@@ -10,11 +11,12 @@
             // === ОБЩИЕ ===
             app_name: 'DogePay',
             loading: 'Загрузка...',
-            subtitle: 'Зарабатывай DOGE играя',
-            balance_label: 'Твой баланс',
+            subtitle: '✨ Зарабатывай DOGE у нас 🪙🚀',
+            balance_label: '💰 Твой баланс',
             balance_doge: '🐕 ~{value} DOGE',
             balance_doge_suffix: 'DOGE',
-            footer: '🔐 Безопасно • ⚡ Быстро • 🌍 Глобально',
+            footer: '🔐 Безопасно • ⚡ Быстро • 💎 Удобно',
+            footer_doge: '🐕 Зарабатывай DOGE у нас! 🪙',
             back_home: 'На главную',
             back: 'Назад',
             error: '❌ Ошибка',
@@ -26,8 +28,8 @@
             btn_ads: '📢 Реклама',
             btn_withdraw: '💸 Вывод',
 
-            // === КРАН ===
-            faucet_title: 'Кран',
+            // === КРАН — 🔥 30 МИНУТ КУЛДАУН 🔥 ===
+            faucet_title: '🚰 Кран',
             faucet_subtitle: 'Забери бесплатные монеты',
             claim_btn: 'ЗАБРАТЬ (10-30 🪙)',
             claim_processing: '⏳ Обработка...',
@@ -35,7 +37,7 @@
             claim_ready: '✅ Можно забирать!',
             claim_waiting: '⏳ Жди...',
             faucet_info_1: '💎 Награда: <strong>10-30 🪙</strong>',
-            faucet_info_2: '⏰ Интервал: <strong>60 секунд</strong>',
+            faucet_info_2: '⏰ Интервал: <strong>30 минут</strong>',  // 🔥 ОБНОВЛЕНО
             faucet_info_3: '🔐 CAPTCHA: защита от ботов',
             captcha_title: '🔐 Проверка',
             captcha_question: 'Решите пример:',
@@ -46,18 +48,21 @@
             reward_text: '+{amount} 🪙',
             reward_claimed: '🎉 Ты получил {amount} 🪙',
 
-            // === РЕКЛАМА ===
-            ads_title: 'Реклама',
-            ads_subtitle: 'Смотри и получай монеты',
-            ads_watch: '📺 Смотреть рекламу',
-            ads_reward: '🪙 Награда: 5-20 монет',
-            ads_info: '📺 Просмотри рекламу и получи монеты\n⏱ Лимит: каждые 1 час',
+            // === РЕКЛАМА — 🔥 5-10 🪙 / 10 МИН 🔥 ===
+            ads_title: '📢 Реклама',
+            ads_subtitle: 'Получай 🪙 за просмотр',
+            ads_watch: '🎬 Смотреть за 5-10 🪙',  // 🔥 ОБНОВЛЕНО
+            ads_reward: '🪙 Награда: <strong>5-10 🪙</strong>',  // 🔥 ОБНОВЛЕНО
+            ads_info: '📺 Просмотри предложение и получи монеты\n⏱ Лимит: <strong>каждые 10 минут</strong>',  // 🔥 ОБНОВЛЕНО
             ads_coming_soon: '🚧 Раздел в разработке...\nСкоро здесь будет реклама!',
-            ads_available: '✅ Реклама доступна!',
-            ads_wait: '⏳ Следующая через {hours} ч.',
+            ads_available: '✅ Нажми чтобы получить награду!',
+            ads_wait: '⏳ Следующая через {minutes} мин.',  // 🔥 ОБНОВЛЕНО
+            ads_safe: '🔐 Безопасно: Никаких личных данных',
+            ads_btn_ready: '✅ Нажми чтобы получить награду!',
+            ads_btn_waiting: '⏳ Подожди перед следующей наградой',
 
             // === ВЫВОД ===
-            withdraw_title: 'Вывод DOGE',
+            withdraw_title: '💸 Вывод DOGE',
             withdraw_subtitle: 'Выведи на свой кошелёк',
             wallet_label: 'Твой DOGE кошелёк',
             wallet_placeholder: 'Адрес кошелька',
@@ -113,11 +118,12 @@
             // === COMMON ===
             app_name: 'DogePay',
             loading: 'Loading...',
-            subtitle: 'Earn DOGE while playing',
-            balance_label: 'Your balance',
+            subtitle: '✨ Earn DOGE with us 🪙🚀',
+            balance_label: '💰 Your balance',
             balance_doge: '🐕 ~{value} DOGE',
             balance_doge_suffix: 'DOGE',
-            footer: '🔐 Secure • ⚡ Fast • 🌍 Global',
+            footer: '🔐 Secure • ⚡ Fast • 💎 Convenient',
+            footer_doge: '🐕 Earn DOGE with us! 🪙',
             back_home: 'Home',
             back: 'Back',
             error: '❌ Error',
@@ -129,8 +135,8 @@
             btn_ads: '📢 Ads',
             btn_withdraw: '💸 Withdraw',
 
-            // === FAUCET ===
-            faucet_title: 'Faucet',
+            // === FAUCET — 🔥 30 MIN COOLDOWN 🔥 ===
+            faucet_title: '🚰 Faucet',
             faucet_subtitle: 'Claim free coins',
             claim_btn: 'CLAIM (10-30 🪙)',
             claim_processing: '⏳ Processing...',
@@ -138,7 +144,7 @@
             claim_ready: '✅ Ready to claim!',
             claim_waiting: '⏳ Wait...',
             faucet_info_1: '💎 Reward: <strong>10-30 🪙</strong>',
-            faucet_info_2: '⏰ Interval: <strong>60 seconds</strong>',
+            faucet_info_2: '⏰ Interval: <strong>30 minutes</strong>',  // 🔥 UPDATED
             faucet_info_3: '🔐 CAPTCHA: bot protection',
             captcha_title: '🔐 Verification',
             captcha_question: 'Solve:',
@@ -149,18 +155,21 @@
             reward_text: '+{amount} 🪙',
             reward_claimed: '🎉 You got {amount} 🪙',
 
-            // === ADS ===
-            ads_title: 'Ads',
-            ads_subtitle: 'Watch and earn coins',
-            ads_watch: '📺 Watch Ad',
-            ads_reward: '🪙 Reward: 5-20 coins',
-            ads_info: '📺 Watch ad and get coins\n⏱ Limit: every 1 hour',
+            // === ADS — 🔥 5-10 🪙 / 10 MIN 🔥 ===
+            ads_title: '📢 Ads',
+            ads_subtitle: 'Earn 🪙 for viewing',
+            ads_watch: '🎬 Watch for 5-10 🪙',  // 🔥 UPDATED
+            ads_reward: '🪙 Reward: <strong>5-10 🪙</strong>',  // 🔥 UPDATED
+            ads_info: '📺 Watch offer and get coins\n⏱ Limit: <strong>every 10 minutes</strong>',  // 🔥 UPDATED
             ads_coming_soon: '🚧 Coming soon...\nAds will be available shortly!',
-            ads_available: '✅ Ad available!',
-            ads_wait: '⏳ Next in {hours}h',
+            ads_available: '✅ Click to get reward!',
+            ads_wait: '⏳ Next in {minutes}m',  // 🔥 UPDATED
+            ads_safe: '🔐 Safe: No personal data',
+            ads_btn_ready: '✅ Click to get reward!',
+            ads_btn_waiting: '⏳ Wait before next reward',
 
             // === WITHDRAW ===
-            withdraw_title: 'Withdraw DOGE',
+            withdraw_title: '💸 Withdraw DOGE',
             withdraw_subtitle: 'Withdraw to your wallet',
             wallet_label: 'Your DOGE wallet',
             wallet_placeholder: 'Wallet address',
@@ -220,11 +229,15 @@
 
         // Инициализация
         init() {
-            // 1. Пробуем загрузить из localStorage
-            const saved = localStorage.getItem('dogepay_lang');
-            if (saved && translations[saved]) {
-                this.current = saved;
-                return;
+            try {
+                // 1. Пробуем загрузить из localStorage
+                const saved = localStorage.getItem('dogepay_lang');
+                if (saved && translations[saved]) {
+                    this.current = saved;
+                    return;
+                }
+            } catch (e) {
+                console.warn('⚠️ localStorage not available');
             }
 
             // 2. Пробуем определить из Telegram
@@ -232,7 +245,7 @@
             const tgLang = tg?.initDataUnsafe?.user?.language_code;
             if (tgLang && translations[tgLang]) {
                 this.current = tgLang;
-                localStorage.setItem('dogepay_lang', tgLang);
+                try { localStorage.setItem('dogepay_lang', tgLang); } catch(e) {}
                 return;
             }
 
@@ -240,13 +253,13 @@
             const browserLang = navigator.language?.split('-')[0];
             if (browserLang && translations[browserLang]) {
                 this.current = browserLang;
-                localStorage.setItem('dogepay_lang', browserLang);
+                try { localStorage.setItem('dogepay_lang', browserLang); } catch(e) {}
                 return;
             }
 
             // 4. Дефолт: русский
             this.current = 'ru';
-            localStorage.setItem('dogepay_lang', 'ru');
+            try { localStorage.setItem('dogepay_lang', 'ru'); } catch(e) {}
         },
 
         // Получить перевод
@@ -264,9 +277,12 @@
                 return key;
             }
 
-            // Замена параметров {param}
+            // 🔥 БЕЗОПАСНАЯ замена параметров {param} 🔥
             for (const [param, value] of Object.entries(params)) {
-                text = text.replace(new RegExp(`\\{${param}\\}`, 'g'), value);
+                if (value === null || value === undefined) continue;
+                const safeParam = param.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`\\{${safeParam}\\}`, 'g');
+                text = text.replace(regex, String(value));
             }
 
             return text;
@@ -280,7 +296,7 @@
             }
             
             this.current = newLang;
-            localStorage.setItem('dogepay_lang', newLang);
+            try { localStorage.setItem('dogepay_lang', newLang); } catch(e) {}
             return true;
         },
 
@@ -324,14 +340,14 @@
                 }
             });
 
-            // Обновляем кнопку флагов (ВАЖНО: не переводим, только меняем порядок)
+            // Обновляем кнопку флагов
             const flagBtn = document.getElementById('langSwitch');
             if (flagBtn) {
                 flagBtn.innerHTML = this.current === 'ru' ? '🇷🇺 🇬🇧' : '🇬🇧 🇷🇺';
                 flagBtn.title = this.current === 'ru' ? 'Switch to English' : 'Переключить на русский';
             }
 
-            // Обновляем активную кнопку языка (если есть .lang-btn)
+            // Обновляем активную кнопку языка
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 const lang = btn.dataset.lang;
                 btn.classList.toggle('active', lang === this.current);
@@ -350,24 +366,26 @@
     };
 
     // ===== 🚀 ЭКСПОРТ В GLOBAL SCOPE =====
-    // Функция перевода (короткое имя)
     window.t = (key, params) => LangMgr.t(key, params);
-    
-    // Менеджер (полный доступ)
     window.LangMgr = LangMgr;
-    
-    // Алиасы для совместимости
     window.currentLang = LangMgr.current;
     window.setLanguage = (lang) => LangMgr.toggle(lang);
     window.updatePageLanguage = () => LangMgr.updatePage();
     window.loadSavedLanguage = () => LangMgr.init();
     window.getAvailableLanguages = () => LangMgr.getAvailable();
+    window.toggleLanguage = () => {
+        const newLang = LangMgr.current === 'ru' ? 'en' : 'ru';
+        LangMgr.toggle(newLang);
+        LangMgr.updatePage();
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+    };
 
     // ===== 🏁 АВТО-ИНИЦИАЛИЗАЦИЯ =====
     function autoInit() {
         LangMgr.init();
         
-        // Если translations загружен после DOM — обновляем сразу
         if (document.readyState !== 'loading') {
             LangMgr.updatePage();
         }
@@ -376,11 +394,9 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', autoInit);
     } else {
-        // Небольшая задержка для гарантии загрузки
         setTimeout(autoInit, 10);
     }
 
-    // Событие для других скриптов
     document.addEventListener('dogepay:ready', () => {
         LangMgr.updatePage();
     });
