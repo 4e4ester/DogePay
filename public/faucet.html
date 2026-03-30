@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- ИСПРАВЛЕНО: синтаксис wght -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -52,6 +53,8 @@
                 <p class="captcha-question" id="captchaQuestion">Сколько будет 5 + 3?</p>
                 <input type="number" id="captchaInput" class="captcha-input" placeholder="?" inputmode="numeric">
                 <button id="verifyCaptchaBtn" class="btn btn-primary" onclick="onVerifyCaptcha()">Проверить</button>
+                <!-- ДОБАВЛЕНО: кнопка отмены капчи -->
+                <button id="cancelCaptchaBtn" class="btn btn-secondary" onclick="hideCaptcha()" style="margin-top: 10px;">Отмена</button>
                 <p id="captchaError" class="captcha-error hidden">❌ Неверно! Попробуй ещё раз.</p>
             </div>
         </div>
@@ -67,7 +70,7 @@
         <!-- ИНФО БЛОК -->
         <div class="info-box">
             <p>💎 Награда: <strong>10-30 🪙</strong></p>
-            <p>⏰ Интервал: <strong>60 секунд</strong></p>
+            <p>⏰ Интервал: <strong>30 минут</strong></p>
             <p>🔐 CAPTCHA: защита от ботов</p>
         </div>
 
@@ -83,10 +86,55 @@
         </div>
     </div>
 
+    <script>
+        // ===== ЗАГЛУШКИ ДЛЯ ОТСУТСТВУЮЩИХ ФУНКЦИЙ =====
+        window.playClick = window.playClick || function() {
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+        };
+        window.playClaim = window.playClaim || function() {
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+        };
+        window.playError = window.playError || function() {
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+            }
+        };
+        window.updateBalance = window.updateBalance || function() {
+            console.log("updateBalance заглушка");
+            return Promise.resolve();
+        };
+        window.addBalance = window.addBalance || function(amount) {
+            console.log("addBalance заглушка, +", amount);
+        };
+        window.initApp = window.initApp || function() {
+            console.log("initApp заглушка");
+        };
+        window.toggleLanguage = window.toggleLanguage || function() {
+            console.log("toggleLanguage заглушка");
+        };
+        window.showToast = window.showToast || function(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<span class="toast-text">${message}</span>`;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('toast-show'));
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+    </script>
     <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
         // ===== ЛОГИКА КРАНА =====
+        // 🔥 КУЛДАУН: 30 минут = 1800 секунд = 1800000 мс 🔥
+        const FAUCET_COOLDOWN_MS = 30 * 60 * 1000;
+        
         let currentCaptcha = { answer: 0 };
         let claimLock = false;
         let timerInterval = null;
@@ -97,15 +145,19 @@
             if (tg?.initDataUnsafe?.user?.id) {
                 return tg.initDataUnsafe.user.id;
             }
-            // Fallback для тестов
             return 123456;
         }
 
-        // Форматирование времени
+        // 🔥 ФОРМАТИРОВАНИЕ ВРЕМЕНИ (поддержка часов) 🔥
         function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            
+            if (h > 0) {
+                return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
         }
 
         // Запуск таймера
@@ -140,14 +192,22 @@
             timerInterval = setInterval(update, 1000);
         }
 
-        // Генерация CAPTCHA
+        // Генерация CAPTCHA (без отрицательных ответов)
         function generateCaptcha() {
             const a = Math.floor(Math.random() * 10) + 1;
             const b = Math.floor(Math.random() * 10) + 1;
-            const ops = ['+', '-'];
-            const op = ops[Math.floor(Math.random() * ops.length)];
+            // ИСПРАВЛЕНО: вычитание только если a >= b, иначе сложение
+            let op;
+            let answer;
+            if (a >= b) {
+                op = Math.random() < 0.5 ? '+' : '-';
+                answer = op === '+' ? a + b : a - b;
+            } else {
+                op = '+';
+                answer = a + b;
+            }
             
-            currentCaptcha.answer = op === '+' ? a + b : a - b;
+            currentCaptcha.answer = answer;
             currentCaptcha.question = `${a} ${op} ${b}`;
             
             document.getElementById('captchaQuestion').innerHTML = `Решите: <strong>${currentCaptcha.question} = ?</strong>`;
@@ -185,26 +245,6 @@
             }, 2500);
         }
 
-        // Показать тост
-        function showToast(message, type = 'info') {
-            if (window.showToast) {
-                window.showToast(message, type);
-                return;
-            }
-            
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML = `<span class="toast-text">${message}</span>`;
-            document.body.appendChild(toast);
-            
-            requestAnimationFrame(() => toast.classList.add('toast-show'));
-            
-            setTimeout(() => {
-                toast.classList.remove('toast-show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
         // Запрос к API
         async function claimReward() {
             if (claimLock) return;
@@ -216,9 +256,7 @@
             try {
                 const res = await fetch('/api/claim', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         user_id: userId,
                         username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || ''
@@ -235,62 +273,53 @@
                 console.log('📦 Response data:', data);
                 
                 if (data.success) {
-                    // Успех!
                     const reward = data.reward || data.amount;
-                    
                     console.log('✅ Reward:', reward);
                     
-                    // Звук + вибрация
-                    if (window.playClaim) playClaim();
+                    if (window.playClaim) window.playClaim();
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
                     }
                     
-                    // Показать награду
                     showReward(reward);
-                    
-                    // Обновить баланс
                     if (window.updateBalance) await window.updateBalance();
                     if (window.addBalance) window.addBalance(reward);
                     
-                    // Сохранить и запустить таймер
-                    const nextClaim = data.nextClaimTime || (Date.now() + 60000);
-                    localStorage.setItem('lastClaim', nextClaim.toString());
+                    // 🔥 СОХРАНЯЕМ ВРЕМЯ СЛЕДУЮЩЕГО КРАНА (30 МИН) 🔥
+                    const nextClaim = Date.now() + FAUCET_COOLDOWN_MS;
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('lastClaim', nextClaim.toString());
+                    }
                     startTimer(nextClaim);
                     
-                    showToast(`✅ +${reward} 🪙`, 'success');
+                    window.showToast(`✅ +${reward} 🪙`, 'success');
                     
                 } else if (data.error?.includes('Подождите') || data.waitTime) {
-                    // Уже собрано
-                    const waitTime = data.waitTime || 60000;
+                    const waitTime = data.waitTime || FAUCET_COOLDOWN_MS;
                     const nextClaim = Date.now() + waitTime;
-                    localStorage.setItem('lastClaim', nextClaim.toString());
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('lastClaim', nextClaim.toString());
+                    }
                     startTimer(nextClaim);
-                    showToast('⏳ ' + (data.error || 'Подождите'), 'info');
-                    
+                    window.showToast('⏳ ' + (data.error || 'Подождите'), 'info');
                 } else {
-                    // Другая ошибка
                     const errorMsg = data.error || 'Неизвестная ошибка';
                     console.error('❌ API error:', errorMsg);
-                    showToast('❌ ' + errorMsg, 'error');
+                    window.showToast('❌ ' + errorMsg, 'error');
                     if (window.playError) window.playError();
                 }
                 
             } catch (err) {
                 console.error('🌐 Network error:', err);
-                console.error('Full error:', err.message);
-                
-                // Показываем детальную ошибку
                 let errorMsg = '🌐 Ошибка сети';
                 if (err.message.includes('Failed to fetch')) {
-                    errorMsg = '❌ Не удалось подключиться к серверу. Проверь интернет.';
+                    errorMsg = '❌ Не удалось подключиться к серверу';
                 } else if (err.message.includes('404')) {
-                    errorMsg = '❌ API endpoint не найден (/api/claim)';
+                    errorMsg = '❌ API endpoint не найден';
                 } else if (err.message.includes('500')) {
-                    errorMsg = '❌ Ошибка сервера. Попробуй позже.';
+                    errorMsg = '❌ Ошибка сервера';
                 }
-                
-                showToast(errorMsg, 'error');
+                window.showToast(errorMsg, 'error');
                 if (window.playError) window.playError();
             } finally {
                 claimLock = false;
@@ -300,32 +329,41 @@
 
         // Проверка CAPTCHA
         function onVerifyCaptcha() {
-            const userAnswer = parseInt(document.getElementById('captchaInput').value, 10);
+            const inputEl = document.getElementById('captchaInput');
+            if (!inputEl) return;
+            const userAnswer = parseInt(inputEl.value, 10);
             
             if (isNaN(userAnswer)) {
-                document.getElementById('captchaError').textContent = '❌ Введите число';
-                document.getElementById('captchaError').classList.remove('hidden');
+                const errorEl = document.getElementById('captchaError');
+                if (errorEl) {
+                    errorEl.textContent = '❌ Введите число';
+                    errorEl.classList.remove('hidden');
+                }
                 return;
             }
             
             if (userAnswer !== currentCaptcha.answer) {
                 const errorEl = document.getElementById('captchaError');
-                errorEl.textContent = '❌ Неверно! Попробуй ещё раз.';
-                errorEl.classList.remove('hidden');
-                errorEl.style.animation = 'shake 0.3s ease';
-                setTimeout(() => errorEl.style.animation = '', 300);
+                if (errorEl) {
+                    errorEl.textContent = '❌ Неверно! Попробуй ещё раз.';
+                    errorEl.classList.remove('hidden');
+                    errorEl.style.animation = 'shake 0.3s ease';
+                    setTimeout(() => errorEl.style.animation = '', 300);
+                }
                 generateCaptcha();
                 return;
             }
             
-            // CAPTCHA пройдена → забрать награду
             claimReward();
         }
 
         // Enter в поле CAPTCHA
-        document.getElementById('captchaInput')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') onVerifyCaptcha();
-        });
+        const captchaInput = document.getElementById('captchaInput');
+        if (captchaInput) {
+            captchaInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') onVerifyCaptcha();
+            });
+        }
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
@@ -341,7 +379,10 @@
                 if (window.initApp) window.initApp();
                 
                 // Проверить таймер
-                const lastClaim = localStorage.getItem('lastClaim');
+                let lastClaim = null;
+                if (typeof localStorage !== 'undefined') {
+                    lastClaim = localStorage.getItem('lastClaim');
+                }
                 console.log('🕐 Last claim:', lastClaim);
                 
                 if (lastClaim && Date.now() < parseInt(lastClaim)) {
