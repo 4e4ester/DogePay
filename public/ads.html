@@ -4,66 +4,79 @@
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'  blob: filesystem: about:; script-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'  blob:; style-src * 'unsafe-inline' 'unsafe-hashes'  blob:; img-src *  blob: https:; font-src *  https:; connect-src * https: wss:; frame-src * https:; child-src * https:; worker-src * blob:;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DogePay - Реклама</title>
+    <title data-t="ads_title">Реклама</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+    <!-- ЭКРАН ЗАГРУЗКИ -->
     <div id="loading-screen" class="loading-screen">
         <div class="loader-content">
             <div class="logo-bounce">📢</div>
             <div class="spinner"></div>
-            <p>Загрузка...</p>
+            <p data-t="loading">Загрузка...</p>
         </div>
     </div>
 
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div class="container" id="main-content">
+        <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
+        <!-- ШАПКА -->
         <div class="header">
             <div class="logo-float">📢</div>
-            <h1 class="gradient-title">Реклама</h1>
-            <p class="subtitle">Получай 🪙 за просмотр</p>
+            <h1 class="gradient-title" data-t="ads_title">Реклама</h1>
+            <p class="subtitle" data-t="ads_subtitle">Получай 🪙 за просмотр</p>
         </div>
 
+        <!-- КАРТОЧКА РЕКЛАМЫ -->
         <div class="ads-card">
             <div class="reward-header">
                 <span class="reward-icon">🎁</span>
-                <h3>Получи 5-10 🪙</h3>
+                <h3 data-t="ads_reward">Получи 5-10 🪙</h3>
             </div>
-            <p class="reward-desc">Нажми кнопку, посмотри предложение и получи награду!</p>
+            <p class="reward-desc" data-t="ads_info">Нажми кнопку, посмотри предложение и получи награду!</p>
             
+            <!-- КНОПКА -->
             <button id="claimAdBtn" class="btn btn-primary btn-large">
                 <span class="btn-icon">🎬</span>
-                <span class="btn-text">Смотреть за 5-10 🪙</span>
+                <span class="btn-text" data-t="ads_watch">Смотреть за 5-10 🪙</span>
             </button>
             
-            <p id="adStatus" class="ad-status">✅ Нажми чтобы получить награду!</p>
+            <!-- СТАТУС -->
+            <p id="adStatus" class="ad-status status-ready" data-t="ads_btn_ready">✅ Нажми чтобы получить награду!</p>
             
+            <!-- ТАЙМЕР -->
             <div id="cooldownTimer" class="cooldown-timer hidden">
                 <span class="timer-icon">⏳</span>
-                <span id="timerText">Следующая через: 00:00</span>
+                <span id="timerText" data-t="ads_wait">Следующая через: 00:00</span>
             </div>
         </div>
 
+        <!-- ИНФО -->
         <div class="info-box">
-            <p><strong>💰 Награда:</strong> 5-10 🪙 за клик</p>
-            <p><strong>⏰ Лимит:</strong> 1 раз в 10 минут</p>
-            <p><strong>🔐 Безопасно:</strong> Никаких личных данных</p>
+            <p data-t="ads_reward"><strong>💰 Награда:</strong> 5-10 🪙 за клик</p>
+            <p data-t="ads_info"><strong>⏰ Лимит:</strong> 1 раз в 10 минут</p>
+            <p data-t="ads_safe"><strong>🔐 Безопасно:</strong> Никаких личных данных</p>
         </div>
 
+        <!-- СТАТИСТИКА -->
         <div class="stats-mini">
-            <div class="stat-item"><span class="stat-value" id="adsWatched">0</span><span class="stat-label">Просмотрено</span></div>
-            <div class="stat-item"><span class="stat-value" id="adsEarned">0</span><span class="stat-label">Заработано 🪙</span></div>
+            <div class="stat-item"><span class="stat-value" id="adsWatched">0</span><span class="stat-label" data-t="ads_stat_watched">Просмотрено</span></div>
+            <div class="stat-item"><span class="stat-value" id="adsEarned">0</span><span class="stat-label" data-t="ads_stat_earned">Заработано 🪙</span></div>
         </div>
 
+        <!-- НАЗАД -->
         <a href="index.html" class="btn btn-secondary" onclick="playClick()">
-            <span class="btn-icon">←</span><span>На главную</span>
+            <span class="btn-icon">←</span><span data-t="back_home">На главную</span>
         </a>
 
-        <div class="footer"><p>🐕 DogePay • Реклама</p></div>
+        <!-- ФУТЕР -->
+        <div class="footer"><p>🐕 DogePay • <span data-t="ads_title">Реклама</span></p></div>
     </div>
 
+    <!-- СКРИПТЫ -->
     <script src="translations.js"></script>
     <script src="app.js"></script>
     
@@ -79,24 +92,20 @@
         window.addEventListener('load', loadAdsterra);
     </script>
     
-    <!-- 🔥 ПРОСТАЯ И НАДЁЖНАЯ ЛОГИКА 🔥 -->
+    <!-- 🔥 ЛОГИКА С ПЕРЕВОДАМИ 🔥 -->
     <script>
-        // ===== НАСТРОЙКИ =====
-        const COOLDOWN_MS = 10 * 60 * 1000; // 10 минут
-        const WATCH_MS = 12000; // 12 сек "просмотр"
+        const COOLDOWN_MS = 10 * 60 * 1000;
+        const WATCH_MS = 12000;
         const REWARD_MIN = 5;
         const REWARD_MAX = 10;
-        
         let isProcessing = false;
         let timerInterval = null;
 
-        // ===== ПОЛУЧЕНИЕ USER_ID =====
         function getUserId() {
             const tg = window.Telegram?.WebApp;
             return tg?.initDataUnsafe?.user?.id || 123456;
         }
 
-        // ===== ПРОВЕРКА: МОЖНО ЛИ ЗАБРАТЬ? =====
         function canClaim() {
             const last = parseInt(localStorage.getItem('lastAdReward') || '0');
             const now = Date.now();
@@ -106,7 +115,6 @@
             return { ok: false, wait: COOLDOWN_MS - diff };
         }
 
-        // ===== ФОРМАТ ВРЕМЕНИ ММ:СС =====
         function fmt(ms) {
             const s = Math.ceil(ms / 1000);
             const m = Math.floor(s / 60);
@@ -114,7 +122,7 @@
             return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
         }
 
-        // ===== ОБНОВЛЕНИЕ КНОПКИ/СТАТУСА =====
+        // 🔥 ОБНОВЛЕНИЕ UI С ПЕРЕВОДАМИ 🔥
         function updateUI() {
             const btn = document.getElementById('claimAdBtn');
             const status = document.getElementById('adStatus');
@@ -122,44 +130,38 @@
             const timerText = document.getElementById('timerText');
             const check = canClaim();
             
-            console.log('🔄 updateUI():', check);
-            
             if (check.ok) {
-                // Можно забирать
                 btn.disabled = false;
-                btn.querySelector('.btn-text').textContent = 'Смотреть за 5-10 🪙';
-                status.textContent = '✅ Нажми чтобы получить награду!';
+                btn.querySelector('.btn-text').textContent = window.t?.('ads_watch') || 'Смотреть за 5-10 🪙';
+                status.textContent = window.t?.('ads_btn_ready') || '✅ Нажми чтобы получить награду!';
                 status.className = 'ad-status status-ready';
                 timerBox.classList.add('hidden');
                 if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             } else {
-                // Ждём
                 btn.disabled = true;
-                status.textContent = '⏳ Подожди перед следующей наградой';
+                status.textContent = window.t?.('ads_btn_waiting') || '⏳ Подожди перед следующей наградой';
                 status.className = 'ad-status status-waiting';
                 timerBox.classList.remove('hidden');
                 
-                // Запускаем таймер
                 if (timerInterval) clearInterval(timerInterval);
                 timerInterval = setInterval(() => {
                     const c = canClaim();
                     if (c.ok) { updateUI(); return; }
-                    timerText.textContent = `Следующая через: ${fmt(c.wait)}`;
+                    const waitMin = Math.ceil(c.wait / 60000);
+                    timerText.textContent = (window.t?.('ads_wait') || 'Следующая через: {minutes} мин.').replace('{minutes}', waitMin);
                 }, 1000);
-                timerText.textContent = `Следующая через: ${fmt(check.wait)}`;
+                const waitMin = Math.ceil(check.wait / 60000);
+                timerText.textContent = (window.t?.('ads_wait') || 'Следующая через: {minutes} мин.').replace('{minutes}', waitMin);
             }
         }
 
-        // ===== ОБРАБОТКА КЛИКА =====
         async function handleAdReward() {
-            console.log('🎬 handleAdReward() START');
-            
-            if (isProcessing) { console.log('⚠️ Already processing'); return; }
-            
+            if (isProcessing) return;
             const check = canClaim();
             if (!check.ok) {
-                console.log('⏳ Cooldown active:', fmt(check.wait));
-                alert(`⏳ Подожди ещё ${fmt(check.wait)}`);
+                const waitMin = Math.ceil(check.wait / 60000);
+                const msg = (window.t?.('wait') || '⏳ Подожди {minutes} мин.').replace('{minutes}', waitMin);
+                alert(msg);
                 return;
             }
             
@@ -168,75 +170,47 @@
             const btnText = btn.querySelector('.btn-text');
             const status = document.getElementById('adStatus');
             
-            // UI: загрузка
             btn.disabled = true;
-            btnText.textContent = 'Загрузка...';
-            status.textContent = '🔄 Открываем предложение...';
+            btnText.textContent = window.t?.('claim_processing') || '⏳ Обработка...';
+            status.textContent = '🔄 ' + (window.t?.('ads_watch') || 'Открываем предложение...');
             
             try {
-                console.log('🪟 Waiting 12 seconds...');
-                
-                // 1. Ждём 12 сек (эмуляция просмотра)
                 await new Promise(res => setTimeout(res, WATCH_MS));
                 
-                console.log('✅ Watch completed');
-                
-                // 2. Генерируем награду 5-10
                 const reward = Math.floor(Math.random() * (REWARD_MAX - REWARD_MIN + 1)) + REWARD_MIN;
-                console.log('🎲 Reward generated:', reward);
-                
-                // 3. Отправляем на сервер
-                console.log('📡 Sending to /api/ad-reward...');
-                const userId = getUserId();
-                console.log('👤 User ID:', userId);
                 
                 const res = await fetch('/api/ad-reward', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, reward: reward, type: 'popunder_click' })
+                    body: JSON.stringify({ user_id: getUserId(), reward: reward, type: 'popunder_click' })
                 });
                 
-                console.log('📦 Response status:', res.status);
                 const data = await res.json();
-                console.log('📦 Response data:', data);
                 
                 if (data.success) {
-                    console.log('✅ Server confirmed!');
-                    
-                    // Звук + вибрация
                     if (window.playClaim) playClaim();
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
                     }
                     
-                    // 🔥 ОБНОВЛЯЕМ БАЛАНС НЕМЕДЛЕННО 🔥
                     const balanceEl = document.getElementById('balance');
                     if (balanceEl) {
                         const cur = parseInt(balanceEl.textContent.replace(/\s/g,'')) || 0;
                         balanceEl.textContent = (cur + reward).toLocaleString('ru-RU');
                         balanceEl.classList.add('pulse-once');
                         setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
-                        console.log('💰 Balance updated in DOM:', cur + reward);
                     }
                     
-                    // DOGE баланс
                     const dogeEl = document.getElementById('balance-doge');
                     if (dogeEl) {
                         const curDoge = parseFloat(dogeEl.textContent) || 0;
                         dogeEl.textContent = (curDoge + reward/1000).toFixed(4);
                     }
                     
-                    // Глобальное обновление
-                    if (window.updateBalance) {
-                        await window.updateBalance();
-                        console.log('🔄 Global balance updated');
-                    }
+                    if (window.updateBalance) await window.updateBalance();
                     
-                    // Сохраняем время
                     localStorage.setItem('lastAdReward', Date.now().toString());
-                    console.log('💾 Saved lastAdReward');
                     
-                    // Статистика
                     let w = parseInt(localStorage.getItem('adsWatched')||'0');
                     let e = parseInt(localStorage.getItem('adsEarned')||'0');
                     w++; e+=reward;
@@ -245,84 +219,61 @@
                     document.getElementById('adsWatched').textContent = w;
                     document.getElementById('adsEarned').textContent = e.toLocaleString('ru-RU');
                     
-                    // UI успех
-                    status.textContent = `✅ Получено ${reward} 🪙!`;
+                    status.textContent = (window.t?.('reward_claimed') || '✅ Получено {amount} 🪙!').replace('{amount}', reward);
                     status.className = 'ad-status status-success';
                     
-                    // Попап
                     const popup = document.createElement('div');
                     popup.className = 'reward-toast reward-success';
                     popup.innerHTML = `<span>🎉 +${reward} 🪙</span>`;
                     document.body.appendChild(popup);
                     setTimeout(() => popup.remove(), 2500);
                     
-                    // Обновляем UI (таймер)
                     setTimeout(updateUI, 2000);
                     
                 } else {
-                    console.error('❌ Server error:', data);
-                    throw new Error(data.error || 'Сервер не подтвердил');
+                    throw new Error(data.error || window.t?.('error') || 'Сервер не подтвердил');
                 }
                 
             } catch (err) {
                 console.error('❌ ERROR:', err);
-                status.textContent = '❌ Ошибка: ' + (err.message || 'Попробуй позже');
+                status.textContent = window.t?.('error') || '❌ Ошибка';
                 status.className = 'ad-status status-error';
-                alert('🌐 Ошибка: ' + (err.message || 'Попробуй позже'));
+                alert(window.t?.('error_network') || '🌐 Ошибка: ' + (err.message || 'Попробуй позже'));
                 if (window.playError) playError();
-                
-                // 🔥 FALLBACK: всё равно добавляем локально (для теста) 🔥
-                const reward = 5;
-                const balanceEl = document.getElementById('balance');
-                if (balanceEl) {
-                    const cur = parseInt(balanceEl.textContent.replace(/\s/g,'')) || 0;
-                    balanceEl.textContent = (cur + reward).toLocaleString('ru-RU');
-                }
-                alert(`🧪 ТЕСТ: +${reward} 🪙 (локально, сервер не ответил)`);
-                
             } finally {
                 isProcessing = false;
                 btn.disabled = false;
-                btnText.textContent = 'Смотреть за 5-10 🪙';
-                console.log('🔄 handleAdReward() END');
+                btnText.textContent = window.t?.('ads_watch') || 'Смотреть за 5-10 🪙';
             }
         }
 
-        // ===== ИНИЦИАЛИЗАЦИЯ =====
+        // 🔥 ИНИЦИАЛИЗАЦИЯ С ПЕРЕВОДАМИ 🔥
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🎮 ads.html DOMContentLoaded');
-            
             setTimeout(() => {
-                // Скрыть загрузку
                 const loading = document.getElementById('loading-screen');
                 const main = document.getElementById('main-content');
                 if (loading) loading.classList.add('hidden');
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
+                if (window.initApp) window.initApp();
                 
-                // Инициализация app.js
-                if (window.initApp) {
-                    try { window.initApp(); } catch(e) { console.error('initApp error:', e); }
+                // 🔥 ПРИМЕНЯЕМ ПЕРЕВОДЫ 🔥
+                if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
+                if (typeof updatePageLanguage === 'function') {
+                    setTimeout(() => updatePageLanguage(), 100);
                 }
                 
-                // Загружаем статистику
                 document.getElementById('adsWatched').textContent = localStorage.getItem('adsWatched') || '0';
                 document.getElementById('adsEarned').textContent = (parseInt(localStorage.getItem('adsEarned')||'0')).toLocaleString('ru-RU');
                 
-                // 🔥 ОБНОВЛЯЕМ UI СРАЗУ 🔥
                 updateUI();
                 
-                // Кнопка
                 document.getElementById('claimAdBtn')?.addEventListener('click', () => {
                     if (window.playClick) playClick();
                     handleAdReward();
                 });
-                
-                console.log('✅ ads.html ready');
-                
             }, 1500);
         });
         
-        // Очистка
         window.addEventListener('beforeunload', () => {
             if (timerInterval) clearInterval(timerInterval);
         });
