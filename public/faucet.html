@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600:700:800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500:600:700:800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- LOADING SCREEN -->
@@ -37,7 +37,7 @@
         </div>
 
         <!-- CLAIM BUTTON -->
-        <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); startClaimFlow()">
+        <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); handleClaim()">
             <span class="btn-icon">🎁</span>
             <span>CLAIM (10-30 🪙)</span>
         </button>
@@ -124,34 +124,8 @@
     <!-- SCRIPTS -->
     <script src="app.js"></script>
     
-    <!-- 🔥 ADSTERRA POPUNDER SCRIPT 🔥 -->
-    <script>
-        // Загружаем скрипт один раз при загрузке страницы
-        (function() {
-            const s = document.createElement('script');
-            s.src = 'https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js';
-            s.async = true;
-            s.onerror = () => console.warn('⚠️ Adsterra Popunder script failed');
-            document.body.appendChild(s);
-        })();
-        
-        // Функция для открытия попандера
-        function triggerAdsterraPopunder() {
-            try {
-                // Adsterra Popunder обычно срабатывает автоматически при клике
-                // если скрипт уже загружен. Для надёжности можно вызвать клик по скрытому элементу:
-                const fakeLink = document.createElement('a');
-                fakeLink.href = '#';
-                fakeLink.target = '_blank';
-                fakeLink.style.display = 'none';
-                document.body.appendChild(fakeLink);
-                fakeLink.click();
-                fakeLink.remove();
-            } catch(e) {
-                console.warn('⚠️ Popunder trigger error:', e);
-            }
-        }
-    </script>
+    <!-- 🔥 ADSTERRA POPUNDER SCRIPT (ТВОЙ КОД) 🔥 -->
+    <script src="https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js"></script>
     
     <!-- FAUCET LOGIC -->
     <script>
@@ -223,20 +197,6 @@
             if (errEl) errEl.classList.add('hidden');
         }
 
-        // 🔥 НОВЫЙ ПОТОК: КЛИК → POPUNDER → CAPTCHA → НАГРАДА 🔥
-        function startClaimFlow() {
-            if (claimLock) return;
-            
-            // 1. Сначала открываем рекламу (Popunder)
-            triggerAdsterraPopunder();
-            
-            // 2. Небольшая задержка чтобы попандер успел открыться
-            setTimeout(() => {
-                // 3. Потом показываем CAPTCHA
-                showCaptcha();
-            }, 500);
-        }
-
         function showCaptcha() {
             generateCaptcha();
             const captchaContainer = document.getElementById('captchaContainer');
@@ -265,6 +225,29 @@
                 popup.style.animation = 'rewardPop 0.5s ease forwards';
                 setTimeout(() => popup.classList.add('hidden'), 2500);
             }
+        }
+
+        // 🔥 ПРОСТОЙ ПОТОК: КЛИК → РЕКЛАМА → ПОТОМ ВСЁ КАК ОБЫЧНО 🔥
+        function handleClaim() {
+            if (claimLock) return;
+            
+            // 1. Просто открываем рекламу (скрипт уже загружен выше)
+            // Adsterra Popunder сработает автоматически при загрузке скрипта
+            // или можно вызвать клик по скрытой ссылке для надёжности:
+            try {
+                const fakeLink = document.createElement('a');
+                fakeLink.href = 'https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js';
+                fakeLink.target = '_blank';
+                fakeLink.style.display = 'none';
+                document.body.appendChild(fakeLink);
+                fakeLink.click();
+                fakeLink.remove();
+            } catch(e) {
+                console.warn('⚠️ Popunder trigger:', e);
+            }
+            
+            // 2. Показываем CAPTCHA как обычно
+            showCaptcha();
         }
 
         async function claimReward() {
