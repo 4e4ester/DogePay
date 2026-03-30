@@ -209,8 +209,8 @@ app.post('/api/claim', async (req, res) => {
 
         if (lastClaim) {
             const diff = (new Date() - new Date(lastClaim)) / 1000;
-            if (diff < 18) {
-                const wait = Math.ceil(18 - diff);
+            if (diff < 1800) {
+                const wait = Math.ceil(1800 - diff);
                 await client.query('ROLLBACK');
                 return res.status(429).json({ 
                     success: false, 
