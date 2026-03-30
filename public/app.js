@@ -144,7 +144,7 @@
             AudioMgr.playClick();
             currentLang = currentLang === 'ru' ? 'en' : 'ru';
             localStorage.setItem('dogepay_lang', currentLang);
-            setTimeout(() => location.reload(), 150);
+            setTimeout(() => location.reload(), 120);
         }
     };
 
