@@ -183,6 +183,20 @@
     
     <!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА С ИСПРАВЛЕНИЕМ СТРОКИ 🔥 -->
     <script>
+        // Очистка устаревших строковых данных в localStorage
+        (function cleanupStorage() {
+            try {
+                const oldBalance = localStorage.getItem('balance_update');
+                if (oldBalance) {
+                    const parsed = JSON.parse(oldBalance);
+                    if (typeof parsed.balance === 'string') {
+                        localStorage.removeItem('balance_update');
+                        console.log('🧹 Очищен старый строковый баланс из localStorage');
+                    }
+                }
+            } catch(e) {}
+        })();
+
         async function fetchBalance() {
             try {
                 const tg = window.Telegram?.WebApp;
@@ -197,8 +211,8 @@
                 console.log('📦 Ответ API:', data);
                 
                 if (data.success && data.balance !== undefined) {
-                    // Преобразуем в число, если пришло строкой (как в твоих логах)
-                    const balanceNum = typeof data.balance === 'number' ? data.balance : parseInt(data.balance, 10);
+                    // Преобразуем в число (сервер уже возвращает число, но на всякий случай)
+                    const balanceNum = Number(data.balance);
                     if (isNaN(balanceNum)) throw new Error('Balance is not a number');
                     
                     const balanceEl = document.getElementById('balance');
@@ -216,6 +230,9 @@
                     if (dogeEl) {
                         dogeEl.textContent = (balanceNum / 1000).toFixed(4);
                     }
+                    
+                    // Сохраняем в localStorage для синхронизации между вкладками
+                    localStorage.setItem('balance_update', JSON.stringify({ balance: balanceNum, timestamp: Date.now() }));
                 } else {
                     console.warn('⚠️ Ответ не содержит balance или success:false');
                 }
@@ -223,6 +240,29 @@
                 console.error('❌ Balance fetch error:', e);
             }
         }
+        
+        // Слушаем обновления баланса из других вкладок (например, после награды в кране/рекламе)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'balance_update') {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    const balanceNum = Number(data.balance);
+                    if (!isNaN(balanceNum)) {
+                        const balanceEl = document.getElementById('balance');
+                        const dogeEl = document.getElementById('balance-doge');
+                        if (balanceEl) {
+                            balanceEl.textContent = balanceNum.toLocaleString('ru-RU');
+                            balanceEl.classList.add('pulse-once');
+                            setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
+                        }
+                        if (dogeEl) {
+                            dogeEl.textContent = (balanceNum / 1000).toFixed(4);
+                        }
+                        console.log('🔄 Баланс обновлён из localStorage:', balanceNum);
+                    }
+                } catch(err) { console.warn('Storage parse error:', err); }
+            }
+        });
         
         // Запуск с задержкой, чтобы Telegram WebApp успел инициализироваться
         setTimeout(() => {
