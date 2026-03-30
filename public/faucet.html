@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <!-- ИСПРАВЛЕНО: синтаксис wght -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -223,22 +222,26 @@
                 const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.success && typeof data.balance === 'number') {
+                    if (data.success && data.balance !== undefined) {
+                        // Преобразуем в число, если пришло строкой
+                        let balanceNum = typeof data.balance === 'number' ? data.balance : parseInt(data.balance, 10);
+                        if (isNaN(balanceNum)) balanceNum = 0;
+                        
                         // Обновляем на текущей странице если есть элементы
                         const balanceEl = document.getElementById('balance');
                         const dogeEl = document.getElementById('balance-doge');
-                        if (balanceEl) balanceEl.textContent = data.balance.toLocaleString('en-US');
-                        if (dogeEl) dogeEl.textContent = (data.balance / 1000).toFixed(4);
+                        if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US');
+                        if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4);
                         
                         // Отправляем сообщение другим вкладкам (главная и др.)
                         if (window.localStorage) {
                             localStorage.setItem('balance_update', JSON.stringify({
-                                balance: data.balance,
+                                balance: balanceNum,
                                 timestamp: Date.now()
                             }));
                         }
-                        console.log('✅ Balance refreshed:', data.balance);
-                        return data.balance;
+                        console.log('✅ Balance refreshed:', balanceNum);
+                        return balanceNum;
                     }
                 }
             } catch (e) {
@@ -388,11 +391,12 @@
                 if (e.key === 'balance_update') {
                     try {
                         const data = JSON.parse(e.newValue);
+                        const balanceNum = typeof data.balance === 'number' ? data.balance : parseInt(data.balance, 10);
                         const balanceEl = document.getElementById('balance');
                         const dogeEl = document.getElementById('balance-doge');
-                        if (balanceEl) balanceEl.textContent = data.balance.toLocaleString('en-US');
-                        if (dogeEl) dogeEl.textContent = (data.balance / 1000).toFixed(4);
-                        console.log('🔄 Balance updated from storage:', data.balance);
+                        if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US');
+                        if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4);
+                        console.log('🔄 Balance updated from storage:', balanceNum);
                     } catch(err) { console.warn('Storage parse error:', err); }
                 }
             });
