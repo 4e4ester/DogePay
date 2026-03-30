@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500:600:700:800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500:600;700:800&display=swap" rel="stylesheet">
     
     <!-- ✨ ЯРКИЕ СТИЛИ ✨ -->
     <style>
@@ -41,16 +41,18 @@
         
         /* 🔥 SOCIAL BAR CONTAINER 🔥 */
         #adsterra-social-bar {
-            min-height: 90px;
-            margin: 16px 0;
-            text-align: center;
-            background: rgba(243,198,53,0.08);
-            border-radius: 12px;
-            padding: 8px;
+            min-height: 90px; margin: 16px 0; text-align: center;
+            background: rgba(243,198,53,0.08); border-radius: 12px; padding: 8px;
             border: 1px dashed rgba(243,198,53,0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        /* 🔥 АНИМАЦИЯ ОБНОВЛЕНИЯ БАЛАНСА 🔥 */
+        .pulse-once { animation: pulseOnce 0.3s ease; }
+        @keyframes pulseOnce {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); color: var(--gold-light); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -132,11 +134,9 @@
     
     <!-- 🔥 ADSTERRA SOCIAL BAR (SocialBar_1) 🔥 -->
     <script type="text/javascript">
-        // Загружаем SocialBar после загрузки страницы
         window.addEventListener('load', function() {
             const s = document.createElement('script');
-            s.type = 'text/javascript';
-            s.async = true;
+            s.type = 'text/javascript'; s.async = true;
             s.src = 'https://pl29015763.profitablecpmratenetwork.com/41/23/92/4123926d7a745b419b89677d56e2093a.js';
             s.onerror = function() { console.warn('⚠️ Adsterra SocialBar failed to load'); };
             document.body.appendChild(s);
@@ -175,50 +175,36 @@
                 if (loading) loading.classList.add('hidden');
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
                 if (window.initApp) { try { window.initApp(); } catch(e) { console.error('initApp error:', e); } }
-                
-                // 🔥 ПРИМЕНЯЕМ ПЕРЕВОДЫ 🔥
                 if (typeof loadSavedLanguage === 'function') loadSavedLanguage();
-                if (typeof updatePageLanguage === 'function') {
-                    setTimeout(() => updatePageLanguage(), 100);
-                }
+                if (typeof updatePageLanguage === 'function') { setTimeout(() => updatePageLanguage(), 100); }
             }, 1500);
         });
     </script>
+    
+    <!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА КАЖДЫЕ 5 СЕК 🔥 -->
+    <script>
+        async function fetchBalance() {
+            try {
+                const tg = window.Telegram?.WebApp;
+                const userId = tg?.initDataUnsafe?.user?.id || 123456;
+                const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data.success && typeof data.balance === 'number') {
+                    const balanceEl = document.getElementById('balance');
+                    const dogeEl = document.getElementById('balance-doge');
+                    if (balanceEl) {
+                        balanceEl.textContent = data.balance.toLocaleString('ru-RU');
+                        balanceEl.classList.add('pulse-once');
+                        setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
+                    }
+                    if (dogeEl) { dogeEl.textContent = (data.balance / 1000).toFixed(4); }
+                }
+            } catch (e) { console.error('❌ Balance fetch error:', e); }
+        }
+        // Запуск
+        fetchBalance();
+        setInterval(fetchBalance, 5000);
+    </script>
 </body>
 </html>
-
-<!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА КАЖДЫЕ 5 СЕК 🔥 -->
-<script>
-    async function fetchBalance() {
-        try {
-            const tg = window.Telegram?.WebApp;
-            const userId = tg?.initDataUnsafe?.user?.id || 123456;
-            
-            const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            
-            const data = await res.json();
-            if (data.success && typeof data.balance === 'number') {
-                const balanceEl = document.getElementById('balance');
-                const dogeEl = document.getElementById('balance-doge');
-                
-                if (balanceEl) {
-                    balanceEl.textContent = data.balance.toLocaleString('en-US');
-                    balanceEl.classList.add('pulse-once');
-                    setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
-                }
-                if (dogeEl) {
-                    dogeEl.textContent = (data.balance / 1000).toFixed(4);
-                }
-            }
-        } catch (e) {
-            console.error('❌ Balance fetch error:', e);
-        }
-    }
-    
-    // Обновляем при загрузке
-    fetchBalance();
-    
-    // Обновляем каждые 5 секунд
-    setInterval(fetchBalance, 5000);
-</script>
