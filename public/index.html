@@ -224,3 +224,18 @@
     </script>
 </body>
 </html>
+
+<script>
+    // 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ 🔥
+    document.addEventListener('DOMContentLoaded', () => {
+        // Загружаем сохранённый язык
+        if (typeof loadSavedLanguage === 'function') {
+            loadSavedLanguage();
+        }
+        
+        // Применяем переводы
+        if (typeof updatePageLanguage === 'function') {
+            setTimeout(() => updatePageLanguage(), 100);
+        }
+    });
+</script>
