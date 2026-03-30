@@ -20,8 +20,8 @@
 
     <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div class="container" id="main-content">
-        <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
-        <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
+        
+        <!-- 🔥 УБРАНА КНОПКА ЯЗЫКА 🔥 -->
         
         <!-- ШАПКА -->
         <div class="header">
@@ -34,9 +34,9 @@
         <div class="ads-card">
             <div class="reward-header">
                 <span class="reward-icon">🎁</span>
-                <h3 data-t="ads_reward">Получи 5-10 🪙</h3>
+                <h3 data-t="ads_reward_title">Получи 5-10 🪙</h3>
             </div>
-            <p class="reward-desc" data-t="ads_info">Нажми кнопку, посмотри предложение и получи награду!</p>
+            <p class="reward-desc" data-t="ads_reward_desc">Нажми кнопку, посмотри предложение и получи награду!</p>
             
             <!-- КНОПКА -->
             <button id="claimAdBtn" class="btn btn-primary btn-large">
@@ -50,21 +50,27 @@
             <!-- ТАЙМЕР -->
             <div id="cooldownTimer" class="cooldown-timer hidden">
                 <span class="timer-icon">⏳</span>
-                <span id="timerText" data-t="ads_wait">Следующая через: 00:00</span>
+                <span id="timerText">Следующая через: 00:00</span>
             </div>
         </div>
 
         <!-- ИНФО -->
         <div class="info-box">
-            <p data-t="ads_reward"><strong>💰 Награда:</strong> 5-10 🪙 за клик</p>
-            <p data-t="ads_info"><strong>⏰ Лимит:</strong> 1 раз в 10 минут</p>
-            <p data-t="ads_safe"><strong>🔐 Безопасно:</strong> Никаких личных данных</p>
+            <p data-t="ads_info_1">💰 Награда: <strong>5-10 🪙</strong> за клик</p>
+            <p data-t="ads_info_2">⏰ Лимит: <strong>1 раз в 10 минут</strong></p>
+            <p data-t="ads_safe">🔐 Безопасно: Никаких личных данных</p>
         </div>
 
         <!-- СТАТИСТИКА -->
         <div class="stats-mini">
-            <div class="stat-item"><span class="stat-value" id="adsWatched">0</span><span class="stat-label" data-t="ads_stat_watched">Просмотрено</span></div>
-            <div class="stat-item"><span class="stat-value" id="adsEarned">0</span><span class="stat-label" data-t="ads_stat_earned">Заработано 🪙</span></div>
+            <div class="stat-item">
+                <span class="stat-value" id="adsWatched">0</span>
+                <span class="stat-label" data-t="ads_stat_watched">Просмотрено</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="adsEarned">0</span>
+                <span class="stat-label" data-t="ads_stat_earned">Заработано 🪙</span>
+            </div>
         </div>
 
         <!-- НАЗАД -->
@@ -122,7 +128,6 @@
             return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
         }
 
-        // 🔥 ОБНОВЛЕНИЕ UI С ПЕРЕВОДАМИ 🔥
         function updateUI() {
             const btn = document.getElementById('claimAdBtn');
             const status = document.getElementById('adStatus');
@@ -132,7 +137,8 @@
             
             if (check.ok) {
                 btn.disabled = false;
-                btn.querySelector('.btn-text').textContent = window.t?.('ads_watch') || 'Смотреть за 5-10 🪙';
+                const btnTextEl = btn.querySelector('.btn-text');
+                if (btnTextEl) btnTextEl.textContent = window.t?.('ads_watch') || 'Смотреть за 5-10 🪙';
                 status.textContent = window.t?.('ads_btn_ready') || '✅ Нажми чтобы получить награду!';
                 status.className = 'ad-status status-ready';
                 timerBox.classList.add('hidden');
@@ -148,10 +154,10 @@
                     const c = canClaim();
                     if (c.ok) { updateUI(); return; }
                     const waitMin = Math.ceil(c.wait / 60000);
-                    timerText.textContent = (window.t?.('ads_wait') || 'Следующая через: {minutes} мин.').replace('{minutes}', waitMin);
+                    if (timerText) timerText.textContent = (window.t?.('ads_wait') || 'Следующая через: {minutes} мин.').replace('{minutes}', waitMin);
                 }, 1000);
                 const waitMin = Math.ceil(check.wait / 60000);
-                timerText.textContent = (window.t?.('ads_wait') || 'Следующая через: {minutes} мин.').replace('{minutes}', waitMin);
+                if (timerText) timerText.textContent = (window.t?.('ads_wait') || 'Следующая через: {minutes} мин.').replace('{minutes}', waitMin);
             }
         }
 
@@ -171,8 +177,8 @@
             const status = document.getElementById('adStatus');
             
             btn.disabled = true;
-            btnText.textContent = window.t?.('claim_processing') || '⏳ Обработка...';
-            status.textContent = '🔄 ' + (window.t?.('ads_watch') || 'Открываем предложение...');
+            if (btnText) btnText.textContent = window.t?.('claim_processing') || '⏳ Обработка...';
+            if (status) status.textContent = '🔄 ' + (window.t?.('ads_watch') || 'Открываем предложение...');
             
             try {
                 await new Promise(res => setTimeout(res, WATCH_MS));
@@ -216,11 +222,13 @@
                     w++; e+=reward;
                     localStorage.setItem('adsWatched', w.toString());
                     localStorage.setItem('adsEarned', e.toString());
-                    document.getElementById('adsWatched').textContent = w;
-                    document.getElementById('adsEarned').textContent = e.toLocaleString('ru-RU');
+                    const watchedEl = document.getElementById('adsWatched');
+                    const earnedEl = document.getElementById('adsEarned');
+                    if (watchedEl) watchedEl.textContent = w;
+                    if (earnedEl) earnedEl.textContent = e.toLocaleString('ru-RU');
                     
-                    status.textContent = (window.t?.('reward_claimed') || '✅ Получено {amount} 🪙!').replace('{amount}', reward);
-                    status.className = 'ad-status status-success';
+                    if (status) status.textContent = (window.t?.('reward_claimed') || '✅ Получено {amount} 🪙!').replace('{amount}', reward);
+                    if (status) status.className = 'ad-status status-success';
                     
                     const popup = document.createElement('div');
                     popup.className = 'reward-toast reward-success';
@@ -236,18 +244,21 @@
                 
             } catch (err) {
                 console.error('❌ ERROR:', err);
-                status.textContent = window.t?.('error') || '❌ Ошибка';
-                status.className = 'ad-status status-error';
+                const status = document.getElementById('adStatus');
+                if (status) {
+                    status.textContent = window.t?.('error') || '❌ Ошибка';
+                    status.className = 'ad-status status-error';
+                }
                 alert(window.t?.('error_network') || '🌐 Ошибка: ' + (err.message || 'Попробуй позже'));
                 if (window.playError) playError();
             } finally {
                 isProcessing = false;
                 btn.disabled = false;
-                btnText.textContent = window.t?.('ads_watch') || 'Смотреть за 5-10 🪙';
+                const btnTextEl = btn.querySelector('.btn-text');
+                if (btnTextEl) btnTextEl.textContent = window.t?.('ads_watch') || 'Смотреть за 5-10 🪙';
             }
         }
 
-        // 🔥 ИНИЦИАЛИЗАЦИЯ С ПЕРЕВОДАМИ 🔥
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
@@ -262,15 +273,20 @@
                     setTimeout(() => updatePageLanguage(), 100);
                 }
                 
-                document.getElementById('adsWatched').textContent = localStorage.getItem('adsWatched') || '0';
-                document.getElementById('adsEarned').textContent = (parseInt(localStorage.getItem('adsEarned')||'0')).toLocaleString('ru-RU');
+                const watchedEl = document.getElementById('adsWatched');
+                const earnedEl = document.getElementById('adsEarned');
+                if (watchedEl) watchedEl.textContent = localStorage.getItem('adsWatched') || '0';
+                if (earnedEl) earnedEl.textContent = (parseInt(localStorage.getItem('adsEarned')||'0')).toLocaleString('ru-RU');
                 
                 updateUI();
                 
-                document.getElementById('claimAdBtn')?.addEventListener('click', () => {
-                    if (window.playClick) playClick();
-                    handleAdReward();
-                });
+                const claimBtn = document.getElementById('claimAdBtn');
+                if (claimBtn) {
+                    claimBtn.addEventListener('click', () => {
+                        if (window.playClick) playClick();
+                        handleAdReward();
+                    });
+                }
             }, 1500);
         });
         
