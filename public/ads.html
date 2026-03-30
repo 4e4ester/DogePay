@@ -28,6 +28,18 @@
             <p class="subtitle">Earn 🪙 by watching</p>
         </div>
 
+        <!-- 🔥 BALANCE DISPLAY (для показа обновления) 🔥 -->
+        <div class="balance-card" style="padding: 16px 20px; margin-bottom: 20px;">
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Your Balance</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0;">
+                <span style="font-size: 24px;">🪙</span>
+                <span id="balance" style="font-size: 28px; font-weight: 800; color: var(--gold);">0</span>
+            </div>
+            <p style="font-size: 14px; color: var(--text-secondary); text-align: center;">
+                🐕 <span id="balance-doge">0.0000</span> DOGE
+            </p>
+        </div>
+
         <!-- ADS CARD -->
         <div class="ads-card">
             <div class="reward-header">
@@ -45,7 +57,7 @@
             <!-- STATUS -->
             <p id="adStatus" class="ad-status status-ready">✅ Click to get reward!</p>
             
-            <!-- 🔥 TIMER WITH COUNTDOWN 🔥 -->
+            <!-- TIMER -->
             <div id="cooldownTimer" class="cooldown-timer hidden">
                 <span class="timer-icon">⏳</span>
                 <span id="timerText">Next in: 10:00</span>
@@ -119,16 +131,40 @@
                 }
             };
         }
-        if (typeof window.updateBalance === 'undefined') {
-            window.updateBalance = function() {
-                console.log('updateBalance stub');
-                return Promise.resolve();
-            };
+
+        // ===== ФЕТЧ БАЛАНСА С СЕРВЕРА 🔥 =====
+        async function fetchBalance() {
+            try {
+                const userId = getUserId();
+                const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data.success && typeof data.balance === 'number') {
+                    updateBalanceDisplay(data.balance);
+                    return data.balance;
+                }
+            } catch (e) {
+                console.error('❌ Balance fetch error:', e);
+            }
+            return null;
+        }
+
+        function updateBalanceDisplay(coins) {
+            const balanceEl = document.getElementById('balance');
+            const dogeEl = document.getElementById('balance-doge');
+            if (balanceEl) {
+                balanceEl.textContent = coins.toLocaleString('en-US');
+                balanceEl.classList.add('pulse-once');
+                setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
+            }
+            if (dogeEl) {
+                dogeEl.textContent = (coins / 1000).toFixed(4);
+            }
         }
 
         // ===== НАСТРОЙКИ =====
-        const COOLDOWN_MS = 10 * 60 * 1000; // 10 минут
-        const WATCH_MS = 12000; // 12 сек просмотр
+        const COOLDOWN_MS = 10 * 60 * 1000;
+        const WATCH_MS = 12000;
         const REWARD_MIN = 5;
         const REWARD_MAX = 10;
         let isProcessing = false;
@@ -148,7 +184,6 @@
             return { ok: false, wait: COOLDOWN_MS - diff };
         }
 
-        // 🔥 ФОРМАТ ВРЕМЕНИ ММ:СС (как в кране) 🔥
         function fmt(ms) {
             const totalSec = Math.ceil(ms / 1000);
             const m = Math.floor(totalSec / 60);
@@ -156,7 +191,6 @@
             return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
         }
 
-        // 🔥 ОБНОВЛЕНИЕ UI С ОБРАТНЫМ ТАЙМЕРОМ 🔥
         function updateUI() {
             const btn = document.getElementById('claimAdBtn');
             const status = document.getElementById('adStatus');
@@ -165,7 +199,6 @@
             const check = canClaim();
             
             if (check.ok) {
-                // Можно забирать
                 btn.disabled = false;
                 const btnTextEl = btn.querySelector('.btn-text');
                 if (btnTextEl) btnTextEl.textContent = 'Watch for 5-10 🪙';
@@ -174,29 +207,19 @@
                 if (timerBox) timerBox.classList.add('hidden');
                 if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             } else {
-                // Ждём — запускаем обратный отсчёт
                 btn.disabled = true;
                 if (status) status.textContent = '⏳ Wait before next reward';
                 if (status) status.className = 'ad-status status-waiting';
                 if (timerBox) timerBox.classList.remove('hidden');
                 
-                // Очищаем старый таймер
                 if (timerInterval) clearInterval(timerInterval);
                 
-                // 🔥 ОБНОВЛЯЕМ ТАЙМЕР КАЖДУЮ СЕКУНДУ 🔥
                 function updateTimer() {
                     const c = canClaim();
-                    if (c.ok) {
-                        updateUI(); // Перезагружаем UI когда время вышло
-                        return;
-                    }
-                    // 🔥 ФОРМАТ ММ:СС 🔥
+                    if (c.ok) { updateUI(); return; }
                     if (timerText) timerText.textContent = `Next in: ${fmt(c.wait)}`;
                 }
-                
-                // Первое обновление сразу
                 updateTimer();
-                // Затем каждую секунду
                 timerInterval = setInterval(updateTimer, 1000);
             }
         }
@@ -205,7 +228,6 @@
             if (isProcessing) return;
             const check = canClaim();
             if (!check.ok) {
-                const waitMin = Math.ceil(check.wait / 60000);
                 alert(`⏳ Wait ${fmt(check.wait)}`);
                 return;
             }
@@ -220,42 +242,39 @@
             if (status) status.textContent = '🔄 Opening offer...';
             
             try {
+                // 12 сек "просмотр"
                 await new Promise(res => setTimeout(res, WATCH_MS));
                 
                 const reward = Math.floor(Math.random() * (REWARD_MAX - REWARD_MIN + 1)) + REWARD_MIN;
+                const userId = getUserId();
                 
+                console.log('📡 Sending to /api/ad-reward:', { user_id: userId, reward, type: 'popunder_click' });
+                
+                // 🔥 ОТПРАВКА НА СЕРВЕР 🔥
                 const res = await fetch('/api/ad-reward', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: getUserId(), reward: reward, type: 'popunder_click' })
+                    body: JSON.stringify({ user_id: userId, reward: reward, type: 'popunder_click' })
                 });
                 
+                console.log('📦 Response status:', res.status);
                 const data = await res.json();
+                console.log('📦 Response data:', data);
                 
                 if (data.success) {
+                    // ✅ УСПЕХ
                     if (window.playClaim) window.playClaim();
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
                     }
                     
-                    const balanceEl = document.getElementById('balance');
-                    if (balanceEl) {
-                        const cur = parseInt(balanceEl.textContent.replace(/\s/g,'')) || 0;
-                        balanceEl.textContent = (cur + reward).toLocaleString('en-US');
-                        balanceEl.classList.add('pulse-once');
-                        setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
-                    }
+                    // 🔥 ОБНОВЛЯЕМ БАЛАНС С СЕРВЕРА 🔥
+                    await fetchBalance();
                     
-                    const dogeEl = document.getElementById('balance-doge');
-                    if (dogeEl) {
-                        const curDoge = parseFloat(dogeEl.textContent) || 0;
-                        dogeEl.textContent = (curDoge + reward / 1000).toFixed(4);
-                    }
-                    
-                    if (window.updateBalance) await window.updateBalance();
-                    
+                    // Сохраняем время
                     localStorage.setItem('lastAdReward', Date.now().toString());
                     
+                    // Статистика
                     let w = parseInt(localStorage.getItem('adsWatched')||'0');
                     let e = parseInt(localStorage.getItem('adsEarned')||'0');
                     w++; e += reward;
@@ -267,32 +286,42 @@
                     if (watchedEl) watchedEl.textContent = w;
                     if (earnedEl) earnedEl.textContent = e.toLocaleString('en-US');
                     
+                    // Статус
                     if (status) {
                         status.textContent = `✅ Received ${reward} 🪙!`;
                         status.className = 'ad-status status-success';
                     }
                     
+                    // Попап
                     const popup = document.createElement('div');
                     popup.className = 'reward-toast';
                     popup.innerHTML = `<span>🎉 +${reward} 🪙</span>`;
                     document.body.appendChild(popup);
                     setTimeout(() => popup.remove(), 2500);
                     
-                    setTimeout(updateUI, 2000);
+                    // Обновляем UI через 2 сек
+                    setTimeout(() => {
+                        updateUI();
+                        // 🔥 Ещё раз фетчим баланс для гарантии 🔥
+                        fetchBalance();
+                    }, 2000);
                     
                 } else {
-                    throw new Error(data.error || 'Server error');
+                    // ❌ ОШИБКА ОТ СЕРВЕРА
+                    console.error('❌ Server error:', data);
+                    throw new Error(data.error || 'Server rejected reward');
                 }
                 
             } catch (err) {
                 console.error('❌ ERROR:', err);
                 const status = document.getElementById('adStatus');
                 if (status) {
-                    status.textContent = '❌ Error';
+                    status.textContent = '❌ Error: ' + (err.message || 'Try again');
                     status.className = 'ad-status status-error';
                 }
                 alert('🌐 Error: ' + (err.message || 'Try again'));
                 if (window.playError) window.playError();
+                
             } finally {
                 isProcessing = false;
                 btn.disabled = false;
@@ -309,12 +338,14 @@
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
                 if (window.initApp) window.initApp();
                 
+                // 🔥 ЗАГРУЖАЕМ БАЛАНС ПРИ ОТКРЫТИИ СТРАНИЦЫ 🔥
+                fetchBalance();
+                
                 const watchedEl = document.getElementById('adsWatched');
                 const earnedEl = document.getElementById('adsEarned');
                 if (watchedEl) watchedEl.textContent = localStorage.getItem('adsWatched') || '0';
                 if (earnedEl) earnedEl.textContent = (parseInt(localStorage.getItem('adsEarned')||'0')).toLocaleString('en-US');
                 
-                // 🔥 ЗАПУСКАЕМ ТАЙМЕР ПРИ ЗАГРУЗКЕ 🔥
                 updateUI();
                 
                 const claimBtn = document.getElementById('claimAdBtn');
@@ -327,14 +358,13 @@
             }, 1500);
         });
         
-        // Очистка таймера при уходе со страницы
         window.addEventListener('beforeunload', () => {
             if (timerInterval) clearInterval(timerInterval);
         });
     </script>
     
     <style>
-        .reward-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}.reward-icon{font-size:32px;animation:bounce 2s ease-in-out infinite}.reward-header h3{margin:0;font-size:20px;color:var(--text-primary)}.reward-desc{font-size:14px;color:var(--text-secondary);margin:0 0 20px;line-height:1.4}.btn-large{padding:18px 24px;font-size:16px;margin-bottom:16px}.ad-status{font-size:14px;text-align:center;margin:8px 0;min-height:20px}.ad-status.status-ready{color:var(--text-success)}.ad-status.status-waiting{color:var(--text-secondary)}.ad-status.status-success{color:var(--gold);font-weight:600}.ad-status.status-error{color:var(--text-error)}.cooldown-timer{background:rgba(243,198,35,0.08);border:1px solid rgba(243,198,35,0.2);border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--text-secondary)}.timer-icon{font-size:16px}.reward-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-dark));color:var(--bg-primary);padding:14px 28px;border-radius:50px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;z-index:10000;box-shadow:0 10px 40px rgba(243,198,35,0.5);opacity:0;transition:transform .3s ease,opacity .3s ease}.reward-toast.reward-show{transform:translateX(-50%) translateY(0);opacity:1}@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        .reward-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}.reward-icon{font-size:32px;animation:bounce 2s ease-in-out infinite}.reward-header h3{margin:0;font-size:20px;color:var(--text-primary)}.reward-desc{font-size:14px;color:var(--text-secondary);margin:0 0 20px;line-height:1.4}.btn-large{padding:18px 24px;font-size:16px;margin-bottom:16px}.ad-status{font-size:14px;text-align:center;margin:8px 0;min-height:20px}.ad-status.status-ready{color:var(--text-success)}.ad-status.status-waiting{color:var(--text-secondary)}.ad-status.status-success{color:var(--gold);font-weight:600}.ad-status.status-error{color:var(--text-error)}.cooldown-timer{background:rgba(243,198,35,0.08);border:1px solid rgba(243,198,35,0.2);border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--text-secondary)}.timer-icon{font-size:16px}.reward-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-dark));color:var(--bg-primary);padding:14px 28px;border-radius:50px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;z-index:10000;box-shadow:0 10px 40px rgba(243,198,35,0.5);opacity:0;transition:transform .3s ease,opacity .3s ease}.reward-toast.reward-show{transform:translateX(-50%) translateY(0);opacity:1}@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}.pulse-once{animation:pulseOnce 0.3s ease}@keyframes pulseOnce{0%{transform:scale(1)}50%{transform:scale(1.1);color:var(--gold-light)}100%{transform:scale(1)}}
     </style>
 </body>
 </html>
