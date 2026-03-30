@@ -36,8 +36,8 @@
             <div id="timer-status" class="timer-status status-ready">✅ Ready to claim!</div>
         </div>
 
-        <!-- 🔥 CLAIM BUTTON WITH AD SCRIPT 🔥 -->
-        <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); loadAdThenClaim()">
+        <!-- CLAIM BUTTON -->
+        <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); handleClaim()">
             <span class="btn-icon">🎁</span>
             <span>CLAIM (10-30 🪙)</span>
         </button>
@@ -98,16 +98,6 @@
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             }
         };
-        window.updateBalance = window.updateBalance || function() {
-            console.log("updateBalance stub");
-            return Promise.resolve();
-        };
-        window.addBalance = window.addBalance || function(amount) {
-            console.log("addBalance stub, +", amount);
-        };
-        window.initApp = window.initApp || function() {
-            console.log("initApp stub");
-        };
         window.showToast = window.showToast || function(message, type) {
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
@@ -130,12 +120,12 @@
         let currentCaptcha = { answer: 0 };
         let claimLock = false;
         let timerInterval = null;
-        let adScriptLoaded = false; // 🔥 Флаг: загружена ли реклама
+        let adScriptLoaded = false;
 
         function getUserId() {
             const tg = window.Telegram?.WebApp;
-            if (tg?.initDataUnsafe?.user?.id) return tg.initDataUnsafe.user.id;
-            return 123456;
+            if (tg?.initDataUnsafe?.user?.id) return String(tg.initDataUnsafe.user.id);
+            return '123456';
         }
 
         function formatTime(seconds) {
@@ -225,11 +215,42 @@
             }
         }
 
-        // 🔥 ФУНКЦИЯ: ЗАГРУЗИТЬ РЕКЛАМУ + ПОКАЗАТЬ CAPTCHA 🔥
-        function loadAdThenClaim() {
+        // 🔥 ОБНОВЛЕНИЕ БАЛАНСА НА ВСЕХ СТРАНИЦАХ 🔥
+        async function refreshBalanceEverywhere() {
+            try {
+                const userId = getUserId();
+                const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && typeof data.balance === 'number') {
+                        // Обновляем на текущей странице если есть элементы
+                        const balanceEl = document.getElementById('balance');
+                        const dogeEl = document.getElementById('balance-doge');
+                        if (balanceEl) balanceEl.textContent = data.balance.toLocaleString('en-US');
+                        if (dogeEl) dogeEl.textContent = (data.balance / 1000).toFixed(4);
+                        
+                        // Отправляем сообщение другим вкладкам (главная и др.)
+                        if (window.localStorage) {
+                            localStorage.setItem('balance_update', JSON.stringify({
+                                balance: data.balance,
+                                timestamp: Date.now()
+                            }));
+                        }
+                        console.log('✅ Balance refreshed:', data.balance);
+                        return data.balance;
+                    }
+                }
+            } catch (e) {
+                console.error('❌ Balance refresh error:', e);
+            }
+            return null;
+        }
+
+        // 🔥 ЗАГРУЗКА РЕКЛАМЫ + ПОКАЗ CAPTCHA 🔥
+        function handleClaim() {
             if (claimLock) return;
             
-            // 🔥 ДОБАВЛЯЕМ СКРИПТ РЕКЛАМЫ ПРЯМО ЗДЕСЬ (в момент клика) 🔥
+            // Загружаем скрипт рекламы при первом клике
             if (!adScriptLoaded) {
                 const adScript = document.createElement('script');
                 adScript.src = 'https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js';
@@ -242,41 +263,66 @@
                 document.body.appendChild(adScript);
             }
             
-            // 🔥 СРАЗУ ПОКАЗЫВАЕМ CAPTCHA (реклама грузится в фоне) 🔥
+            // Показываем CAPTCHA
             showCaptcha();
         }
 
         async function claimReward() {
             if (claimLock) return;
             claimLock = true;
+            
             const userId = getUserId();
             console.log('🚰 Claim request - User ID:', userId);
+            
+            const btn = document.getElementById('claimBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.querySelector('.btn-text').textContent = 'Processing...';
+            }
+            
             try {
                 const res = await fetch('/api/claim', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '' })
+                    body: JSON.stringify({ 
+                        user_id: userId, 
+                        username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '' 
+                    })
                 });
+                
                 console.log('📡 Response status:', res.status);
-                if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 const data = await res.json();
                 console.log('📦 Response data:', data);
-                if (data.success) {
+                
+                if (res.ok && data.success) {
                     const reward = data.reward || data.amount;
                     console.log('✅ Reward:', reward);
+                    
+                    // Звук + вибрация
                     if (window.playClaim) window.playClaim();
-                    if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                    
+                    // Показ награды
                     showReward(reward);
-                    if (window.updateBalance) await window.updateBalance();
-                    if (window.addBalance) window.addBalance(reward);
-                    const nextClaim = Date.now() + FAUCET_COOLDOWN_MS;
-                    if (typeof localStorage !== 'undefined') localStorage.setItem('lastClaim', nextClaim.toString());
-                    startTimer(nextClaim);
+                    
+                    // 🔥 ОБНОВЛЯЕМ БАЛАНС НЕМЕДЛЕННО 🔥
+                    await refreshBalanceEverywhere();
+                    
+                    // Тост
                     window.showToast(`✅ +${reward} 🪙`, 'success');
+                    
+                    // Таймер
+                    const nextClaim = Date.now() + FAUCET_COOLDOWN_MS;
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('lastClaim', nextClaim.toString());
+                    }
+                    startTimer(nextClaim);
+                    
                 } else if (data.error?.includes('Wait') || data.waitTime) {
                     const waitTime = data.waitTime || FAUCET_COOLDOWN_MS;
                     const nextClaim = Date.now() + waitTime;
-                    if (typeof localStorage !== 'undefined') localStorage.setItem('lastClaim', nextClaim.toString());
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('lastClaim', nextClaim.toString());
+                    }
                     startTimer(nextClaim);
                     window.showToast('⏳ ' + (data.error || 'Please wait'), 'info');
                 } else {
@@ -285,6 +331,7 @@
                     window.showToast('❌ ' + errorMsg, 'error');
                     if (window.playError) window.playError();
                 }
+                
             } catch (err) {
                 console.error('🌐 Network error:', err);
                 let errorMsg = '🌐 Network error';
@@ -296,6 +343,11 @@
             } finally {
                 claimLock = false;
                 hideCaptcha();
+                const btn = document.getElementById('claimBtn');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.querySelector('.btn-text').textContent = 'CLAIM (10-30 🪙)';
+                }
             }
         }
 
@@ -331,13 +383,31 @@
             captchaInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') onVerifyCaptcha(); });
         }
 
+        // Слушаем обновления баланса из других вкладок
+        if (window.addEventListener) {
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'balance_update') {
+                    try {
+                        const data = JSON.parse(e.newValue);
+                        const balanceEl = document.getElementById('balance');
+                        const dogeEl = document.getElementById('balance-doge');
+                        if (balanceEl) balanceEl.textContent = data.balance.toLocaleString('en-US');
+                        if (dogeEl) dogeEl.textContent = (data.balance / 1000).toFixed(4);
+                        console.log('🔄 Balance updated from storage:', data.balance);
+                    } catch(err) { console.warn('Storage parse error:', err); }
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
                 const main = document.getElementById('main-content');
                 if (loading) loading.classList.add('hidden');
                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
-                if (window.initApp) window.initApp();
+                
+                // Обновляем баланс при загрузке
+                refreshBalanceEverywhere();
                 
                 let lastClaim = null;
                 if (typeof localStorage !== 'undefined') lastClaim = localStorage.getItem('lastClaim');
