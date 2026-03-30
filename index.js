@@ -220,19 +220,18 @@ app.post('/api/ad-reward', async (req, res) => {
         
         console.log('📢 Ad reward request:', { user_id, reward, type });
         
-        // Валидация входных данных
+        // Валидация
         if (!user_id || !reward) {
             return res.status(400).json({ success: false, error: 'Неверные данные' });
         }
         
-        // Проверка диапазона награды (защита от накрутки)
         if (reward < 5 || reward > 10) {
             return res.status(400).json({ success: false, error: 'Неверная сумма награды' });
         }
         
-        // Проверка существования пользователя
+        // 🔥 ИСПРАВЛЕНО: user_id вместо id 🔥
         const userCheck = await client.query(
-            'SELECT id, balance, last_ad_reward FROM users WHERE user_id = $1',
+            'SELECT user_id, balance, last_ad_reward FROM users WHERE user_id = $1',
             [user_id]
         );
         
@@ -243,7 +242,7 @@ app.post('/api/ad-reward', async (req, res) => {
             );
         }
         
-        // 🔥 Проверка кулдауна (10 минут = 600 сек) 🔥
+        // Проверка кулдауна (10 минут = 600 сек)
         const check = await client.query(
             'SELECT balance, last_ad_reward FROM users WHERE user_id = $1 FOR UPDATE',
             [user_id]
@@ -255,7 +254,7 @@ app.post('/api/ad-reward', async (req, res) => {
         
         if (lastAdReward) {
             const diff = (new Date() - new Date(lastAdReward)) / 1000;
-            if (diff < 600) {  // 🔥 10 минут вместо 1 часа
+            if (diff < 600) {
                 const wait = Math.ceil(600 - diff);
                 return res.status(429).json({ 
                     success: false, 
@@ -265,7 +264,7 @@ app.post('/api/ad-reward', async (req, res) => {
             }
         }
         
-        // Начисляем награду
+        // Начисление
         const newBalance = balance + reward;
         
         await client.query(
