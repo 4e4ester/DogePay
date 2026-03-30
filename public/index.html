@@ -6,12 +6,11 @@
     <title>DogePay</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://adsgram.ai/adsgram.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- 🎨 ЭКРАН ЗАГРУЗКИ -->
+    <!-- ЭКРАН ЗАГРУЗКИ -->
     <div id="loading-screen" class="loading-screen">
         <div class="loader-content">
             <div class="logo-bounce">🐕</div>
@@ -20,20 +19,20 @@
         </div>
     </div>
 
-    <!-- 🎨 ОСНОВНОЙ КОНТЕНТ -->
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div class="container" id="main-content">
         
-        <!-- 🇷🇺🇬🇧 ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
+        <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА -->
         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button>
         
-        <!-- 🎨 ШАПКА -->
+        <!-- ШАПКА -->
         <div class="header">
             <div class="logo-float">🐕</div>
             <h1 class="gradient-title">DogePay</h1>
             <p class="subtitle" data-t="subtitle">Зарабатывай DOGE играя</p>
         </div>
 
-        <!-- 🎨 КАРТОЧКА БАЛАНСА -->
+        <!-- КАРТОЧКА БАЛАНСА -->
         <div class="balance-card">
             <p class="balance-label" data-t="balance_label">Твой баланс</p>
             <div class="balance-main">
@@ -41,13 +40,13 @@
                 <span id="balance" class="balance-number">0</span>
             </div>
             <p class="balance-doge">
-                <span id="balance-doge-prefix">🐕 ~</span>
+                <span>🐕 ~</span>
                 <span id="balance-doge">0.0000</span>
-                <span id="balance-doge-suffix">DOGE</span>
+                <span>DOGE</span>
             </p>
         </div>
 
-        <!-- 🎨 КНОПКИ (БЕЗ ДУБЛЕЙ!) -->
+        <!-- КНОПКИ -->
         <div class="buttons-grid">
             <a href="faucet.html" class="btn btn-primary" onclick="playClick()">
                 <span class="btn-icon">🚰</span>
@@ -63,19 +62,17 @@
             </a>
         </div>
 
-        <!-- 🎨 ФУТЕР -->
+        <!-- ФУТЕР -->
         <div class="footer">
             <p data-t="footer">🔐 Безопасно • ⚡ Быстро • 🌍 Глобально</p>
         </div>
     </div>
 
-    <!-- 🎨 СКРИПТЫ -->
+    <!-- СКРИПТЫ -->
     <script src="translations.js"></script>
     <script src="app.js"></script>
     <script>
-        // ===== ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ =====
         document.addEventListener('DOMContentLoaded', () => {
-            // Скрыть загрузку через 1.5 сек
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
                 const main = document.getElementById('main-content');
@@ -86,17 +83,13 @@
                     main.classList.add('fade-in');
                 }
                 
-                // Инициализация app.js
-                if (window.initApp) window.initApp();
-                
-                // 🔥 Interstitial реклама (30% шанс, через 2 сек)
-                setTimeout(() => {
-                    if (window.showInterstitial && Math.random() < 0.3) {
-                        console.log('📢 Showing Interstitial Ad...');
-                        window.showInterstitial();
+                if (window.initApp) {
+                    try {
+                        window.initApp();
+                    } catch (err) {
+                        console.error('❌ initApp error:', err);
                     }
-                }, 2000);
-                
+                }
             }, 1500);
         });
     </script>
