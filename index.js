@@ -1,6 +1,7 @@
 // index.js — DogePay Telegram Mini App Server
 // Node.js + Express + Telegraf + PostgreSQL (Neon)
 // ✅ БЕЗ dotenv — переменные из Render Environment Variables
+// ✅ ИСПРАВЛЕНО: user_id теперь TEXT для поддержки больших Telegram ID
 
 const express = require('express');
 const { Telegraf } = require('telegraf');
@@ -57,10 +58,10 @@ const createTables = async () => {
     try {
         await client.query('BEGIN');
 
-        // Таблица пользователей
+        // 🔥 ИСПРАВЛЕНО: user_id TEXT вместо BIGINT 🔥
         await client.query(`
             CREATE TABLE IF NOT EXISTS users (
-                user_id BIGINT PRIMARY KEY,
+                user_id TEXT PRIMARY KEY,
                 username VARCHAR(255),
                 balance BIGINT DEFAULT 0,
                 last_claim TIMESTAMP DEFAULT NULL,
@@ -70,11 +71,11 @@ const createTables = async () => {
             )
         `);
 
-        // Таблица заявок на вывод
+        // 🔥 ИСПРАВЛЕНО: user_id TEXT вместо BIGINT 🔥
         await client.query(`
             CREATE TABLE IF NOT EXISTS withdraw_requests (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 amount BIGINT NOT NULL,
                 wallet_address TEXT NOT NULL,
                 status VARCHAR(20) DEFAULT 'pending',
@@ -102,7 +103,8 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // Команда /start
 bot.start(async (ctx) => {
-    const userId = ctx.from.id;
+    // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
+    const userId = String(ctx.from.id);
     const username = ctx.from.username || '';
     try {
         await pool.query(
@@ -126,7 +128,8 @@ bot.start(async (ctx) => {
 // Команда /balance
 bot.command('balance', async (ctx) => {
     try {
-        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [ctx.from.id]);
+        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
+        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [String(ctx.from.id)]);
         const b = r.rows[0]?.balance ?? 0;
         ctx.reply(`🪙 ${b} коинов`);
     } catch (err) { 
@@ -166,7 +169,9 @@ const isAdmin = (req) => req.headers.authorization === `Bearer ${ADMIN_TOKEN}`;
 // ==================== API: БАЛАНС ====================
 app.get('/api/balance', async (req, res) => {
     try {
-        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [req.query.user_id]);
+        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
+        const userId = String(req.query.user_id);
+        const r = await pool.query('SELECT balance FROM users WHERE user_id = $1', [userId]);
         res.json({ success: true, balance: r.rows[0]?.balance ?? 0 });
     } catch (e) { 
         console.error('API /balance error:', e);
@@ -178,7 +183,10 @@ app.get('/api/balance', async (req, res) => {
 app.post('/api/claim', async (req, res) => {
     const client = await pool.connect();
     try {
-        const { user_id, username } = req.body;
+        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
+        const user_id = String(req.body.user_id);
+        const username = req.body.username;
+        
         if (!user_id) return res.status(400).json({ success: false, error: 'Нет user_id' });
 
         await client.query(
@@ -193,7 +201,7 @@ app.post('/api/claim', async (req, res) => {
         // 🔥 ПРОВЕРКА КУЛДАУНА (30 МИНУТ = 1800 СЕК) 🔥
         if (lastClaim) {
             const diff = (new Date() - new Date(lastClaim)) / 1000;
-            if (diff < 1800) {  // 🔥 30 минут
+            if (diff < 1800) {
                 const wait = Math.ceil(1800 - diff);
                 return res.status(429).json({ 
                     success: false, 
@@ -222,7 +230,10 @@ app.post('/api/claim', async (req, res) => {
 app.post('/api/ad-reward', async (req, res) => {
     const client = await pool.connect();
     try {
-        const { user_id, reward, type } = req.body;
+        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
+        const user_id = String(req.body.user_id);
+        const reward = req.body.reward;
+        const type = req.body.type;
         
         console.log('📢 Ad reward request:', { user_id, reward, type });
         
@@ -235,7 +246,7 @@ app.post('/api/ad-reward', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Неверная сумма награды' });
         }
         
-        // 🔥 ИСПРАВЛЕНО: user_id вместо id 🔥
+        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
         const userCheck = await client.query(
             'SELECT user_id, balance, last_ad_reward FROM users WHERE user_id = $1',
             [user_id]
@@ -302,7 +313,11 @@ app.post('/api/ad-reward', async (req, res) => {
 app.post('/api/withdraw', async (req, res) => {
     const client = await pool.connect();
     try {
-        const { user_id, amount, wallet_address } = req.body;
+        // 🔥 ИСПРАВЛЕНО: user_id как строка 🔥
+        const user_id = String(req.body.user_id);
+        const amount = req.body.amount;
+        const wallet_address = req.body.wallet_address;
+        
         if (!user_id || !amount || !wallet_address) return res.status(400).json({ success: false, error: 'Заполни все поля' });
         if (amount < 10000) return res.status(400).json({ success: false, error: 'Мин. 10000 🪙' });
 
