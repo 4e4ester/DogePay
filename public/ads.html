@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700:800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400:500:600:700:800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- ЭКРАН ЗАГРУЗКИ -->
@@ -29,38 +29,50 @@
         <div class="header">
             <div class="logo-float">📢</div>
             <h1 class="gradient-title">Реклама</h1>
-            <p class="subtitle">Зарабатывай просмотром</p>
+            <p class="subtitle">Получай 🪙 за просмотр</p>
         </div>
 
-        <!-- 📢 РЕКЛАМА (Adsterra Social Bar) -->
+        <!-- 🎁 КАРТОЧКА НАГРАДЫ -->
         <div class="ads-card">
-            
-            <!-- Контейнер для Social Bar -->
-            <div id="adsterra-container" style="min-height: 90px; margin: 10px 0; text-align: center;">
-                <!-- Adsterra код вставится сюда автоматически -->
+            <div class="reward-header">
+                <span class="reward-icon">🎁</span>
+                <h3>Получи 5-10 🪙</h3>
             </div>
             
-            <!-- Подсказка для пользователя -->
-            <p class="ads-hint">
-                💡 Нажми на рекламу чтобы поддержать проект! 🐕
-            </p>
+            <p class="reward-desc">Нажми кнопку, посмотри предложение и получи награду!</p>
+            
+            <!-- КНОПКА ПОЛУЧИТЬ НАГРАДУ -->
+            <button id="claimAdBtn" class="btn btn-primary btn-large" onclick="handleAdReward()">
+                <span class="btn-icon">🎬</span>
+                <span class="btn-text">Смотреть за 5-10 🪙</span>
+                <span class="btn-loader hidden"></span>
+            </button>
+            
+            <!-- СТАТУС -->
+            <p id="adStatus" class="ad-status"></p>
+            
+            <!-- ТАЙМЕР КУЛДАУНА -->
+            <div id="cooldownTimer" class="cooldown-timer hidden">
+                <span class="timer-icon">⏳</span>
+                <span id="timerText">Следующая через: 00:00</span>
+            </div>
         </div>
 
-        <!-- 💡 АЛЬТЕРНАТИВНЫЕ СПОСОБЫ ЗАРАБОТКА -->
+        <!-- 💡 ИНФО -->
         <div class="info-box">
-            <p><strong>🚰 Кран:</strong> 10-30 🪙 каждые 60 сек</p>
-            <p><strong>💸 Вывод:</strong> Обменивай монеты на DOGE</p>
-            <p><strong>🎁 Скоро:</strong> Новые способы заработка!</p>
+            <p><strong>💰 Награда:</strong> 5-10 🪙 за клик</p>
+            <p><strong>⏰ Лимит:</strong> 1 раз в 60 минут</p>
+            <p><strong>🔐 Безопасно:</strong> Никаких личных данных</p>
         </div>
 
-        <!-- СТАТИСТИКА (локальная) -->
+        <!-- 📊 СТАТИСТИКА -->
         <div class="stats-mini">
             <div class="stat-item">
-                <span class="stat-value" id="total-watched">0</span>
+                <span class="stat-value" id="adsWatched">0</span>
                 <span class="stat-label">Просмотрено</span>
             </div>
             <div class="stat-item">
-                <span class="stat-value" id="total-earned">0</span>
+                <span class="stat-value" id="adsEarned">0</span>
                 <span class="stat-label">Заработано 🪙</span>
             </div>
         </div>
@@ -81,41 +93,370 @@
     <script src="translations.js"></script>
     <script src="app.js"></script>
     
-    <!-- 📢 ADSTERRA SOCIAL BAR (ТВОЙ КОД) -->
-    <script src="https://pl29015763.profitablecpmratenetwork.com/41/23/92/4123926d7a745b419b89677d56e2093a.js"></script>
+    <!-- 🪟 ADSTERRA POPUNDER (ID: 28915367) -->
+    <script src="https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js"></script>
     
-    <!-- ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ -->
+    <!-- ЛОГИКА НАГРАДЫ ЗА РЕКЛАМУ -->
     <script>
-        // Статистика (локальная)
-        function initStats() {
-            const watched = localStorage.getItem('adsWatched') || '0';
-            const earned = localStorage.getItem('adsEarned') || '0';
-            document.getElementById('total-watched').textContent = watched;
-            document.getElementById('total-earned').textContent = parseInt(earned).toLocaleString('ru-RU');
+        // ===== CONFIG =====
+        const AD_REWARD_MIN = 5;
+        const AD_REWARD_MAX = 10;
+        const AD_COOLDOWN = 60 * 60 * 1000; // 1 час в мс
+        const AD_WATCH_TIME = 12000; // 12 сек "просмотра"
+        
+        let isProcessing = false;
+        let countdownInterval = null;
+
+        // ===== ПОЛУЧЕНИЕ USER_ID =====
+        function getUserId() {
+            const tg = window.Telegram?.WebApp;
+            return tg?.initDataUnsafe?.user?.id || 123456;
         }
 
-        // Инициализация
+        // ===== ПРОВЕРКА КУЛДАУНА =====
+        function canClaimAdReward() {
+            const lastClaim = localStorage.getItem('lastAdReward');
+            if (!lastClaim) return { can: true, remaining: 0 };
+            
+            const elapsed = Date.now() - parseInt(lastClaim);
+            const remaining = AD_COOLDOWN - elapsed;
+            
+            return {
+                can: remaining <= 0,
+                remaining: Math.max(0, remaining)
+            };
+        }
+
+        // ===== ФОРМАТИРОВАНИЕ ВРЕМЕНИ =====
+        function formatTime(ms) {
+            const totalSec = Math.ceil(ms / 1000);
+            const m = Math.floor(totalSec / 60);
+            const s = totalSec % 60;
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        // ===== ОБНОВЛЕНИЕ UI =====
+        function updateAdUI() {
+            const btn = document.getElementById('claimAdBtn');
+            const status = document.getElementById('adStatus');
+            const cooldown = document.getElementById('cooldownTimer');
+            const timerText = document.getElementById('timerText');
+            
+            const check = canClaimAdReward();
+            
+            if (check.can) {
+                // Можно забирать
+                btn.disabled = false;
+                btn.querySelector('.btn-text').textContent = 'Смотреть за 5-10 🪙';
+                btn.querySelector('.btn-loader').classList.add('hidden');
+                status.textContent = '✅ Нажми чтобы получить награду!';
+                status.className = 'ad-status status-ready';
+                cooldown.classList.add('hidden');
+            } else {
+                // Ждём
+                btn.disabled = true;
+                status.textContent = '⏳ Подожди перед следующей наградой';
+                status.className = 'ad-status status-waiting';
+                cooldown.classList.remove('hidden');
+                
+                // Запускаем таймер
+                startCooldownTimer(check.remaining, timerText);
+            }
+        }
+
+        // ===== ТАЙМЕР КУЛДАУНА =====
+        function startCooldownTimer(remainingMs, timerEl) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            function update() {
+                const check = canClaimAdReward();
+                if (check.can) {
+                    clearInterval(countdownInterval);
+                    updateAdUI();
+                    return;
+                }
+                timerEl.textContent = `Следующая через: ${formatTime(check.remaining)}`;
+            }
+            update();
+            countdownInterval = setInterval(update, 1000);
+        }
+
+        // ===== ОБРАБОТКА КЛИКА ПО КНОПКЕ =====
+        async function handleAdReward() {
+            if (isProcessing) return;
+            
+            const check = canClaimAdReward();
+            if (!check.can) {
+                showToast(`⏳ Подожди ещё ${formatTime(check.remaining)}`, 'info');
+                return;
+            }
+            
+            isProcessing = true;
+            const btn = document.getElementById('claimAdBtn');
+            const btnText = btn.querySelector('.btn-text');
+            const btnLoader = btn.querySelector('.btn-loader');
+            const status = document.getElementById('adStatus');
+            
+            // Состояние загрузки
+            btn.disabled = true;
+            btnText.textContent = 'Загрузка...';
+            btnLoader.classList.remove('hidden');
+            status.textContent = '🔄 Открываем предложение...';
+            
+            try {
+                // 1. Показываем Popunder (Adsterra делает это автоматически при загрузке скрипта)
+                // Но мы эмулируем "просмотр" таймером
+                console.log('🪟 Triggering Popunder...');
+                
+                // 2. Ждём "просмотр" (12 сек)
+                await new Promise(resolve => setTimeout(resolve, AD_WATCH_TIME));
+                
+                // 3. Генерируем награду 5-10 🪙
+                const reward = Math.floor(Math.random() * (AD_REWARD_MAX - AD_REWARD_MIN + 1)) + AD_REWARD_MIN;
+                console.log(`✅ Awarding ${reward} 🪙`);
+                
+                // 4. Отправляем на сервер
+                const success = await sendAdReward(reward);
+                
+                if (success) {
+                    // Успех!
+                    if (window.playClaim) playClaim();
+                    if (window.Telegram?.WebApp?.HapticFeedback) {
+                        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                    }
+                    
+                    // Показываем награду
+                    showRewardPopup(reward);
+                    
+                    // Обновляем баланс
+                    await updateBalanceWithReward(reward);
+                    
+                    // Сохраняем время
+                    localStorage.setItem('lastAdReward', Date.now().toString());
+                    
+                    // Обновляем статистику
+                    updateLocalStats(reward);
+                    
+                    // UI
+                    status.textContent = `✅ Получено ${reward} 🪙!`;
+                    status.className = 'ad-status status-success';
+                    
+                    showToast(`🎉 +${reward} 🪙 зачислено!`, 'success');
+                    
+                    // Перезапускаем таймер
+                    setTimeout(updateAdUI, 2000);
+                    
+                } else {
+                    throw new Error('Сервер не подтвердил награду');
+                }
+                
+            } catch (err) {
+                console.error('❌ Ad reward error:', err);
+                status.textContent = '❌ Ошибка. Попробуй позже.';
+                status.className = 'ad-status status-error';
+                showToast('🌐 Ошибка получения награды', 'error');
+                if (window.playError) playError();
+            } finally {
+                isProcessing = false;
+                btn.disabled = false;
+                btnText.textContent = 'Смотреть за 5-10 🪙';
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        // ===== ОТПРАВКА НА СЕРВЕР =====
+        async function sendAdReward(reward) {
+            try {
+                const res = await fetch('/api/ad-reward', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: getUserId(),
+                        reward: reward,
+                        type: 'popunder_click'
+                    })
+                });
+                const data = await res.json();
+                return data.success === true;
+            } catch (err) {
+                console.error('❌ API error:', err);
+                return false;
+            }
+        }
+
+        // ===== ОБНОВЛЕНИЕ БАЛАНСА =====
+        async function updateBalanceWithReward(reward) {
+            // Локальное обновление (мгновенный отклик)
+            const balanceEl = document.getElementById('balance');
+            const dogeEl = document.getElementById('balance-doge');
+            
+            if (balanceEl) {
+                const current = parseInt(balanceEl.textContent.replace(/\s/g, '')) || 0;
+                balanceEl.textContent = (current + reward).toLocaleString('ru-RU');
+                balanceEl.classList.add('pulse-once');
+                setTimeout(() => balanceEl.classList.remove('pulse-once'), 300);
+            }
+            if (dogeEl) {
+                const currentDoge = parseFloat(dogeEl.textContent) || 0;
+                dogeEl.textContent = (currentDoge + reward/1000).toFixed(4);
+            }
+            
+            // Глобальное обновление
+            if (window.updateBalance) {
+                await window.updateBalance();
+            }
+        }
+
+        // ===== ПОПАП НАГРАДЫ =====
+        function showRewardPopup(amount) {
+            const popup = document.createElement('div');
+            popup.className = 'reward-toast reward-success';
+            popup.innerHTML = `
+                <span class="reward-icon">🎉</span>
+                <span class="reward-text">+${amount} 🪙</span>
+            `;
+            document.body.appendChild(popup);
+            
+            requestAnimationFrame(() => popup.classList.add('reward-show'));
+            
+            setTimeout(() => {
+                popup.classList.remove('reward-show');
+                setTimeout(() => popup.remove(), 300);
+            }, 2500);
+        }
+
+        // ===== ТОСТ УВЕДОМЛЕНИЕ =====
+        function showToast(message, type = 'info') {
+            if (window.showToast) {
+                window.showToast(message, type);
+                return;
+            }
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('toast-show'));
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ===== ЛОКАЛЬНАЯ СТАТИСТИКА =====
+        function updateLocalStats(reward) {
+            let watched = parseInt(localStorage.getItem('adsWatched') || '0');
+            let earned = parseInt(localStorage.getItem('adsEarned') || '0');
+            watched++;
+            earned += reward;
+            localStorage.setItem('adsWatched', watched.toString());
+            localStorage.setItem('adsEarned', earned.toString());
+            document.getElementById('adsWatched').textContent = watched;
+            document.getElementById('adsEarned').textContent = earned.toLocaleString('ru-RU');
+        }
+
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const loading = document.getElementById('loading-screen');
                 const main = document.getElementById('main-content');
-                
                 if (loading) loading.classList.add('hidden');
-                if (main) {
-                    main.style.display = 'block';
-                    main.classList.add('fade-in');
-                }
-                
+                if (main) { main.style.display = 'block'; main.classList.add('fade-in'); }
                 if (window.initApp) window.initApp();
-                initStats();
+                
+                // Загружаем статистику
+                document.getElementById('adsWatched').textContent = localStorage.getItem('adsWatched') || '0';
+                document.getElementById('adsEarned').textContent = (parseInt(localStorage.getItem('adsEarned') || '0')).toLocaleString('ru-RU');
+                
+                // Обновляем UI
+                updateAdUI();
                 
             }, 1500);
         });
+
+        // Очистка
+        window.addEventListener('beforeunload', () => {
+            if (countdownInterval) clearInterval(countdownInterval);
+        });
     </script>
+    
+    <!-- СТИЛИ -->
+    <style>
+        .reward-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .reward-icon {
+            font-size: 32px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        .reward-header h3 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--text-primary);
+        }
+        .reward-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0 0 20px;
+            line-height: 1.4;
+        }
+        .btn-large {
+            padding: 18px 24px;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+        .ad-status {
+            font-size: 14px;
+            text-align: center;
+            margin: 8px 0;
+            min-height: 20px;
+        }
+        .ad-status.status-ready { color: var(--text-success); }
+        .ad-status.status-waiting { color: var(--text-secondary); }
+        .ad-status.status-success { color: var(--gold); font-weight: 600; }
+        .ad-status.status-error { color: var(--text-error); }
+        .cooldown-timer {
+            background: rgba(243, 198, 35, 0.08);
+            border: 1px solid rgba(243, 198, 35, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .timer-icon { font-size: 16px; }
+        .reward-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+            color: var(--bg-primary);
+            padding: 14px 28px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            z-index: 10000;
+            box-shadow: 0 10px 40px rgba(243, 198, 35, 0.5);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .reward-toast.reward-show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+    </style>
 </body>
 </html>
-
-<p class="ads-hint">
-    💡 <strong>Совет:</strong> Нажми на рекламу, подожди 5 сек, 
-    потом вернись — ты поддержишь проект! 🐕🪙
-</p>
