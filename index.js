@@ -212,7 +212,7 @@ app.post('/api/claim', async (req, res) => {
     }
 });
 
-// 🔥 НОВЫЙ ЭНДПОИНТ: НАГРАДА ЗА РЕКЛАМУ (5-10 🪙, 1 час) 🔥
+// 🔥 НОВЫЙ ЭНДПОИНТ: НАГРАДА ЗА РЕКЛАМУ (5-10 🪙, 10 МИНУТ) 🔥
 app.post('/api/ad-reward', async (req, res) => {
     const client = await pool.connect();
     try {
@@ -237,14 +237,13 @@ app.post('/api/ad-reward', async (req, res) => {
         );
         
         if (userCheck.rows.length === 0) {
-            // Создаём пользователя если нет
             await client.query(
                 `INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
                 [user_id]
             );
         }
         
-        // Проверка кулдауна (1 час = 3600 сек)
+        // 🔥 Проверка кулдауна (10 минут = 600 сек) 🔥
         const check = await client.query(
             'SELECT balance, last_ad_reward FROM users WHERE user_id = $1 FOR UPDATE',
             [user_id]
@@ -256,8 +255,8 @@ app.post('/api/ad-reward', async (req, res) => {
         
         if (lastAdReward) {
             const diff = (new Date() - new Date(lastAdReward)) / 1000;
-            if (diff < 3600) {
-                const wait = Math.ceil(3600 - diff);
+            if (diff < 600) {  // 🔥 10 минут вместо 1 часа
+                const wait = Math.ceil(600 - diff);
                 return res.status(429).json({ 
                     success: false, 
                     error: `Подождите ${wait} сек`,
