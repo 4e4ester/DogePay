@@ -1,0 +1,274 @@
+<!DOCTYPE html> 
+ <html lang="ru"> 
+ <head> 
+     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' blob: filesystem: about:; script-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' blob:; style-src * 'unsafe-inline' 'unsafe-hashes' blob:; img-src * blob: https:; font-src * https:; connect-src * https: wss:; frame-src * https:; child-src * https:; worker-src * blob:;"> 
+     
+     <meta charset="UTF-8"> 
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"> 
+     <title data-t="app_name">DogePay</title> 
+     <link rel="stylesheet" href="style.css"> 
+     <script src="https://telegram.org/js/telegram-web-app.js"></script> 
+     <link rel="preconnect" href="https://fonts.googleapis.com"> 
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"> 
+     
+     <!-- ✨ ЯРКИЕ СТИЛИ ✨ --> 
+     <style> 
+         .subtitle { 
+             font-size: 18px; font-weight: 700; text-align: center; margin: 8px 0 20px; 
+             background: linear-gradient(135deg, #f3c635 0%, #ff6b6b 30%, #f3c635 60%, #4ecdc4 100%); 
+             background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; 
+             filter: drop-shadow(0 0 10px rgba(243, 198, 53, 0.5)) drop-shadow(0 0 20px rgba(255, 107, 107, 0.3)); 
+             animation: gradientFlow 4s ease infinite, glowPulse 2s ease-in-out infinite; 
+         } 
+         @keyframes gradientFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } } 
+         @keyframes glowPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } } 
+         .subtitle .emoji { display: inline-block; animation: bounce 1.5s ease-in-out infinite; } 
+         .subtitle .emoji:nth-child(2) { animation-delay: 0.2s; } 
+         .subtitle .emoji:nth-child(3) { animation-delay: 0.4s; } 
+         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } } 
+         .info-box { 
+             background: linear-gradient(135deg, rgba(243,198,53,0.15), rgba(78,205,196,0.15)); 
+             border: 2px solid rgba(243, 198, 53, 0.4); border-radius: 16px; padding: 16px; margin: 20px 0; text-align: center; 
+             box-shadow: 0 4px 20px rgba(243, 198, 53, 0.2); 
+         } 
+         .info-box p { margin: 0; font-weight: 600; color: var(--text-primary); font-size: 14px; } 
+         .info-box strong { color: #f3c635; text-shadow: 0 0 8px rgba(243, 198, 53, 0.6); } 
+         .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(243, 198, 53, 0.3); } 
+         .footer p { font-size: 13px; color: var(--text-secondary); text-align: center; } 
+         .footer p strong { color: #f3c635; font-weight: 700; } 
+         .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(243, 198, 53, 0.4); transition: all 0.2s ease; } 
+         .btn-secondary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3); transition: all 0.2s ease; } 
+         
+         /* 🔥 SOCIAL BAR CONTAINER 🔥 */ 
+         #adsterra-social-bar { 
+             min-height: 90px; margin: 16px 0; text-align: center; 
+             background: rgba(243,198,53,0.08); border-radius: 12px; padding: 8px; 
+             border: 1px dashed rgba(243,198,53,0.4); 
+             display: flex; align-items: center; justify-content: center; 
+         } 
+         
+         /* 🔥 АНИМАЦИЯ ОБНОВЛЕНИЯ БАЛАНСА 🔥 */ 
+         .pulse-once { animation: pulseOnce 0.3s ease; } 
+         @keyframes pulseOnce { 
+             0% { transform: scale(1); } 
+             50% { transform: scale(1.1); color: var(--gold-light); } 
+             100% { transform: scale(1); } 
+         } 
+     </style> 
+ </head> 
+ <body> 
+     <!-- ЭКРАН ЗАГРУЗКИ --> 
+     <div id="loading-screen" class="loading-screen"> 
+         <div class="loader-content"> 
+             <div class="logo-bounce">🐕</div> 
+             <div class="spinner"></div> 
+             <p class="loading-text" data-t="loading">Загрузка...</p> 
+         </div> 
+     </div> 
+ 
+     <!-- ОСНОВНОЙ КОНТЕНТ --> 
+     <div class="container" id="main-content"> 
+         
+         <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА --> 
+         <button id="langSwitch" class="lang-switch" onclick="toggleLanguage()">🇷🇺 🇬🇧</button> 
+         
+         <!-- ШАПКА --> 
+         <div class="header"> 
+             <div class="logo-float">🐕</div> 
+             <h1 class="gradient-title" data-t="app_name">DogePay</h1> 
+             <p class="subtitle" data-t="subtitle"> 
+                 <span class="emoji">✨</span>Зарабатывай DOGE у нас<span class="emoji">🪙</span><span class="emoji">🚀</span> 
+             </p> 
+         </div> 
+ 
+         <!-- 🔥 ADSTERRA SOCIAL BAR CONTAINER 🔥 --> 
+         <div id="adsterra-social-bar"> 
+             <!-- SocialBar_1 загрузится сюда --> 
+         </div> 
+ 
+         <!-- КАРТОЧКА БАЛАНСА --> 
+         <div class="balance-card"> 
+             <p class="balance-label" data-t="balance_label">💰 Твой баланс</p> 
+             <div class="balance-main"> 
+                 <span class="coin-icon">🪙</span> 
+                 <span id="balance" class="balance-number">0</span> 
+             </div> 
+             <p class="balance-doge"> 
+                 <span data-t="balance_doge">🐕</span> 
+                 <span id="balance-doge">0.0000</span> 
+                 <span data-t="balance_doge_suffix" style="color: #f3c635; font-weight: 700;">DOGE</span> 
+             </p> 
+         </div> 
+ 
+         <!-- КНОПКИ --> 
+         <div class="buttons-grid"> 
+             <a href="faucet.html" class="btn btn-primary" onclick="playClick()"> 
+                 <span class="btn-icon">🚰</span> 
+                 <span data-t="btn_faucet">Кран</span> 
+             </a> 
+             <a href="ads.html" class="btn btn-primary" onclick="playClick()"> 
+                 <span class="btn-icon">📢</span> 
+                 <span data-t="btn_ads">Реклама</span> 
+             </a> 
+             <a href="withdraw.html" class="btn btn-secondary" onclick="playClick()"> 
+                 <span class="btn-icon">💸</span> 
+                 <span data-t="btn_withdraw">Вывод</span> 
+             </a> 
+         </div> 
+ 
+         <!-- ИНФО-БЛОК --> 
+         <div class="info-box"> 
+             <p data-t="footer_text">🔐 <strong>Безопасно</strong> • ⚡ <strong>Быстро</strong> • 💎 <strong>Удобно</strong></p> 
+             <p style="margin-top: 8px; font-size: 13px;" data-t="footer_doge">🐕 <strong>Зарабатывай DOGE у нас!</strong> 🪙</p> 
+         </div> 
+ 
+         <!-- ФУТЕР --> 
+         <div class="footer"> 
+             <p>🐕 <strong data-t="app_name">DogePay</strong> v1.0</p> 
+         </div> 
+     </div> 
+ 
+     <!-- СКРИПТЫ --> 
+     <script src="translations.js"></script> 
+     <script src="app.js"></script> 
+     
+     <!-- 🔥 ADSTERRA SOCIAL BAR (SocialBar_1) 🔥 --> 
+     <script type="text/javascript"> 
+         window.addEventListener('load', function() { 
+             const s = document.createElement('script'); 
+             s.type = 'text/javascript'; s.async = true; 
+             s.src = 'https://pl29015763.profitablecpmratenetwork.com/41/23/92/4123926d7a745b419b89677d56e2093a.js'; 
+             s.onerror = function() { console.warn('⚠️ Adsterra SocialBar failed to load'); }; 
+             document.body.appendChild(s); 
+         }); 
+     </script> 
+     
+     <!-- ЗАЩИТНЫЕ ЗАГЛУШКИ --> 
+     <script> 
+         (function() { 
+             if (typeof window.toggleLanguage === 'undefined') { 
+                 window.toggleLanguage = function() { 
+                     if (window.Telegram?.WebApp?.HapticFeedback) { 
+                         window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); 
+                     } 
+                 }; 
+             } 
+             if (typeof window.playClick === 'undefined') { 
+                 window.playClick = function() { 
+                     if (window.Telegram?.WebApp?.HapticFeedback) { 
+                         window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); 
+                     } 
+                 }; 
+             } 
+             if (typeof window.initApp === 'undefined') { 
+                 window.initApp = function() { console.log('initApp stub'); }; 
+             } 
+         })(); 
+     </script> 
+     
+     <!-- 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ 🔥 --> 
+     <script> 
+         document.addEventListener('DOMContentLoaded', () => { 
+             setTimeout(() => { 
+                 const loading = document.getElementById('loading-screen'); 
+                 const main = document.getElementById('main-content'); 
+                 if (loading) loading.classList.add('hidden'); 
+                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); } 
+                 if (window.initApp) { try { window.initApp(); } catch(e) { console.error('initApp error:', e); } } 
+                 if (typeof loadSavedLanguage === 'function') loadSavedLanguage(); 
+                 if (typeof updatePageLanguage === 'function') { setTimeout(() => updatePageLanguage(), 100); } 
+             }, 1500); 
+         }); 
+     </script> 
+     
+     <!-- 🔥 АВТООБНОВЛЕНИЕ БАЛАНСА С ИСПРАВЛЕНИЕМ СТРОКИ 🔥 --> 
+     <script> 
+         // Очистка устаревших строковых данных в localStorage 
+         (function cleanupStorage() { 
+             try { 
+                 const oldBalance = localStorage.getItem('balance_update'); 
+                 if (oldBalance) { 
+                     const parsed = JSON.parse(oldBalance); 
+                     if (typeof parsed.balance === 'string') { 
+                         localStorage.removeItem('balance_update'); 
+                         console.log('🧹 Очищен старый строковый баланс из localStorage'); 
+                     } 
+                 } 
+             } catch(e) {} 
+         })(); 
+ 
+         async function fetchBalance() { 
+             try { 
+                 const tg = window.Telegram?.WebApp; 
+                 const userId = tg?.initDataUnsafe?.user?.id || 123456; 
+                 console.log('🔍 Запрос баланса для userId:', userId); 
+                 
+                 const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' }); 
+                 console.log('📡 Статус ответа:', res.status); 
+                 
+                 if (!res.ok) throw new Error(`HTTP ${res.status}`); 
+                 const data = await res.json(); 
+                 console.log('📦 Ответ API:', data); 
+                 
+                 if (data.success && data.balance !== undefined) { 
+                     // Преобразуем в число (сервер уже возвращает число, но на всякий случай) 
+                     const balanceNum = Number(data.balance); 
+                     if (isNaN(balanceNum)) throw new Error('Balance is not a number'); 
+                     
+                     const balanceEl = document.getElementById('balance'); 
+                     const dogeEl = document.getElementById('balance-doge'); 
+                     
+                     if (balanceEl) { 
+                         balanceEl.textContent = balanceNum.toLocaleString('ru-RU'); 
+                         console.log('✅ Баланс обновлён на странице:', balanceNum); 
+                         balanceEl.classList.add('pulse-once'); 
+                         setTimeout(() => balanceEl.classList.remove('pulse-once'), 300); 
+                     } else { 
+                         console.error('❌ Элемент #balance не найден!'); 
+                     } 
+                     
+                     if (dogeEl) { 
+                         dogeEl.textContent = (balanceNum / 1000).toFixed(4); 
+                     } 
+                     
+                     // Сохраняем в localStorage для синхронизации между вкладками 
+                     localStorage.setItem('balance_update', JSON.stringify({ balance: balanceNum, timestamp: Date.now() })); 
+                 } else { 
+                     console.warn('⚠️ Ответ не содержит balance или success:false'); 
+                 } 
+             } catch (e) { 
+                 console.error('❌ Balance fetch error:', e); 
+             } 
+         } 
+         
+         // Слушаем обновления баланса из других вкладок (например, после награды в кране/рекламе) 
+         window.addEventListener('storage', (e) => { 
+             if (e.key === 'balance_update') { 
+                 try { 
+                     const data = JSON.parse(e.newValue); 
+                     const balanceNum = Number(data.balance); 
+                     if (!isNaN(balanceNum)) { 
+                         const balanceEl = document.getElementById('balance'); 
+                         const dogeEl = document.getElementById('balance-doge'); 
+                         if (balanceEl) { 
+                             balanceEl.textContent = balanceNum.toLocaleString('ru-RU'); 
+                             balanceEl.classList.add('pulse-once'); 
+                             setTimeout(() => balanceEl.classList.remove('pulse-once'), 300); 
+                         } 
+                         if (dogeEl) { 
+                             dogeEl.textContent = (balanceNum / 1000).toFixed(4); 
+                         } 
+                         console.log('🔄 Баланс обновлён из localStorage:', balanceNum); 
+                     } 
+                 } catch(err) { console.warn('Storage parse error:', err); } 
+             } 
+         }); 
+         
+         // Запуск с задержкой, чтобы Telegram WebApp успел инициализироваться 
+         setTimeout(() => { 
+             fetchBalance(); 
+             setInterval(fetchBalance, 5000); 
+         }, 1000); 
+     </script> 
+ </body> 
+ </html>

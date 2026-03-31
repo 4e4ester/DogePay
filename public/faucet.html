@@ -1,0 +1,445 @@
+<!DOCTYPE html> 
+ <html lang="en"> 
+ <head> 
+     <meta charset="UTF-8"> 
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"> 
+     <title>DogePay - Faucet</title> 
+     <link rel="stylesheet" href="style.css"> 
+     <script src="https://telegram.org/js/telegram-web-app.js"></script> 
+     <link rel="preconnect" href="https://fonts.googleapis.com"> 
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"> 
+ </head> 
+ <body> 
+     <!-- LOADING SCREEN --> 
+     <div id="loading-screen" class="loading-screen"> 
+         <div class="loader-content"> 
+             <div class="logo-bounce">🚰</div> 
+             <div class="spinner"></div> 
+             <p>Loading...</p> 
+         </div> 
+     </div> 
+ 
+     <!-- MAIN CONTENT --> 
+     <div class="container" id="main-content"> 
+         
+         <!-- HEADER --> 
+         <div class="header"> 
+             <div class="logo-float">🚰</div> 
+             <h1 class="gradient-title">Faucet</h1> 
+             <p class="subtitle">Claim free coins</p> 
+         </div> 
+ 
+         <!-- TIMER --> 
+         <div class="timer-card"> 
+             <p class="timer-label">Next claim in:</p> 
+             <div id="timer" class="timer-display">00:00</div> 
+             <div id="timer-status" class="timer-status status-ready">✅ Ready to claim!</div> 
+         </div> 
+ 
+         <!-- CLAIM BUTTON - добавлен класс btn-text для текста --> 
+         <button id="claimBtn" class="btn btn-primary btn-large" onclick="playClick(); handleClaim()"> 
+             <span class="btn-icon">🎁</span> 
+             <span class="btn-text">CLAIM (10-30 🪙)</span> 
+         </button> 
+ 
+         <!-- CAPTCHA BLOCK --> 
+         <div id="captchaContainer" class="captcha-container hidden"> 
+             <div class="captcha-card"> 
+                 <p class="captcha-title">🔐 Verification</p> 
+                 <p class="captcha-question" id="captchaQuestion">Solve: 5 + 3 = ?</p> 
+                 <input type="number" id="captchaInput" class="captcha-input" placeholder="?" inputmode="numeric"> 
+                 <button id="verifyCaptchaBtn" class="btn btn-primary" onclick="onVerifyCaptcha()">Verify</button> 
+                 <button id="cancelCaptchaBtn" class="btn btn-secondary" onclick="hideCaptcha()" style="margin-top: 10px;">Cancel</button> 
+                 <p id="captchaError" class="captcha-error hidden">❌ Wrong! Try again.</p> 
+             </div> 
+         </div> 
+ 
+         <!-- REWARD POPUP --> 
+         <div id="rewardPopup" class="reward-popup hidden"> 
+             <div class="reward-content"> 
+                 <span class="reward-icon">🎉</span> 
+                 <span class="reward-text">+<span id="rewardAmount">0</span> 🪙</span> 
+             </div> 
+         </div> 
+ 
+         <!-- INFO BLOCK --> 
+         <div class="info-box"> 
+             <p>💎 Reward: <strong>10-30 🪙</strong></p> 
+             <p>⏰ Interval: <strong>30 minutes</strong></p> 
+             <p>🔐 CAPTCHA: bot protection</p> 
+         </div> 
+ 
+         <!-- BACK BUTTON --> 
+         <a href="index.html" class="btn btn-secondary" onclick="playClick()"> 
+             <span class="btn-icon">←</span> 
+             <span>Home</span> 
+         </a> 
+ 
+         <!-- FOOTER --> 
+         <div class="footer"> 
+             <p>🐕 DogePay • Faucet</p> 
+         </div> 
+     </div> 
+ 
+     <!-- STUBS FOR FUNCTIONS --> 
+     <script> 
+         window.playClick = window.playClick || function() { 
+             if (window.Telegram?.WebApp?.HapticFeedback) { 
+                 window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); 
+             } 
+         }; 
+         window.playClaim = window.playClaim || function() { 
+             if (window.Telegram?.WebApp?.HapticFeedback) { 
+                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); 
+             } 
+         }; 
+         window.playError = window.playError || function() { 
+             if (window.Telegram?.WebApp?.HapticFeedback) { 
+                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error'); 
+             } 
+         }; 
+         window.showToast = window.showToast || function(message, type) { 
+             const toast = document.createElement('div'); 
+             toast.className = `toast toast-${type}`; 
+             toast.innerHTML = `<span class="toast-text">${message}</span>`; 
+             document.body.appendChild(toast); 
+             requestAnimationFrame(() => toast.classList.add('toast-show')); 
+             setTimeout(() => { 
+                 toast.classList.remove('toast-show'); 
+                 setTimeout(() => toast.remove(), 300); 
+             }, 3000); 
+         }; 
+     </script> 
+     
+     <!-- SCRIPTS --> 
+     <script src="app.js"></script> 
+     
+     <!-- FAUCET LOGIC --> 
+     <script> 
+         // 🔥 Очистка устаревших строковых данных в localStorage 
+         (function cleanupStorage() { 
+             try { 
+                 const oldBalance = localStorage.getItem('balance_update'); 
+                 if (oldBalance) { 
+                     const parsed = JSON.parse(oldBalance); 
+                     if (typeof parsed.balance === 'string') { 
+                         localStorage.removeItem('balance_update'); 
+                         console.log('🧹 Очищен старый строковый баланс из localStorage'); 
+                     } 
+                 } 
+             } catch(e) {} 
+         })(); 
+ 
+         const FAUCET_COOLDOWN_MS = 30 * 60 * 1000; 
+         let currentCaptcha = { answer: 0 }; 
+         let claimLock = false; 
+         let timerInterval = null; 
+         let adScriptLoaded = false; 
+ 
+         function getUserId() { 
+             const tg = window.Telegram?.WebApp; 
+             if (tg?.initDataUnsafe?.user?.id) return String(tg.initDataUnsafe.user.id); 
+             return '123456'; 
+         } 
+ 
+         function formatTime(seconds) { 
+             const h = Math.floor(seconds / 3600); 
+             const m = Math.floor((seconds % 3600) / 60); 
+             const s = seconds % 60; 
+             if (h > 0) return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
+             return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
+         } 
+ 
+         function startTimer(endTimestamp) { 
+             const timerEl = document.getElementById('timer'); 
+             const statusEl = document.getElementById('timer-status'); 
+             const claimBtn = document.getElementById('claimBtn'); 
+             if (timerInterval) clearInterval(timerInterval); 
+             function update() { 
+                 const now = Date.now(); 
+                 const diff = endTimestamp - now; 
+                 if (diff <= 0) { 
+                     timerEl.textContent = '00:00'; 
+                     statusEl.textContent = '✅ Ready to claim!'; 
+                     statusEl.className = 'timer-status status-ready'; 
+                     claimBtn.disabled = false; 
+                     claimBtn.classList.remove('disabled'); 
+                     if (timerInterval) clearInterval(timerInterval); 
+                 } else { 
+                     const secondsLeft = Math.ceil(diff / 1000); 
+                     timerEl.textContent = formatTime(secondsLeft); 
+                     statusEl.textContent = '⏳ Wait...'; 
+                     statusEl.className = 'timer-status status-waiting'; 
+                     claimBtn.disabled = true; 
+                     claimBtn.classList.add('disabled'); 
+                 } 
+             } 
+             update(); 
+             timerInterval = setInterval(update, 1000); 
+         } 
+ 
+         function generateCaptcha() { 
+             const a = Math.floor(Math.random() * 10) + 1; 
+             const b = Math.floor(Math.random() * 10) + 1; 
+             let op, answer; 
+             if (a >= b) { 
+                 op = Math.random() < 0.5 ? '+' : '-'; 
+                 answer = op === '+' ? a + b : a - b; 
+             } else { 
+                 op = '+'; 
+                 answer = a + b; 
+             } 
+             currentCaptcha.answer = answer; 
+             currentCaptcha.question = `${a} ${op} ${b}`; 
+             const qEl = document.getElementById('captchaQuestion'); 
+             if (qEl) qEl.innerHTML = `<strong>Solve:</strong> ${currentCaptcha.question} = ?`; 
+             const inputEl = document.getElementById('captchaInput'); 
+             if (inputEl) { inputEl.value = ''; inputEl.placeholder = '?'; } 
+             const errEl = document.getElementById('captchaError'); 
+             if (errEl) errEl.classList.add('hidden'); 
+         } 
+ 
+         function showCaptcha() { 
+             generateCaptcha(); 
+             const captchaContainer = document.getElementById('captchaContainer'); 
+             const claimBtn = document.getElementById('claimBtn'); 
+             if (captchaContainer) captchaContainer.classList.remove('hidden'); 
+             if (claimBtn) claimBtn.classList.add('hidden'); 
+             const inputEl = document.getElementById('captchaInput'); 
+             if (inputEl) inputEl.focus(); 
+         } 
+ 
+         function hideCaptcha() { 
+             const captchaContainer = document.getElementById('captchaContainer'); 
+             const claimBtn = document.getElementById('claimBtn'); 
+             if (captchaContainer) captchaContainer.classList.add('hidden'); 
+             if (claimBtn) claimBtn.classList.remove('hidden'); 
+         } 
+ 
+         function showReward(amount) { 
+             const popup = document.getElementById('rewardPopup'); 
+             const amountEl = document.getElementById('rewardAmount'); 
+             if (amountEl) amountEl.textContent = amount; 
+             if (popup) { 
+                 popup.classList.remove('hidden'); 
+                 popup.style.animation = 'none'; 
+                 popup.offsetHeight; 
+                 popup.style.animation = 'rewardPop 0.5s ease forwards'; 
+                 setTimeout(() => popup.classList.add('hidden'), 2500); 
+             } 
+         } 
+ 
+         // 🔥 ОБНОВЛЕНИЕ БАЛАНСА НА ВСЕХ СТРАНИЦАХ (с принудительным числом) 🔥 
+         async function refreshBalanceEverywhere() { 
+             try { 
+                 const userId = getUserId(); 
+                 const res = await fetch(`/api/balance?user_id=${userId}`, { cache: 'no-store' }); 
+                 if (res.ok) { 
+                     const data = await res.json(); 
+                     if (data.success && data.balance !== undefined) { 
+                         // Гарантируем число 
+                         const balanceNum = Number(data.balance); 
+                         if (isNaN(balanceNum)) throw new Error('Balance is not a number'); 
+                         
+                         // Обновляем на текущей странице если есть элементы 
+                         const balanceEl = document.getElementById('balance'); 
+                         const dogeEl = document.getElementById('balance-doge'); 
+                         if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US'); 
+                         if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4); 
+                         
+                         // Сохраняем в localStorage для синхронизации между вкладками 
+                         if (window.localStorage) { 
+                             localStorage.setItem('balance_update', JSON.stringify({ 
+                                 balance: balanceNum, 
+                                 timestamp: Date.now() 
+                             })); 
+                         } 
+                         console.log('✅ Balance refreshed:', balanceNum); 
+                         return balanceNum; 
+                     } 
+                 } 
+             } catch (e) { 
+                 console.error('❌ Balance refresh error:', e); 
+             } 
+             return null; 
+         } 
+ 
+         // 🔥 ЗАГРУЗКА РЕКЛАМЫ + ПОКАЗ CAPTCHA 🔥 
+         function handleClaim() { 
+             if (claimLock) return; 
+             
+             // Загружаем скрипт рекламы при первом клике 
+             if (!adScriptLoaded) { 
+                 const adScript = document.createElement('script'); 
+                 adScript.src = 'https://pl29015866.profitablecpmratenetwork.com/e7/8a/ff/e78aff0c9ab53cb2e8c1fcdefa074cea.js'; 
+                 adScript.async = true; 
+                 adScript.onload = () => { 
+                     console.log('✅ Adsterra script loaded'); 
+                     adScriptLoaded = true; 
+                 }; 
+                 adScript.onerror = () => console.warn('⚠️ Adsterra script failed'); 
+                 document.body.appendChild(adScript); 
+             } 
+             
+             // Показываем CAPTCHA 
+             showCaptcha(); 
+         } 
+ 
+         async function claimReward() { 
+             if (claimLock) return; 
+             claimLock = true; 
+             
+             const userId = getUserId(); 
+             console.log('🚰 Claim request - User ID:', userId); 
+             
+             const btn = document.getElementById('claimBtn'); 
+             const btnTextSpan = btn?.querySelector('.btn-text'); 
+             if (btnTextSpan) btnTextSpan.textContent = 'Processing...'; 
+             if (btn) btn.disabled = true; 
+             
+             try { 
+                 const res = await fetch('/api/claim', { 
+                     method: 'POST', 
+                     headers: { 'Content-Type': 'application/json' }, 
+                     body: JSON.stringify({ 
+                         user_id: userId, 
+                         username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '' 
+                     }) 
+                 }); 
+                 
+                 console.log('📡 Response status:', res.status); 
+                 const data = await res.json(); 
+                 console.log('📦 Response data:', data); 
+                 
+                 if (res.ok && data.success) { 
+                     const reward = data.reward || data.amount; 
+                     console.log('✅ Reward:', reward); 
+                     
+                     // Звук + вибрация 
+                     if (window.playClaim) window.playClaim(); 
+                     
+                     // Показ награды 
+                     showReward(reward); 
+                     
+                     // 🔥 ОБНОВЛЯЕМ БАЛАНС НЕМЕДЛЕННО 🔥 
+                     await refreshBalanceEverywhere(); 
+                     
+                     // Тост 
+                     window.showToast(`✅ +${reward} 🪙`, 'success'); 
+                     
+                     // Таймер 
+                     const nextClaim = Date.now() + FAUCET_COOLDOWN_MS; 
+                     if (typeof localStorage !== 'undefined') { 
+                         localStorage.setItem('lastClaim', nextClaim.toString()); 
+                     } 
+                     startTimer(nextClaim); 
+                     
+                 } else if (data.error?.includes('Wait') || data.waitTime) { 
+                     const waitTime = data.waitTime || FAUCET_COOLDOWN_MS; 
+                     const nextClaim = Date.now() + waitTime; 
+                     if (typeof localStorage !== 'undefined') { 
+                         localStorage.setItem('lastClaim', nextClaim.toString()); 
+                     } 
+                     startTimer(nextClaim); 
+                     window.showToast('⏳ ' + (data.error || 'Please wait'), 'info'); 
+                 } else { 
+                     const errorMsg = data.error || 'Unknown error'; 
+                     console.error('❌ API error:', errorMsg); 
+                     window.showToast('❌ ' + errorMsg, 'error'); 
+                     if (window.playError) window.playError(); 
+                 } 
+                 
+             } catch (err) { 
+                 console.error('🌐 Network error:', err); 
+                 let errorMsg = '🌐 Network error'; 
+                 if (err.message.includes('Failed to fetch')) errorMsg = '❌ Could not connect to server'; 
+                 else if (err.message.includes('404')) errorMsg = '❌ API endpoint not found'; 
+                 else if (err.message.includes('500')) errorMsg = '❌ Server error'; 
+                 window.showToast(errorMsg, 'error'); 
+                 if (window.playError) window.playError(); 
+             } finally { 
+                 claimLock = false; 
+                 hideCaptcha(); 
+                 const btn = document.getElementById('claimBtn'); 
+                 const btnTextSpan = btn?.querySelector('.btn-text'); 
+                 if (btnTextSpan) btnTextSpan.textContent = 'CLAIM (10-30 🪙)'; 
+                 if (btn) btn.disabled = false; 
+             } 
+         } 
+ 
+         function onVerifyCaptcha() { 
+             const inputEl = document.getElementById('captchaInput'); 
+             if (!inputEl) return; 
+             const userAnswer = parseInt(inputEl.value, 10); 
+             if (isNaN(userAnswer)) { 
+                 const errorEl = document.getElementById('captchaError'); 
+                 if (errorEl) { 
+                     errorEl.textContent = '❌ Enter a number'; 
+                     errorEl.classList.remove('hidden'); 
+                 } 
+                 return; 
+             } 
+             if (userAnswer !== currentCaptcha.answer) { 
+                 const errorEl = document.getElementById('captchaError'); 
+                 if (errorEl) { 
+                     errorEl.textContent = '❌ Wrong! Try again.'; 
+                     errorEl.classList.remove('hidden'); 
+                     errorEl.style.animation = 'shake 0.3s ease'; 
+                     setTimeout(() => errorEl.style.animation = '', 300); 
+                 } 
+                 generateCaptcha(); 
+                 return; 
+             } 
+             // ✅ CAPTCHA верна — начисляем награду 
+             claimReward(); 
+         } 
+ 
+         const captchaInput = document.getElementById('captchaInput'); 
+         if (captchaInput) { 
+             captchaInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') onVerifyCaptcha(); }); 
+         } 
+ 
+         // Слушаем обновления баланса из других вкладок (например, после рекламы) 
+         if (window.addEventListener) { 
+             window.addEventListener('storage', (e) => { 
+                 if (e.key === 'balance_update') { 
+                     try { 
+                         const data = JSON.parse(e.newValue); 
+                         const balanceNum = Number(data.balance); 
+                         if (!isNaN(balanceNum)) { 
+                             const balanceEl = document.getElementById('balance'); 
+                             const dogeEl = document.getElementById('balance-doge'); 
+                             if (balanceEl) balanceEl.textContent = balanceNum.toLocaleString('en-US'); 
+                             if (dogeEl) dogeEl.textContent = (balanceNum / 1000).toFixed(4); 
+                             console.log('🔄 Balance updated from storage:', balanceNum); 
+                         } 
+                     } catch(err) { console.warn('Storage parse error:', err); } 
+                 } 
+             }); 
+         } 
+ 
+         document.addEventListener('DOMContentLoaded', () => { 
+             setTimeout(() => { 
+                 const loading = document.getElementById('loading-screen'); 
+                 const main = document.getElementById('main-content'); 
+                 if (loading) loading.classList.add('hidden'); 
+                 if (main) { main.style.display = 'block'; main.classList.add('fade-in'); } 
+                 
+                 // Обновляем баланс при загрузке 
+                 refreshBalanceEverywhere(); 
+                 
+                 let lastClaim = null; 
+                 if (typeof localStorage !== 'undefined') lastClaim = localStorage.getItem('lastClaim'); 
+                 console.log('🕐 Last claim:', lastClaim); 
+                 if (lastClaim && Date.now() < parseInt(lastClaim)) { 
+                     startTimer(parseInt(lastClaim)); 
+                 } else { 
+                     console.log('✅ Faucet ready!'); 
+                 } 
+             }, 1500); 
+         }); 
+ 
+         window.addEventListener('beforeunload', () => { if (timerInterval) clearInterval(timerInterval); }); 
+     </script> 
+ </body> 
+ </html>
