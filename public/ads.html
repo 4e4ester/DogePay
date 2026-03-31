@@ -53,7 +53,7 @@
          <div class="ads-card"> 
              <div class="reward-header"> 
                  <span class="reward-icon">🎁</span> 
-                 <h3>Get 10-20 🪙</h3> 
+                 <h3>Get 5-10 🪙</h3> 
              </div> 
              <p class="reward-desc">Click the button, stay on the page for 10 seconds and get your reward!</p> 
              
@@ -67,7 +67,7 @@
              <!-- BUTTON --> 
              <button id="claimAdBtn" class="btn btn-primary btn-large"> 
                  <span class="btn-icon">🎬</span> 
-                 <span class="btn-text">Watch for 10-20 🪙</span> 
+                 <span class="btn-text">Watch for 5-10 🪙</span> 
              </button> 
              
              <!-- STATUS --> 
@@ -210,8 +210,8 @@
  
          // ===== НАСТРОЙКИ ===== 
          const COOLDOWN_MS = 10 * 60 * 1000; 
-         const REWARD_MIN = 10; 
-         const REWARD_MAX = 20; 
+         const REWARD_MIN = 5; 
+         const REWARD_MAX = 10; 
          let isProcessing = false; 
          let timerInterval = null; 
 
@@ -303,7 +303,7 @@
                  // Имитируем ожидание (даем Adsterra время показать рекламу)
                  await new Promise(r => setTimeout(r, 10000));
 
-                 const reward = Math.floor(Math.random() * (20 - 10 + 1)) + 10; 
+                 const reward = Math.floor(Math.random() * (REWARD_MAX - REWARD_MIN + 1)) + REWARD_MIN; 
                  const userId = getUserId(); 
                  
                  const res = await fetch('/api/ad-reward', { 
