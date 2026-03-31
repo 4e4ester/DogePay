@@ -40,13 +40,38 @@
          </div> 
  
          <!-- SOCIAL AD BOX --> 
-         <div class="info-box" style="text-align: center; border: 1px dashed var(--gold); background: rgba(243, 198, 35, 0.05);"> 
+         <div class="info-box" style="text-align: center; border: 1px dashed var(--gold); background: rgba(243, 198, 35, 0.05); margin-bottom: 20px;"> 
              <span style="font-size: 40px; display: block; margin-bottom: 10px;">✨</span>
              <h3 style="color: var(--gold); margin-bottom: 8px;">Enjoy the Content</h3> 
              <p style="color: var(--text-secondary); font-size: 14px;"> 
                  Ads will appear automatically as notifications or small banners. 
                  Thank you for supporting us! 
              </p> 
+         </div> 
+
+         <!-- ADS CLAIM CARD (LIKE FAUCET) --> 
+         <div class="ads-card"> 
+             <div class="reward-header"> 
+                 <span class="reward-icon">🎁</span> 
+                 <h3>Get 10-20 🪙</h3> 
+             </div> 
+             <p class="reward-desc">Click the button, stay on the page for 10 seconds and get your reward!</p> 
+             
+             <!-- TIMER -->
+             <div class="timer-card" id="adsTimerCard" style="margin-bottom: 20px; display: none;">
+                 <p class="timer-label" style="font-size: 13px; color: var(--text-secondary); margin: 0 0 4px;">Next claim in:</p>
+                 <div id="timerTextLarge" style="font-size: 32px; font-weight: 800; color: var(--gold); text-shadow: 0 0 15px rgba(243, 198, 35, 0.3);">00:00</div>
+                 <div id="timerStatusLarge" style="font-size: 14px; margin-top: 4px; color: var(--text-secondary);">⏳ Wait...</div>
+             </div>
+
+             <!-- BUTTON --> 
+             <button id="claimAdBtn" class="btn btn-primary btn-large"> 
+                 <span class="btn-icon">🎬</span> 
+                 <span class="btn-text">Watch for 10-20 🪙</span> 
+             </button> 
+             
+             <!-- STATUS --> 
+             <p id="adStatus" class="ad-status status-ready">✅ Click to get reward!</p> 
          </div> 
  
          <!-- REWARD POPUP --> 
@@ -190,9 +215,6 @@
          let isProcessing = false; 
          let timerInterval = null; 
 
-         // Инициализация Adsgram
-         const AdController = window.AdsGram?.init({ blockId: "task-26297" });
-
          function getUserId() { 
              const tg = window.Telegram?.WebApp; 
              return tg?.initDataUnsafe?.user?.id || 123456; 
@@ -215,23 +237,121 @@
          } 
  
          function updateUI() { 
+             const btn = document.getElementById('claimAdBtn'); 
+             const status = document.getElementById('adStatus'); 
              const timerCard = document.getElementById('adsTimerCard');
+             const timerTextLarge = document.getElementById('timerTextLarge');
+             const timerStatusLarge = document.getElementById('timerStatusLarge');
              const check = canClaim(); 
              
              if (check.ok) { 
+                 if (btn) btn.disabled = false; 
+                 if (status) status.textContent = '✅ Click to get reward!'; 
+                 if (status) status.className = 'ad-status status-ready'; 
                  if (timerCard) timerCard.style.display = 'none'; 
                  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } 
              } else { 
+                 if (btn) btn.disabled = true; 
+                 if (status) status.textContent = '⏳ Wait before next reward'; 
+                 if (status) status.className = 'ad-status status-waiting'; 
                  if (timerCard) timerCard.style.display = 'block'; 
+                 
                  if (timerInterval) clearInterval(timerInterval); 
                  
                  function updateTimer() { 
                      const c = canClaim(); 
                      if (c.ok) { updateUI(); return; } 
+                     if (timerTextLarge) timerTextLarge.textContent = fmt(c.wait); 
+                     if (timerStatusLarge) timerStatusLarge.textContent = '⏳ Wait...';
                  } 
                  updateTimer(); 
                  timerInterval = setInterval(updateTimer, 1000); 
              } 
+         } 
+
+         function showReward(amount) { 
+             const popup = document.getElementById('rewardPopup'); 
+             const amountEl = document.getElementById('rewardAmountPopup'); 
+             if (amountEl) amountEl.textContent = amount; 
+             if (popup) { 
+                 popup.classList.remove('hidden'); 
+                 popup.style.animation = 'none'; 
+                 popup.offsetHeight; 
+                 popup.style.animation = 'rewardPop 1.5s ease forwards'; 
+                 setTimeout(() => popup.classList.add('hidden'), 3500); 
+             } 
+         } 
+ 
+         async function handleAdReward() { 
+             if (isProcessing) return; 
+             const check = canClaim(); 
+             if (!check.ok) { 
+                 alert(`⏳ Wait ${fmt(check.wait)}`); 
+                 return; 
+             } 
+             
+             isProcessing = true; 
+             const btn = document.getElementById('claimAdBtn'); 
+             const btnText = btn?.querySelector('.btn-text'); 
+             const status = document.getElementById('adStatus'); 
+             
+             if (btn) btn.disabled = true; 
+             if (btnText) btnText.textContent = '⏳ Watching (10s)...'; 
+             if (status) status.textContent = '🔄 Loading ads...'; 
+             
+             try { 
+                 // Имитируем ожидание (даем Adsterra время показать рекламу)
+                 await new Promise(r => setTimeout(r, 10000));
+
+                 const reward = Math.floor(Math.random() * (20 - 10 + 1)) + 10; 
+                 const userId = getUserId(); 
+                 
+                 const res = await fetch('/api/ad-reward', { 
+                     method: 'POST', 
+                     headers: { 'Content-Type': 'application/json' }, 
+                     body: JSON.stringify({ 
+                         user_id: userId, 
+                         reward: reward, 
+                         type: 'ads_claim',
+                         secret: window.getApiSecret ? window.getApiSecret() : 'doge_secure_777' 
+                     }) 
+                 }); 
+                 
+                 const data = await res.json(); 
+                 
+                 if (data.success) { 
+                     if (window.playClaim) window.playClaim(); 
+                     showReward(reward);
+                     await fetchBalance(); 
+                     window.showToast(`✅ +${reward} 🪙`, 'success');
+                     localStorage.setItem('lastAdReward', Date.now().toString()); 
+                     
+                     let w = parseInt(localStorage.getItem('adsWatched')||'0'); 
+                     let e = parseInt(localStorage.getItem('adsEarned')||'0'); 
+                     w++; e += reward; 
+                     localStorage.setItem('adsWatched', w.toString()); 
+                     localStorage.setItem('adsEarned', e.toString()); 
+                     
+                     const watchedEl = document.getElementById('adsWatched'); 
+                     const earnedEl = document.getElementById('adsEarned'); 
+                     if (watchedEl) watchedEl.textContent = w; 
+                     if (earnedEl) earnedEl.textContent = e.toLocaleString('en-US'); 
+                     
+                     if (status) { 
+                         status.textContent = `✅ Received ${reward} 🪙!`; 
+                         status.className = 'ad-status status-success'; 
+                     } 
+                 } else {
+                     throw new Error(data.error || 'API error');
+                 }
+             } catch (err) { 
+                 console.error('❌ Ad reward error:', err); 
+                 window.showToast('❌ Ошибка начисления', 'error');
+                 if (status) status.textContent = '❌ Try again later';
+             } finally {
+                 isProcessing = false;
+                 updateUI();
+             }
          } 
  
          // Слушаем обновления баланса из других вкладок (например, из крана) 
@@ -252,6 +372,9 @@
          }); 
  
          document.addEventListener('DOMContentLoaded', () => { 
+             const claimBtn = document.getElementById('claimAdBtn');
+             if (claimBtn) claimBtn.addEventListener('click', handleAdReward); 
+             
              const hideLoading = () => {
                  const loading = document.getElementById('loading-screen'); 
                  const main = document.getElementById('main-content'); 
