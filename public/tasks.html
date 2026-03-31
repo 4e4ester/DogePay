@@ -26,20 +26,52 @@
          const TASK_BLOCK_ID = 'task-26297'; 
          let taskAdsgram = null; 
          
+         function getUserId() {
+             const tg = window.Telegram?.WebApp;
+             return tg?.initDataUnsafe?.user?.id || 123456;
+         }
+
          document.addEventListener('DOMContentLoaded', () => { 
              if (typeof AdsGram !== 'undefined') { 
                  taskAdsgram = new AdsGram(TASK_BLOCK_ID); 
              } 
              
              document.getElementById('taskWallBtn')?.addEventListener('click', async () => { 
-                 if (taskAdsgram) { 
-                     try { 
-                         await taskAdsgram.showAd(); 
-                         // После выполнения задания — начисли награду 
-                         // (AdsGram сам отслеживает выполнение) 
-                     } catch (err) { 
-                         alert('Задания недоступны'); 
-                     } 
+                 if (!taskAdsgram) {
+                     alert('Задания недоступны');
+                     return;
+                 }
+
+                 try { 
+                     await taskAdsgram.showAd(); 
+                     
+                     // Если выполнение дошло сюда — значит пользователь досмотрел
+                     const userId = getUserId();
+                     const reward = 25; // Награда за задание больше чем за обычную рекламу
+                     
+                     const res = await fetch('/api/ad-reward', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({ 
+                             user_id: userId, 
+                             reward: reward, 
+                             type: 'task_adsgram' 
+                         })
+                     });
+                     
+                     const data = await res.json();
+                     if (data.success) {
+                         alert(`🎉 Задание выполнено! Начислено ${reward} 🪙`);
+                     } else {
+                         alert('❌ Ошибка начисления награды');
+                     }
+                 } catch (err) { 
+                     if (err.message === 'No ads available') {
+                         alert('В данный момент заданий нет. Попробуйте позже.');
+                     } else if (err.message !== 'User skipped ad') {
+                         console.error('Adsgram error:', err);
+                         alert('Ошибка при загрузке задания');
+                     }
                  } 
              }); 
          }); 

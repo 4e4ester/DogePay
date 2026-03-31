@@ -13,8 +13,9 @@
  
  // ==================== КОНФИГУРАЦИЯ ==================== 
  const PORT = process.env.PORT || 3000; 
- const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; 
+ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123admin'; 
  const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex'); 
+ const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '699705090'; // 🔥 ВАШ ID ЗДЕСЬ (теперь реальный)
  
  // ==================== ОТЛАДКА ==================== 
  console.log('🔍 DEBUG: Переменные окружения'); 
@@ -205,7 +206,7 @@
  
          const check = await client.query('SELECT last_claim, balance FROM users WHERE user_id = $1 FOR UPDATE', [user_id]); 
          const lastClaim = check.rows[0]?.last_claim; 
-         const balance = check.rows[0]?.balance ?? 0; 
+         const balance = Number(check.rows[0]?.balance ?? 0); 
  
          if (lastClaim) { 
              const diff = (new Date() - new Date(lastClaim)) / 1000; 
@@ -273,9 +274,9 @@
          ); 
          
          const user = check.rows[0]; 
-         const balance = user?.balance ?? 0; 
+         const balance = Number(user?.balance ?? 0); 
          const lastAdReward = user?.last_ad_reward; 
-         
+ 
          if (lastAdReward) { 
              const diff = (new Date() - new Date(lastAdReward)) / 1000; 
              if (diff < 600) { 
@@ -288,7 +289,7 @@
                  }); 
              } 
          } 
-         
+ 
          const newBalance = balance + reward; 
          await client.query( 
              'UPDATE users SET balance = $1, last_ad_reward = NOW() WHERE user_id = $2', 
@@ -370,9 +371,9 @@
      if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Нет доступа' }); 
      try { 
          const r = await pool.query(` 
-             SELECT r.id, r.user_id, u.username, r.amount, r.wallet_address, r.created_at 
+             SELECT r.id, CAST(r.user_id AS TEXT) as user_id, u.username, r.amount, r.wallet_address, r.created_at 
              FROM withdraw_requests r 
-             LEFT JOIN users u ON r.user_id = u.user_id 
+             LEFT JOIN users u ON CAST(r.user_id AS TEXT) = CAST(u.user_id AS TEXT) 
              WHERE r.status = 'pending' 
              ORDER BY r.created_at ASC 
          `); 
@@ -415,6 +416,31 @@
          await client.query('ROLLBACK'); 
          console.error('API /admin/reject error:', e); 
          res.status(500).json({ success: false, error: e.message }); 
+     } finally { 
+         client.release(); 
+     } 
+ }); 
+ 
+ // API: СБРОС ТАЙМЕРОВ (АДМИН) 
+ app.post('/api/admin/reset-timer', async (req, res) => { 
+     if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Нет доступа' }); 
+ 
+     const { user_id } = req.body; 
+     if (!user_id) return res.status(400).json({ success: false, error: 'User ID required' }); 
+ 
+     const client = await pool.connect(); 
+     try { 
+         await client.query('BEGIN'); 
+         await client.query( 
+             'UPDATE users SET last_claim = NULL, last_ad_reward = NULL WHERE user_id = $1', 
+             [user_id] 
+         ); 
+         await client.query('COMMIT'); 
+         res.json({ success: true, message: 'Таймеры сброшены!' }); 
+     } catch (err) { 
+         await client.query('ROLLBACK'); 
+         console.error('Reset timer error:', err); 
+         res.status(500).json({ success: false, error: 'Database error' }); 
      } finally { 
          client.release(); 
      } 

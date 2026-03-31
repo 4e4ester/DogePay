@@ -48,7 +48,7 @@
              
              <button id="login-btn" class="btn btn-primary btn-large" onclick="playClick(); handleLogin()"> 
                  <span class="btn-icon">🚀</span> 
-                 <span data-t="login_btn">Войти</span> 
+                 <span class="btn-text" data-t="login_btn">Войти</span> 
                  <span class="btn-loader hidden"></span> 
              </button> 
              
@@ -87,6 +87,18 @@
                      <div class="stat-label" data-t="processed_requests">Обработано</div> 
                  </div> 
              </div> 
+ 
+             <!-- 🛡️ ADMIN TOOLS (СБРОС ТАЙМЕРА) -->
+             <div class="section-header" style="margin-top: 24px;">
+                 <h3 data-t="admin_tools">Инструменты админа</h3>
+             </div>
+             <div class="admin-tools-card">
+                 <button class="btn btn-warning btn-block" onclick="playClick(); handleResetTimer()">
+                     <span class="btn-icon">⚡</span>
+                     <span>Сбросить мой таймер</span>
+                 </button>
+                 <p class="tool-hint">Удаляет ограничения на клейм для вашего ID</p>
+             </div>
  
              <!-- 📋 СПИСОК ЗАЯВОК --> 
              <div class="section-header"> 
@@ -256,6 +268,29 @@
              showToast(window.t?.('logged_out') || '👋 Вы вышли', 'info'); 
          } 
  
+         // Сброс таймера
+         async function handleResetTimer() {
+             const userId = getUserId();
+             try {
+                 const res = await fetchWithAuth('/api/admin/reset-timer', {
+                     method: 'POST',
+                     body: JSON.stringify({ user_id: userId })
+                 });
+                 const data = await res.json();
+                 if (data.success) {
+                     showToast('⚡ Таймеры сброшены!', 'success');
+                     // Очищаем локальные данные, чтобы клейм был доступен сразу
+                     localStorage.removeItem('lastClaim');
+                     localStorage.removeItem('lastAdReward');
+                 } else {
+                     showToast('❌ Ошибка: ' + (data.error || 'Unknown'), 'error');
+                 }
+             } catch (err) {
+                 console.error('Reset timer error:', err);
+                 showToast('🌐 Ошибка сети', 'error');
+             }
+         }
+
          // Загрузка статистики 
          async function loadStats() { 
              try { 
