@@ -15,6 +15,7 @@
  const PORT = process.env.PORT || 3000; 
  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; 
  const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex'); 
+ const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '123456'; // 🔥 ВАШ ID ЗДЕСЬ
  
  // ==================== ОТЛАДКА ==================== 
  console.log('🔍 DEBUG: Переменные окружения'); 
@@ -415,6 +416,31 @@
          await client.query('ROLLBACK'); 
          console.error('API /admin/reject error:', e); 
          res.status(500).json({ success: false, error: e.message }); 
+     } finally { 
+         client.release(); 
+     } 
+ }); 
+ 
+ // API: СБРОС ТАЙМЕРОВ (АДМИН) 
+ app.post('/api/admin/reset-timer', async (req, res) => { 
+     if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Нет доступа' }); 
+ 
+     const { user_id } = req.body; 
+     if (!user_id) return res.status(400).json({ success: false, error: 'User ID required' }); 
+ 
+     const client = await pool.connect(); 
+     try { 
+         await client.query('BEGIN'); 
+         await client.query( 
+             'UPDATE users SET last_claim = NULL, last_ad_reward = NULL WHERE user_id = $1', 
+             [user_id] 
+         ); 
+         await client.query('COMMIT'); 
+         res.json({ success: true, message: 'Таймеры сброшены!' }); 
+     } catch (err) { 
+         await client.query('ROLLBACK'); 
+         console.error('Reset timer error:', err); 
+         res.status(500).json({ success: false, error: 'Database error' }); 
      } finally { 
          client.release(); 
      } 
