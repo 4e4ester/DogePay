@@ -13,7 +13,7 @@
  
  // ==================== КОНФИГУРАЦИЯ ==================== 
  const PORT = process.env.PORT || 3000; 
- const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; 
+ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123admin'; 
  const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex'); 
  const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '123456'; // 🔥 ВАШ ID ЗДЕСЬ
  
@@ -371,9 +371,9 @@
      if (!isAdmin(req)) return res.status(401).json({ success: false, error: 'Нет доступа' }); 
      try { 
          const r = await pool.query(` 
-             SELECT r.id, r.user_id, u.username, r.amount, r.wallet_address, r.created_at 
+             SELECT r.id, CAST(r.user_id AS TEXT) as user_id, u.username, r.amount, r.wallet_address, r.created_at 
              FROM withdraw_requests r 
-             LEFT JOIN users u ON r.user_id = u.user_id 
+             LEFT JOIN users u ON CAST(r.user_id AS TEXT) = CAST(u.user_id AS TEXT) 
              WHERE r.status = 'pending' 
              ORDER BY r.created_at ASC 
          `); 
