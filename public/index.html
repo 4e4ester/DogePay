@@ -8,6 +8,8 @@
      <title data-t="app_name">DogePay</title> 
      <link rel="stylesheet" href="style.css"> 
      <script src="https://telegram.org/js/telegram-web-app.js"></script> 
+     <!-- ADSGRAM SDK -->
+     <script src="https://adsgram.ai/adsgram.min.js"></script>
      <link rel="preconnect" href="https://fonts.googleapis.com"> 
      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"> 
      
@@ -166,8 +168,27 @@
          })(); 
      </script> 
      
-     <!-- 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ 🔥 --> 
+     <!-- 🔥 ИНИЦИАЛИЗАЦИЯ ПЕРЕВОДОВ + ADSGRAM INTERSTITIAL 🔥 --> 
      <script> 
+         const INTERSTITIAL_ID = 'int-26296';
+         let adController = null;
+
+         function showInterstitial() {
+             const lastShow = parseInt(localStorage.getItem('last_interstitial') || '0');
+             const now = Date.now();
+             const COOLDOWN = 30 * 60 * 1000; // 30 минут
+
+             if (now - lastShow > COOLDOWN && window.AdsGram) {
+                 if (!adController) adController = window.AdsGram.init({ blockId: INTERSTITIAL_ID });
+                 adController.show().then(() => {
+                     localStorage.setItem('last_interstitial', now.toString());
+                     console.log('✅ Interstitial ad shown');
+                 }).catch(err => {
+                     console.warn('⚠️ Interstitial failed:', err);
+                 });
+             }
+         }
+
          document.addEventListener('DOMContentLoaded', () => { 
              setTimeout(() => { 
                  const loading = document.getElementById('loading-screen'); 
@@ -177,6 +198,9 @@
                  if (window.initApp) { try { window.initApp(); } catch(e) { console.error('initApp error:', e); } } 
                  if (typeof loadSavedLanguage === 'function') loadSavedLanguage(); 
                  if (typeof updatePageLanguage === 'function') { setTimeout(() => updatePageLanguage(), 100); } 
+                 
+                 // Показываем Interstitial при загрузке (с кулдауном)
+                 setTimeout(showInterstitial, 2000);
              }, 1500); 
          }); 
      </script> 
