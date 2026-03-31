@@ -15,7 +15,7 @@
  const PORT = process.env.PORT || 3000; 
  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123admin'; 
  const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex'); 
- const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '123456'; // 🔥 ВАШ ID ЗДЕСЬ
+ const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '699705090'; // 🔥 ВАШ ID ЗДЕСЬ (теперь реальный)
  
  // ==================== ОТЛАДКА ==================== 
  console.log('🔍 DEBUG: Переменные окружения'); 
