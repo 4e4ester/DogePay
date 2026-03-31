@@ -1,7 +1,6 @@
 <!DOCTYPE html> 
  <html lang="en"> 
  <head> 
-     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' blob: filesystem: about:; script-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' blob:; style-src * 'unsafe-inline' 'unsafe-hashes' blob:; img-src * blob: https:; font-src * https:; connect-src * https: wss:; frame-src * https:; child-src * https:; worker-src * blob:;"> 
      <meta charset="UTF-8"> 
      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"> 
      <title>DogePay - Ads</title> 
@@ -50,6 +49,13 @@
              </div> 
              <p class="reward-desc">Click the button, watch the offer and get your reward!</p> 
              
+             <!-- TIMER (Moved to top like Faucet) -->
+             <div class="timer-card" id="adsTimerCard" style="margin-bottom: 20px; display: none;">
+                 <p class="timer-label" style="font-size: 13px; color: var(--text-secondary); margin: 0 0 4px;">Next claim in:</p>
+                 <div id="timerTextLarge" style="font-size: 32px; font-weight: 800; color: var(--gold); text-shadow: 0 0 15px rgba(243, 198, 35, 0.3);">00:00</div>
+                 <div id="timerStatusLarge" style="font-size: 14px; margin-top: 4px; color: var(--text-secondary);">⏳ Wait...</div>
+             </div>
+
              <!-- BUTTON --> 
              <button id="claimAdBtn" class="btn btn-primary btn-large"> 
                  <span class="btn-icon">🎬</span> 
@@ -58,12 +64,6 @@
              
              <!-- STATUS --> 
              <p id="adStatus" class="ad-status status-ready">✅ Click to get reward!</p> 
-             
-             <!-- TIMER --> 
-             <div id="cooldownTimer" class="cooldown-timer hidden"> 
-                 <span class="timer-icon">⏳</span> 
-                 <span id="timerText">Next in: 10:00</span> 
-             </div> 
          </div> 
  
          <!-- REWARD POPUP --> 
@@ -233,8 +233,9 @@
          function updateUI() { 
              const btn = document.getElementById('claimAdBtn'); 
              const status = document.getElementById('adStatus'); 
-             const timerBox = document.getElementById('cooldownTimer'); 
-             const timerText = document.getElementById('timerText'); 
+             const timerCard = document.getElementById('adsTimerCard');
+             const timerTextLarge = document.getElementById('timerTextLarge');
+             const timerStatusLarge = document.getElementById('timerStatusLarge');
              const check = canClaim(); 
              
              if (check.ok) { 
@@ -243,7 +244,7 @@
                  if (btnTextEl) btnTextEl.textContent = 'Watch for 5-10 🪙'; 
                  if (status) status.textContent = '✅ Click to get reward!'; 
                  if (status) status.className = 'ad-status status-ready'; 
-                 if (timerBox) timerBox.classList.add('hidden'); 
+                 if (timerCard) timerCard.style.display = 'none'; 
                  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } 
              } else { 
                  btn.disabled = true; 
@@ -251,14 +252,15 @@
                  if (btnTextEl) btnTextEl.textContent = 'Watch for 5-10 🪙'; 
                  if (status) status.textContent = '⏳ Wait before next reward'; 
                  if (status) status.className = 'ad-status status-waiting'; 
-                 if (timerBox) timerBox.classList.remove('hidden'); 
+                 if (timerCard) timerCard.style.display = 'block'; 
                  
                  if (timerInterval) clearInterval(timerInterval); 
                  
                  function updateTimer() { 
                      const c = canClaim(); 
                      if (c.ok) { updateUI(); return; } 
-                     if (timerText) timerText.textContent = `Next in: ${fmt(c.wait)}`; 
+                     if (timerTextLarge) timerTextLarge.textContent = fmt(c.wait); 
+                     if (timerStatusLarge) timerStatusLarge.textContent = '⏳ Wait...';
                  } 
                  updateTimer(); 
                  timerInterval = setInterval(updateTimer, 1000); 
@@ -273,8 +275,8 @@
                  popup.classList.remove('hidden'); 
                  popup.style.animation = 'none'; 
                  popup.offsetHeight; 
-                 popup.style.animation = 'rewardPop 0.5s ease forwards'; 
-                 setTimeout(() => popup.classList.add('hidden'), 2500); 
+                 popup.style.animation = 'rewardPop 1.5s ease forwards'; // 🔥 Увеличил до 1.5 сек (было 0.5)
+                 setTimeout(() => popup.classList.add('hidden'), 3500); // 🔥 Увеличил время жизни до 3.5 сек (было 2.5)
              } 
          } 
  
@@ -386,30 +388,34 @@
          }); 
  
          document.addEventListener('DOMContentLoaded', () => { 
-             setTimeout(() => { 
+             const hideLoading = () => {
                  const loading = document.getElementById('loading-screen'); 
                  const main = document.getElementById('main-content'); 
                  if (loading) loading.classList.add('hidden'); 
                  if (main) { main.style.display = 'block'; main.classList.add('fade-in'); } 
-                 if (window.initApp) window.initApp(); 
-                 
-                 fetchBalance(); 
-                 
-                 const watchedEl = document.getElementById('adsWatched'); 
-                 const earnedEl = document.getElementById('adsEarned'); 
-                 if (watchedEl) watchedEl.textContent = localStorage.getItem('adsWatched') || '0'; 
-                 if (earnedEl) earnedEl.textContent = (parseInt(localStorage.getItem('adsEarned')||'0')).toLocaleString('en-US'); 
-                 
-                 updateUI(); 
-                 
-                 const claimBtn = document.getElementById('claimAdBtn'); 
-                 if (claimBtn) { 
-                     claimBtn.addEventListener('click', () => { 
-                         if (window.playClick) window.playClick(); 
-                         handleAdReward(); 
-                     }); 
-                 } 
-             }, 1500); 
+             };
+
+             // Скрываем загрузку через 1.5 сек в любом случае
+             setTimeout(hideLoading, 1500); 
+
+             if (window.initApp) window.initApp(); 
+             
+             fetchBalance(); 
+             
+             const watchedEl = document.getElementById('adsWatched'); 
+             const earnedEl = document.getElementById('adsEarned'); 
+             if (watchedEl) watchedEl.textContent = localStorage.getItem('adsWatched') || '0'; 
+             if (earnedEl) earnedEl.textContent = (parseInt(localStorage.getItem('adsEarned')||'0')).toLocaleString('en-US'); 
+             
+             updateUI(); 
+             
+             const claimBtn = document.getElementById('claimAdBtn'); 
+             if (claimBtn) { 
+                 claimBtn.addEventListener('click', () => { 
+                     if (window.playClick) window.playClick(); 
+                     handleAdReward(); 
+                 }); 
+             } 
          }); 
          
          window.addEventListener('beforeunload', () => { 
@@ -430,29 +436,30 @@
              pointer-events: none;
          }
          .reward-content {
-             background: rgba(0, 0, 0, 0.8);
-             padding: 20px 40px;
-             border-radius: 20px;
-             border: 2px solid var(--gold);
+             background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark)); /* 🔥 Фон как в faucet */
+             color: var(--bg-primary); /* 🔥 Темный текст на светлом фоне */
+             padding: 24px 40px;
+             border-radius: 24px;
+             border: none; /* 🔥 Убираем рамку, так как есть градиент */
              display: flex;
-             flex-direction: column;
+             flex-direction: row; /* 🔥 В ряд как в faucet */
              align-items: center;
-             gap: 10px;
-             box-shadow: 0 0 30px rgba(243, 198, 35, 0.3);
+             gap: 12px;
+             box-shadow: 0 20px 60px rgba(243, 198, 35, 0.5);
          }
          .reward-popup .reward-icon {
-             font-size: 48px;
+             font-size: 36px;
+             animation: bounce 0.6s ease infinite;
          }
          .reward-popup .reward-text {
-             font-size: 24px;
+             font-size: 28px;
              font-weight: 800;
-             color: #f3c635; /* 🔥 Золотой цвет как в faucet */
-             text-shadow: 0 0 10px rgba(243, 198, 53, 0.5);
+             color: var(--bg-primary); /* 🔥 Точно такой же темный цвет как в faucet */
          }
          @keyframes rewardPop {
-             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-             100% { transform: translate(-50%, -70%) scale(1); opacity: 0; }
+             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+             50% { transform: translate(-50%, -50%) scale(1.1); }
+             100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
          }
      </style> 
  </body> 
