@@ -205,7 +205,7 @@
  
          const check = await client.query('SELECT last_claim, balance FROM users WHERE user_id = $1 FOR UPDATE', [user_id]); 
          const lastClaim = check.rows[0]?.last_claim; 
-         const balance = check.rows[0]?.balance ?? 0; 
+         const balance = Number(check.rows[0]?.balance ?? 0); 
  
          if (lastClaim) { 
              const diff = (new Date() - new Date(lastClaim)) / 1000; 
@@ -273,9 +273,9 @@
          ); 
          
          const user = check.rows[0]; 
-         const balance = user?.balance ?? 0; 
+         const balance = Number(user?.balance ?? 0); 
          const lastAdReward = user?.last_ad_reward; 
-         
+ 
          if (lastAdReward) { 
              const diff = (new Date() - new Date(lastAdReward)) / 1000; 
              if (diff < 600) { 
@@ -288,7 +288,7 @@
                  }); 
              } 
          } 
-         
+ 
          const newBalance = balance + reward; 
          await client.query( 
              'UPDATE users SET balance = $1, last_ad_reward = NOW() WHERE user_id = $2', 
