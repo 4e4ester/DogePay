@@ -116,12 +116,27 @@ const API_SECRET = process.env.API_SECRET || 'doge_secure_777'; // 🔐 Секр
  bot.start(async (ctx) => { 
      const userId = String(ctx.from.id); 
      const username = ctx.from.username || ''; 
+     const photoUrl = 'https://i.ibb.co/LzfN0G8/dogepay-welcome.jpg'; // 🖼️ ССЫЛКА НА ТВОЁ ФОТО
+
      try { 
          await pool.query( 
              `INSERT INTO users (user_id, username) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET username = EXCLUDED.username`, 
              [userId, username] 
          ); 
-         await ctx.reply( 
+         
+         await ctx.replyWithPhoto(
+             photoUrl,
+             {
+                 caption: `🐕 Привет, ${ctx.from.first_name || 'друг'}!\n\nДобро пожаловать в DogePay — здесь ты можешь зарабатывать DOGE, просто играя и смотря рекламу! 🪙🚀\n\n💰 Твой баланс: 0 🪙\n\nНажимай кнопку ниже, чтобы начать! 👇`,
+                 reply_markup: { 
+                     inline_keyboard: [[{ text: '🚀 Открыть DogePay', web_app: { url: process.env.WEB_APP_URL } }]] 
+                 } 
+             }
+         );
+     } catch (err) { 
+         console.error('Ошибка /start:', err); 
+         // Если фото не загрузилось, отправляем текст как запасной вариант
+         ctx.reply( 
              `🐕 Добро пожаловать в DogePay!\n\n🪙 Баланс: 0\n💱 1000 🪙 = 1 DOGE`, 
              { 
                  reply_markup: { 
@@ -129,9 +144,6 @@ const API_SECRET = process.env.API_SECRET || 'doge_secure_777'; // 🔐 Секр
                  } 
              } 
          ); 
-     } catch (err) { 
-         console.error('Ошибка /start:', err); 
-         ctx.reply('❌ Ошибка сервера'); 
      } 
  }); 
  
