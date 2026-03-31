@@ -66,6 +66,14 @@
              </div> 
          </div> 
  
+         <!-- REWARD POPUP --> 
+         <div id="rewardPopup" class="reward-popup hidden"> 
+             <div class="reward-content"> 
+                 <span class="reward-icon">🎉</span> 
+                 <span class="reward-text">+<span id="rewardAmountPopup">0</span> 🪙</span> 
+             </div> 
+         </div> 
+ 
          <!-- INFO --> 
          <div class="info-box"> 
              <p><strong>💰 Reward:</strong> 5-10 🪙 per click</p> 
@@ -229,6 +237,8 @@
                  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } 
              } else { 
                  btn.disabled = true; 
+                 const btnTextEl = btn.querySelector('.btn-text'); 
+                 if (btnTextEl) btnTextEl.textContent = 'Watch for 5-10 🪙'; 
                  if (status) status.textContent = '⏳ Wait before next reward'; 
                  if (status) status.className = 'ad-status status-waiting'; 
                  if (timerBox) timerBox.classList.remove('hidden'); 
@@ -242,6 +252,19 @@
                  } 
                  updateTimer(); 
                  timerInterval = setInterval(updateTimer, 1000); 
+             } 
+         } 
+ 
+         function showReward(amount) { 
+             const popup = document.getElementById('rewardPopup'); 
+             const amountEl = document.getElementById('rewardAmountPopup'); 
+             if (amountEl) amountEl.textContent = amount; 
+             if (popup) { 
+                 popup.classList.remove('hidden'); 
+                 popup.style.animation = 'none'; 
+                 popup.offsetHeight; 
+                 popup.style.animation = 'rewardPop 0.5s ease forwards'; 
+                 setTimeout(() => popup.classList.add('hidden'), 2500); 
              } 
          } 
  
@@ -282,9 +305,9 @@
                  
                  if (data.success) { 
                      if (window.playClaim) window.playClaim(); 
-                     if (window.Telegram?.WebApp?.HapticFeedback) { 
-                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); 
-                     } 
+                     
+                     // 🔥 Показываем анимацию награды 🔥
+                     showReward(reward);
                      
                      // 🔥 Обновляем баланс с сервера 
                      await fetchBalance(); 
@@ -306,12 +329,6 @@
                          status.textContent = `✅ Received ${reward} 🪙!`; 
                          status.className = 'ad-status status-success'; 
                      } 
-                     
-                     const popup = document.createElement('div'); 
-                     popup.className = 'reward-toast'; 
-                     popup.innerHTML = `<span>🎉 +${reward} 🪙</span>`; 
-                     document.body.appendChild(popup); 
-                     setTimeout(() => popup.remove(), 2500); 
                      
                      setTimeout(() => { 
                          updateUI(); 
@@ -392,6 +409,40 @@
      
      <style> 
          .reward-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}.reward-icon{font-size:32px;animation:bounce 2s ease-in-out infinite}.reward-header h3{margin:0;font-size:20px;color:var(--text-primary)}.reward-desc{font-size:14px;color:var(--text-secondary);margin:0 0 20px;line-height:1.4}.btn-large{padding:18px 24px;font-size:16px;margin-bottom:16px}.ad-status{font-size:14px;text-align:center;margin:8px 0;min-height:20px}.ad-status.status-ready{color:var(--text-success)}.ad-status.status-waiting{color:var(--text-secondary)}.ad-status.status-success{color:var(--gold);font-weight:600}.ad-status.status-error{color:var(--text-error)}.cooldown-timer{background:rgba(243,198,35,0.08);border:1px solid rgba(243,198,35,0.2);border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--text-secondary)}.timer-icon{font-size:16px}.reward-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-dark));color:var(--bg-primary);padding:14px 28px;border-radius:50px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;z-index:10000;box-shadow:0 10px 40px rgba(243,198,35,0.5);opacity:0;transition:transform .3s ease,opacity .3s ease}.reward-toast.reward-show{transform:translateX(-50%) translateY(0);opacity:1}@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}.pulse-once{animation:pulseOnce 0.3s ease}@keyframes pulseOnce{0%{transform:scale(1)}50%{transform:scale(1.1);color:var(--gold-light)}100%{transform:scale(1)}} 
+ 
+         /* REWARD POPUP ANIMATION */
+         .reward-popup {
+             position: fixed;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             z-index: 1000;
+             pointer-events: none;
+         }
+         .reward-content {
+             background: rgba(0, 0, 0, 0.8);
+             padding: 20px 40px;
+             border-radius: 20px;
+             border: 2px solid var(--gold);
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             gap: 10px;
+             box-shadow: 0 0 30px rgba(243, 198, 35, 0.3);
+         }
+         .reward-popup .reward-icon {
+             font-size: 48px;
+         }
+         .reward-popup .reward-text {
+             font-size: 24px;
+             font-weight: 800;
+             color: var(--gold);
+         }
+         @keyframes rewardPop {
+             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+             100% { transform: translate(-50%, -70%) scale(1); opacity: 0; }
+         }
      </style> 
  </body> 
  </html>
