@@ -305,7 +305,8 @@
                      headers: { 'Content-Type': 'application/json' }, 
                      body: JSON.stringify({ 
                          user_id: userId, 
-                         username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '' 
+                         username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '',
+                         secret: window.getApiSecret ? window.getApiSecret() : 'doge_secure_777' 
                      }) 
                  }); 
                  

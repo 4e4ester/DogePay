@@ -55,7 +55,8 @@
                          body: JSON.stringify({ 
                              user_id: userId, 
                              reward: reward, 
-                             type: 'task_adsgram' 
+                             type: 'task_adsgram',
+                             secret: window.getApiSecret ? window.getApiSecret() : 'doge_secure_777' 
                          })
                      });
                      

@@ -16,8 +16,9 @@
  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123admin'; 
  const ADMIN_TOKEN = crypto.randomBytes(32).toString('hex'); 
  const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '699705090'; // 🔥 ВАШ ID ЗДЕСЬ (теперь реальный)
- 
- // ==================== ОТЛАДКА ==================== 
+const API_SECRET = process.env.API_SECRET || 'doge_secure_777'; // 🔐 Секретный ключ для защиты API
+
+// ==================== ОТЛАДКА ==================== 
  console.log('🔍 DEBUG: Переменные окружения'); 
  console.log('BOT_TOKEN:', process.env.BOT_TOKEN ? '✅ Есть' : '❌ Нет'); 
  console.log('DATABASE_URL:', process.env.DATABASE_URL ? '✅ Есть' : '❌ Нет'); 
@@ -192,10 +193,14 @@
  app.post('/api/claim', async (req, res) => { 
      const client = await pool.connect(); 
      try { 
-         const user_id = String(req.body.user_id); 
-         const username = req.body.username; 
+         const { user_id, username, secret } = req.body; 
          
-         if (!user_id) return res.status(400).json({ success: false, error: 'Нет user_id' }); 
+         // 🔐 ПРОВЕРКА СЕКРЕТНОГО КЛЮЧА
+         if (secret !== API_SECRET) {
+             return res.status(403).json({ success: false, error: 'Доступ запрещен' });
+         }
+
+         if (!user_id) return res.status(400).json({ success: false, error: 'User ID required' }); 
  
          await client.query('BEGIN'); 
  
@@ -241,9 +246,12 @@
  app.post('/api/ad-reward', async (req, res) => { 
      const client = await pool.connect(); 
      try { 
-         const user_id = String(req.body.user_id); 
-         const reward = req.body.reward; 
-         const type = req.body.type; 
+         const { user_id, reward, type, secret } = req.body; 
+         
+         // 🔐 ПРОВЕРКА СЕКРЕТНОГО КЛЮЧА 
+         if (secret !== API_SECRET) { 
+             return res.status(403).json({ success: false, error: 'Доступ запрещен' }); 
+         } 
          
          console.log('📢 Ad reward request:', { user_id, reward, type }); 
          

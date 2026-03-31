@@ -9,7 +9,15 @@
      let user_id = null; 
      let currentLang = 'ru'; 
      let audioEnabled = true; 
+     const _key = 'doge_secure_777'; // 🔐 Ключ для связи с API
  
+     // Экспортируем вовне
+     window.getUserId = () => user_id || 123456;
+     window.getApiSecret = () => _key;
+     window.playClick = () => AudioMgr.playClick();
+     window.playClaim = () => AudioMgr.playClaim();
+     window.playError = () => AudioMgr.playError();
+
      // ===== ИНИЦИАЛИЗАЦИЯ TELEGRAM WEBAPP ===== 
      function initTelegram() { 
          if (!tg) { 

@@ -305,7 +305,12 @@
                  const res = await fetch('/api/ad-reward', { 
                      method: 'POST', 
                      headers: { 'Content-Type': 'application/json' }, 
-                     body: JSON.stringify({ user_id: userId, reward: reward, type: 'adsgram_video' }) 
+                     body: JSON.stringify({ 
+                         user_id: userId, 
+                         reward: reward, 
+                         type: 'adsgram_video',
+                         secret: window.getApiSecret ? window.getApiSecret() : 'doge_secure_777' 
+                     }) 
                  }); 
                  
                  const data = await res.json(); 
