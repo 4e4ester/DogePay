@@ -373,7 +373,6 @@
  
          document.addEventListener('DOMContentLoaded', () => { 
              const claimBtn = document.getElementById('claimAdBtn');
-             if (claimBtn) claimBtn.addEventListener('click', handleAdReward); 
              
              const hideLoading = () => {
                  const loading = document.getElementById('loading-screen'); 
@@ -396,7 +395,6 @@
              
              updateUI(); 
              
-             const claimBtn = document.getElementById('claimAdBtn'); 
              if (claimBtn) { 
                  claimBtn.addEventListener('click', () => { 
                      if (window.playClick) window.playClick(); 
