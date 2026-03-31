@@ -117,30 +117,40 @@
          window.addEventListener('load', loadAdsterra); 
      </script> 
      
+     <!-- STUBS FOR FUNCTIONS --> 
+     <script> 
+         window.playClick = window.playClick || function() { 
+             if (window.Telegram?.WebApp?.HapticFeedback) { 
+                 window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); 
+             } 
+         }; 
+         window.playClaim = window.playClaim || function() { 
+             if (window.Telegram?.WebApp?.HapticFeedback) { 
+                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); 
+             } 
+         }; 
+         window.playError = window.playError || function() { 
+             if (window.Telegram?.WebApp?.HapticFeedback) { 
+                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error'); 
+             } 
+         }; 
+         window.showToast = window.showToast || function(message, type) { 
+             const toast = document.createElement('div'); 
+             toast.className = `toast toast-${type}`; 
+             toast.innerHTML = `<span class="toast-text">${message}</span>`; 
+             document.body.appendChild(toast); 
+             requestAnimationFrame(() => toast.classList.add('toast-show')); 
+             setTimeout(() => { 
+                 toast.classList.remove('toast-show'); 
+                 setTimeout(() => toast.remove(), 300); 
+             }, 3000); 
+         }; 
+     </script> 
+ 
      <!-- LOGIC + FALLBACKS --> 
      <script> 
          // ===== ГЛОБАЛЬНЫЕ ЗАГЛУШКИ ===== 
-         if (typeof window.playClick === 'undefined') { 
-             window.playClick = function() { 
-                 if (window.Telegram?.WebApp?.HapticFeedback) { 
-                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); 
-                 } 
-             }; 
-         } 
-         if (typeof window.playClaim === 'undefined') { 
-             window.playClaim = function() { 
-                 if (window.Telegram?.WebApp?.HapticFeedback) { 
-                     window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); 
-                 } 
-             }; 
-         } 
-         if (typeof window.playError === 'undefined') { 
-             window.playError = function() { 
-                 if (window.Telegram?.WebApp?.HapticFeedback) { 
-                     window.Telegram.WebApp.HapticFeedback.notificationOccurred('error'); 
-                 } 
-             }; 
-         } 
+         // (Удаляем старые заглушки, так как они теперь выше)
  
          // 🔥 Очистка устаревших строковых данных в localStorage 
          (function cleanupStorage() { 
@@ -309,9 +319,12 @@
                      // 🔥 Показываем анимацию награды 🔥
                      showReward(reward);
                      
-                     // 🔥 Обновляем баланс с сервера 
+                     // 🔥 ОБНОВЛЯЕМ БАЛАНС НЕМЕДЛЕННО 🔥 
                      await fetchBalance(); 
                      
+                     // Тост
+                     window.showToast(`✅ +${reward} 🪙`, 'success');
+
                      localStorage.setItem('lastAdReward', Date.now().toString()); 
                      
                      let w = parseInt(localStorage.getItem('adsWatched')||'0'); 
@@ -330,10 +343,7 @@
                          status.className = 'ad-status status-success'; 
                      } 
                      
-                     setTimeout(() => { 
-                         updateUI(); 
-                         fetchBalance(); 
-                     }, 2000); 
+                     updateUI(); 
                      
                  } else { 
                      console.error('❌ Server error:', data); 
