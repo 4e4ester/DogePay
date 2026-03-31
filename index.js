@@ -124,10 +124,14 @@ const API_SECRET = process.env.API_SECRET || 'doge_secure_777'; // 🔐 Секр
              [userId, username] 
          ); 
          
+         // 🔥 Получаем актуальный баланс пользователя
+         const res = await pool.query('SELECT balance FROM users WHERE user_id = $1', [userId]);
+         const balance = res.rows[0]?.balance ?? 0;
+
          await ctx.replyWithPhoto(
              { source: photoPath },
              {
-                 caption: `🐕 Привет, ${ctx.from.first_name || 'друг'}!\n\nДобро пожаловать в DogePay — здесь ты можешь зарабатывать DOGE, просто играя и смотря рекламу! 🪙🚀\n\n💰 Твой баланс: 0 🪙\n\nНажимай кнопку ниже, чтобы начать! 👇`,
+                 caption: `🐕 Привет, ${ctx.from.first_name || 'друг'}!\n\nДобро пожаловать в DogePay — здесь ты можешь зарабатывать DOGE, просто играя и смотря рекламу! 🪙🚀\n\n💰 Твой баланс: ${balance} 🪙\n\nНажимай кнопку ниже, чтобы начать! 👇`,
                  reply_markup: { 
                      inline_keyboard: [[{ text: '🚀 Открыть DogePay', web_app: { url: process.env.WEB_APP_URL } }]] 
                  } 
