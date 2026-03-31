@@ -116,7 +116,7 @@ const API_SECRET = process.env.API_SECRET || 'doge_secure_777'; // 🔐 Секр
  bot.start(async (ctx) => { 
      const userId = String(ctx.from.id); 
      const username = ctx.from.username || ''; 
-     const photoUrl = 'https://i.ibb.co/LzfN0G8/dogepay-welcome.jpg'; // 🖼️ ССЫЛКА НА ТВОЁ ФОТО
+     const photoPath = path.join(__dirname, 'public', 'welcome.jpg');
 
      try { 
          await pool.query( 
@@ -125,7 +125,7 @@ const API_SECRET = process.env.API_SECRET || 'doge_secure_777'; // 🔐 Секр
          ); 
          
          await ctx.replyWithPhoto(
-             photoUrl,
+             { source: photoPath },
              {
                  caption: `🐕 Привет, ${ctx.from.first_name || 'друг'}!\n\nДобро пожаловать в DogePay — здесь ты можешь зарабатывать DOGE, просто играя и смотря рекламу! 🪙🚀\n\n💰 Твой баланс: 0 🪙\n\nНажимай кнопку ниже, чтобы начать! 👇`,
                  reply_markup: { 
