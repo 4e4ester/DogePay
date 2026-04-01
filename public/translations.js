@@ -29,6 +29,8 @@
              btn_faucet: 'Кран', 
              btn_ads: 'Реклама', 
              btn_withdraw: 'Вывод', 
+             game_soon: 'Игра скоро',
+             game_arena: 'DOGE BATTLE ARENA ⚔️',
  
              // === КРАН — 🔥 30 МИНУТ КУЛДАУН 🔥 === 
              faucet_title: '🚰 Кран', 
@@ -148,6 +150,8 @@
              btn_faucet: 'Faucet', 
              btn_ads: 'Ads', 
              btn_withdraw: 'Withdraw', 
+             game_soon: 'Game Soon',
+             game_arena: 'DOGE BATTLE ARENA ⚔️',
  
              // === FAUCET — 🔥 30 MIN COOLDOWN 🔥 === 
              faucet_title: '🚰 Faucet', 
