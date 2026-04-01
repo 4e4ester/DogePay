@@ -186,6 +186,11 @@
      function initApp() { 
          console.log('🎮 DogePay инициализация...'); 
  
+         if (tg) {
+             tg.expand(); // Развернуть на весь экран
+             tg.ready();
+         }
+
          initTelegram(); 
          AudioMgr.init(); 
          LangMgr.init(); 
