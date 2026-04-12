@@ -227,7 +227,7 @@
          function showInterstitial() {
              const lastShow = parseInt(localStorage.getItem('last_interstitial') || '0');
              const now = Date.now();
-             const COOLDOWN = 30 * 60 * 1000; // 30 минут
+             const COOLDOWN = 5 * 60 * 1000; // 5 минут
 
              if (now - lastShow > COOLDOWN && window.AdsGram) {
                  if (!adController) adController = window.AdsGram.init({ blockId: INTERSTITIAL_ID });
